@@ -59,8 +59,8 @@ document.getElementById("add-recipe-button").addEventListener("click", function 
   editingId = null;
   formHeading.textContent = "New recipe";
   kindField.hidden = false;    // a new recipe asks where it's from
-  removeExtraTagChips();       // drop tag chips that only an edited recipe needed
   form.reset();                // empty all the boxes
+  renderTagChips([]);          // all known tags, none ticked
   resetList(ingredientsList);  // back to one empty ingredient box
   resetList(stepsList);        // back to one empty step box
   updateSourceField();         // hide the Source box again
@@ -94,6 +94,9 @@ form.addEventListener("change", function (event) {
 form.addEventListener("submit", function (event) {
   // Normally a form "sends" itself and reloads the page. We stop that.
   event.preventDefault();
+
+  // A tag typed in the "New tag" box but not added yet still counts.
+  addTypedTag();
 
   // Collect everything from the form into one "recipe" (see recipeFromForm below).
   const recipe = recipeFromForm();
@@ -132,6 +135,97 @@ form.addEventListener("submit", function (event) {
   showHomeMessage("✓ Saved “" + recipe.current.title + "”.");
   refreshHome();
   showScreen(homeScreen);
+});
+
+// ---------- Tags ----------
+// The starter tags are always offered. Your own tags are remembered simply by being
+// on a saved recipe: every tag used on any recipe is offered next time.
+
+const STARTER_TAGS = ["breakfast", "lunch", "dinner", "dessert", "quick", "vegetarian"];
+const newTagBox = document.getElementById("new-tag");
+
+// Tidy a typed tag: lower case, no extra spaces, at most 30 letters. "  Soup  " → "soup".
+function cleanTag(text) {
+  return text.trim().replace(/\s+/g, " ").toLowerCase().slice(0, 30);
+}
+
+// Every tag to offer: the starter tags first, then your own tags A to Z.
+function knownTags() {
+  const own = [];
+  (loadRecipes() || []).forEach(function (recipe) {
+    [recipe.current, recipe.original].forEach(function (version) {
+      if (!version) {
+        return;
+      }
+      version.tags.forEach(function (tag) {
+        if (STARTER_TAGS.indexOf(tag) === -1 && own.indexOf(tag) === -1) {
+          own.push(tag);
+        }
+      });
+    });
+  });
+  own.sort(function (a, b) { return a.localeCompare(b); });
+  return STARTER_TAGS.concat(own);
+}
+
+// Make one tag chip (a checkbox that looks like a pill) and add it to the form.
+function addTagChip(tag, checked) {
+  const chip = document.createElement("label");
+  chip.className = "chip";
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.name = "tags";
+  box.value = tag;
+  box.checked = checked;
+  const text = document.createElement("span");
+  text.textContent = tag;
+  chip.append(box, text);
+  tagChips.append(chip);
+}
+
+// Fill the tag area with every known tag, ticking the ones in "selected".
+function renderTagChips(selected) {
+  tagChips.innerHTML = "";
+  knownTags().forEach(function (tag) {
+    addTagChip(tag, selected.indexOf(tag) !== -1);
+  });
+  // A recipe's tag that isn't known yet (shouldn't happen, but just in case) still gets a chip.
+  selected.forEach(function (tag) {
+    if (knownTags().indexOf(tag) === -1) {
+      addTagChip(tag, true);
+    }
+  });
+  newTagBox.value = "";
+}
+
+// Add the tag typed in the "New tag" box: tick its chip, making one if it's new.
+function addTypedTag() {
+  const tag = cleanTag(newTagBox.value);
+  newTagBox.value = "";
+  if (tag === "") {
+    return;
+  }
+  const existing = Array.from(tagChips.querySelectorAll('input[name="tags"]')).find(function (box) {
+    return box.value === tag;
+  });
+  if (existing) {
+    existing.checked = true;
+  } else {
+    addTagChip(tag, true);
+  }
+}
+
+document.getElementById("add-tag-button").addEventListener("click", function () {
+  addTypedTag();
+  newTagBox.focus(); // ready for another one
+});
+
+// The keyboard's Done key in the "New tag" box adds the tag (instead of saving the whole form).
+newTagBox.addEventListener("keydown", function (event) {
+  if (event.key === "Enter" && !event.isComposing) {
+    event.preventDefault();
+    addTypedTag();
+  }
 });
 
 // ---------- Ingredient and step lists ----------
@@ -572,27 +666,6 @@ function changeRecipe(id, change) {
 // ---------- Edit, delete, original ----------
 // ======================================================================
 
-// Tag chips the starter list doesn't have (e.g. from a backup) are added while editing,
-// so editing never drops a tag. They're marked "extra" and removed for a new recipe.
-function removeExtraTagChips() {
-  tagChips.querySelectorAll(".chip[data-extra]").forEach(function (chip) { chip.remove(); });
-}
-
-function addExtraTagChip(tag) {
-  const chip = document.createElement("label");
-  chip.className = "chip";
-  chip.dataset.extra = "yes";
-  const box = document.createElement("input");
-  box.type = "checkbox";
-  box.name = "tags";
-  box.value = tag;
-  const text = document.createElement("span");
-  text.textContent = tag;
-  chip.append(box, text);
-  tagChips.append(chip);
-  return box;
-}
-
 // Fill a list of typing boxes (ingredients or steps) with saved items.
 function fillEditList(list, items) {
   list.innerHTML = "";
@@ -616,7 +689,6 @@ document.getElementById("edit-button").addEventListener("click", function () {
   editingId = recipe.id;
   formHeading.textContent = "Edit recipe";
   kindField.hidden = true;     // the kind stays as it was saved
-  removeExtraTagChips();
   form.reset();
   formMessage.hidden = true;
 
@@ -628,13 +700,7 @@ document.getElementById("edit-button").addEventListener("click", function () {
   fillEditList(stepsList, c.steps);
   form.elements.servings.value = c.servings === null ? "" : c.servings;
   form.elements.time.value = c.timeMinutes === null ? "" : c.timeMinutes;
-  c.tags.forEach(function (tag) {
-    let box = tagChips.querySelector('input[name="tags"][value="' + CSS.escape(tag) + '"]');
-    if (!box) {
-      box = addExtraTagChip(tag);
-    }
-    box.checked = true;
-  });
+  renderTagChips(c.tags);      // all known tags, with this recipe's ticked
   form.elements.notes.value = recipe.notes;
 
   showScreen(formScreen);

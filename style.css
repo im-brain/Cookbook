@@ -535,3 +535,23 @@ textarea:focus {
 .original-banner {
   border-color: var(--accent);
 }
+
+/* ---------- 12. Adding your own tag ---------- */
+
+/* The "New tag" box and its "+ Add" button, side by side under the tag chips. */
+.new-tag-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.new-tag-row input {
+  flex: 1;          /* the box takes the spare room */
+  min-width: 0;     /* allow it to shrink on narrow phones */
+}
+
+.new-tag-row .button {
+  width: auto;      /* the button is only as wide as its words */
+  margin-top: 0;
+  white-space: nowrap;
+}

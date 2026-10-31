@@ -5,8 +5,8 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 
 ## Current status (2026-10-31)
 
-- **Steps 1–9 done.** Steps 7 and 8 confirmed on the phone. Step 9 (edit, delete, original) is **Version 11**; check it on the phone after merging.
-- **Next: Step 10, Tags** (starter tags plus my own). It will be Version 12.
+- **Steps 1–10 done.** Steps 7–9 confirmed on the phone. Step 10 (own tags) is **Version 12**; check it on the phone after merging.
+- **Next: Step 11, Search** (filter by title, ingredient or tag). It will be Version 13.
 - Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first.
 
 ## What "done" means (version 1)
@@ -101,7 +101,7 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
   **Test it:** Export, delete a recipe, import: it comes back. The reminder appears after a change and disappears after a backup.
 - [x] **Step 9 — Edit, delete, original vs mine.** Edit anything; delete asks "Are you sure?". For recipes from elsewhere: View original and Reset to original.
   **Test it:** Change a step, reload: change kept. View original shows the old step. Reset brings it back. Delete removes it.
-- [ ] **Step 10 — Tags.** Starter tags plus my own.
+- [x] **Step 10 — Tags.** Starter tags plus my own.
   **Test it:** Add a new tag "soup" to a recipe; it's offered next time.
 - [ ] **Step 11 — Search.** Filter by title, ingredient or tag.
   **Test it:** Typing "chicken" shows only recipes with chicken.
@@ -140,3 +140,5 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Step 8 done (Version 10): a Backup box on the home screen. **Export** opens the iPhone Share menu with `cookbook-backup-YYYY-MM-DD.json` (Save to Files → iCloud Drive). **Import** merges a backup in: missing recipes come back, the newer copy wins, nothing on the phone is deleted, and it asks first. The reminder says "N recipes changed since your last backup" (new, edited or deleted), or "✓ All recipes backed up".
 - 2026-10-31 — Step 8 confirmed on the user's phone (export to iCloud Drive and import both work).
 - 2026-10-31 — Step 9 done (Version 11): the recipe page has **Edit recipe** (the same form, filled in), **Delete recipe** (asks first), and, for recipes from somewhere else, **View original** (with a banner) → **Back to my version** / **Reset to original** (asks first; notes are kept). The kind of recipe can't be changed when editing. Tags the starter list doesn't have are kept when editing.
+- 2026-10-31 — Step 9 confirmed on the user's phone.
+- 2026-10-31 — Step 10 done (Version 12): the form has a "New tag" box with "+ Add" (or the keyboard's Done). New tags appear as ticked chips. Tags are tidied to lower case, and duplicates are ignored. A tag typed but not added still counts when you tap Save. Your own tags are offered on every recipe form after the starter tags, A–Z.
