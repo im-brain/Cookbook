@@ -178,6 +178,7 @@ fieldset.field {
 /* The name above each box, e.g. "Title".
    ":not(.choice)" = every label except the big tappable choices, which have their own style below. */
 .field > label:not(.choice),
+.field > .field-label,
 .field > legend {
   display: block;
   font-weight: 600;
@@ -300,4 +301,58 @@ textarea:focus {
   border-radius: 10px;
   padding: 12px 14px;
   margin: 0 0 16px;
+}
+
+/* ----- Lists you add to one item at a time (ingredients, steps) ----- */
+.list-editor {
+  list-style: none;   /* we draw our own bullets and numbers below */
+  margin: 0 0 8px;
+  padding: 0;
+  counter-reset: row; /* start counting rows at 0 */
+}
+/* One row: marker, typing box, and a remove (×) button. */
+.list-editor li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 8px;
+  counter-increment: row; /* count this row */
+}
+/* The marker in front of each row: a dot for ingredients... */
+.list-editor li::before {
+  content: "•";
+  flex: 0 0 24px;
+  text-align: center;
+  line-height: 48px;
+  color: var(--muted);
+}
+/* ...and the row's number for steps (1., 2., 3. ...). */
+.list-editor.numbered li::before {
+  content: counter(row) ".";
+  font-weight: 600;
+}
+/* The typing box takes up the rest of the row. */
+.list-editor textarea {
+  flex: 1;
+  min-height: 48px;
+  overflow: hidden;   /* app.js grows the box as you type, so no scrollbar */
+  resize: none;       /* no drag handle needed: the box grows by itself */
+}
+/* The round remove (×) button at the end of a row. */
+.remove-row {
+  flex: 0 0 44px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+.remove-row:active {
+  color: var(--accent);
+}
+/* "+ Add ingredient" / "+ Add step" buttons: a little closer to the list. */
+.add-row {
+  margin-top: 0;
 }

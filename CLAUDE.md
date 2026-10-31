@@ -31,7 +31,8 @@ At the end of every step, in the same pull request:
 - **Always open the cookbook from the Home Screen icon.** Safari deletes a website's saved data after ~7 days of Safari use without visiting it, but Home Screen apps are exempt. The Home Screen app and a Safari tab have **separate storage**, so recipes saved in one don't appear in the other. That's why the install step comes early, before real recipes are saved.
 - **Backups:** Export a file (save it to iCloud Drive), Import it back. The reminder shows "N recipes changed since your last backup" whenever there are unbacked-up changes (risk is losing the phone, not Safari).
 - **Two kinds of recipe:** "My own" (no original) and "From somewhere else" (optional source, e.g. a link or "Grandma's card"). For the second kind, the first saved version is kept as the **original**; edits are "mine". Show "mine" by default, with **View original** and **Reset to original** (asks first).
-- **Recipe fields:** title, ingredients (one per line), steps (one per line), servings, total time, tags, notes, kind, source. **No photos** (phone storage is about 5 MB).
+- **Recipe fields:** title, ingredients, steps, servings, total time, tags, notes, kind, source. **No photos** (phone storage is about 5 MB).
+- **Ingredients and steps are entered one at a time** (user's choice after trying a big text box): one box per item, "+ Add ingredient" / "+ Add step" or the keyboard's Next key adds the next box, × removes one. Steps are numbered.
 - **Notes** are separate from edits and shown **above the ingredients**.
 - **Tags:** starter list (breakfast, lunch, dinner, dessert, quick, vegetarian) plus the user's own.
 - **No outside recipe service for now.** TheMealDB and Spoonacular were considered and dropped.
@@ -53,4 +54,5 @@ At the end of every step, in the same pull request:
 - Screens: each screen is a `<section>` in `index.html` (`#home-screen`, `#recipe-form-screen`). `showScreen(...)` in `app.js` shows one and hides the rest. Add new screens to that function.
 - Form classes in `style.css`: `.field` (label + hint + box), `.hint`, `.field-row` (side by side), `.choice` (big radio option), `.chips`/`.chip` (tag pills), `.message` (notice box), `.button-secondary` (outline button).
 - CSS gotcha: `.field > label` also matched the `.choice` labels and broke their layout. It's now `.field > label:not(.choice)`. Watch for broad selectors overriding specific ones.
-- Form field names (`kind`, `source`, `title`, `ingredients`, `steps`, `servings`, `time`, `tags`, `notes`) are what step 6 reads when saving.
+- Form field names (`kind`, `source`, `title`, `servings`, `time`, `tags`, `notes`) are what step 6 reads when saving. Ingredients and steps are lists: read them with `readList(ingredientsList)` / `readList(stepsList)` in `app.js` (empty boxes are skipped). To fill a list when editing (step 9), use `resetList` + `addRow`.
+- Testing gotcha: Playwright's `text=+ Add ingredient` matched the hint text before the button. Target buttons by selector (e.g. `button.add-row[data-list=...]`).
