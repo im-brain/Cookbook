@@ -41,4 +41,6 @@ At the end of every step, in the same pull request:
 ## Lessons learned
 
 - Screenshot check: a Playwright script with `devices['iPhone 13']` opening `index.html` works in the cloud session (keep the script in the scratchpad, not the repo).
-- Until Step 2 turns on GitHub Pages, the screenshot is the only test.
+- GitHub Pages publishes from `main`, folder `/ (root)`. Every merge to `main` redeploys the site within about a minute.
+- The cloud session's network can't open `*.github.io`, so Claude can't load the live site directly. To confirm a deploy, check the "pages build and deployment" workflow run via the GitHub tools; the user does the real-phone test.
+- After a PR is merged, restart the working branch from `main` before the next step.
