@@ -565,31 +565,37 @@ function renderRecipeList() {
 
   sorted.forEach(function (recipe) {
     const row = document.createElement("li");
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "recipe-row";
-
-    const title = document.createElement("span");
-    title.className = "recipe-row-title";
-    title.textContent = recipe.current.title;
-    button.append(title);
-
-    const detailsText = describeRecipe(recipe, true);
-    if (detailsText) {
-      const details = document.createElement("span");
-      details.className = "recipe-row-details";
-      details.textContent = detailsText;
-      button.append(details);
-    }
-
-    // Tapping the row opens that recipe.
-    button.addEventListener("click", function () {
-      showRecipe(recipe.id);
-    });
-
-    row.append(button);
+    row.append(makeRecipeButton(recipe));
     recipeList.append(row);
   });
+}
+
+// Build one tappable recipe row: title, details underneath, and "›". Tapping opens the recipe.
+// Used by the list and by "What should I cook?".
+function makeRecipeButton(recipe) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "recipe-row";
+
+  const title = document.createElement("span");
+  title.className = "recipe-row-title";
+  title.textContent = recipe.current.title;
+  button.append(title);
+
+  const detailsText = describeRecipe(recipe, true);
+  if (detailsText) {
+    const details = document.createElement("span");
+    details.className = "recipe-row-details";
+    details.textContent = detailsText;
+    button.append(details);
+  }
+
+  // Tapping the row opens that recipe.
+  button.addEventListener("click", function () {
+    showRecipe(recipe.id);
+  });
+
+  return button;
 }
 
 // ======================================================================
@@ -696,6 +702,7 @@ function refreshHome() {
   updateRecipeCount();
   renderRecipeList();
   updateBackupReminder();
+  pickCard.hidden = true; // an old pick might be out of date now
 }
 
 // Find one recipe, change it with "change", and store everything again.
@@ -1131,6 +1138,110 @@ function importBackupText(text) {
   showBackupMessage(done);
   refreshHome();
 }
+
+// ======================================================================
+// ---------- "What should I cook?" ----------
+// Picks a random recipe, optionally only from one tag. Never the same one twice in a row
+// (unless it's the only choice).
+// ======================================================================
+
+const pickCard = document.getElementById("pick-card");
+const pickHeading = document.getElementById("pick-heading");
+const pickResult = document.getElementById("pick-result");
+const pickMessage = document.getElementById("pick-message");
+const pickFilter = document.getElementById("pick-filter");
+const pickTags = document.getElementById("pick-tags");
+const pickAgain = document.getElementById("pick-again");
+
+let pickTag = "";        // "" means any recipe; otherwise only recipes with this tag
+let lastPickedId = null; // so we don't suggest the same recipe twice in a row
+
+// The filter chips: "any" plus every tag used on at least one recipe (starter tags first).
+// They're radio buttons (only one can be chosen) styled like the tag chips in the form.
+function renderPickTags(recipes) {
+  const used = knownTags().filter(function (tag) {
+    return recipes.some(function (r) { return r.current.tags.indexOf(tag) !== -1; });
+  });
+  if (used.indexOf(pickTag) === -1) {
+    pickTag = ""; // the chosen tag isn't used any more
+  }
+  pickTags.innerHTML = "";
+  [""].concat(used).forEach(function (tag) {
+    const chip = document.createElement("label");
+    chip.className = "chip";
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "pick-tag";
+    radio.value = tag;
+    radio.checked = tag === pickTag;
+    const text = document.createElement("span");
+    text.textContent = tag === "" ? "any" : tag;
+    chip.append(radio, text);
+    pickTags.append(chip);
+  });
+  pickFilter.hidden = used.length === 0; // no tags anywhere: nothing to filter by
+}
+
+// Choose a recipe and show it.
+function pickRecipe() {
+  pickCard.hidden = false;
+  pickResult.innerHTML = "";
+  pickMessage.hidden = true;
+  pickHeading.hidden = true;
+
+  const recipes = loadRecipes();
+  if (recipes === null) {
+    pickMessage.textContent = "Sorry, your saved recipes couldn't be read.";
+    pickMessage.hidden = false;
+    pickFilter.hidden = true;
+    pickAgain.hidden = true;
+    return;
+  }
+  if (recipes.length === 0) {
+    pickMessage.textContent = "Your cookbook is empty, so there's nothing to pick yet. Add a few recipes and I'll choose one for you!";
+    pickMessage.hidden = false;
+    pickFilter.hidden = true;
+    pickAgain.hidden = true;
+    return;
+  }
+
+  renderPickTags(recipes);
+  const choices = recipes.filter(function (r) {
+    return pickTag === "" || r.current.tags.indexOf(pickTag) !== -1;
+  });
+
+  // Leave out the last pick, if there's anything else to choose.
+  const fresh = choices.length > 1
+    ? choices.filter(function (r) { return r.id !== lastPickedId; })
+    : choices;
+  const picked = fresh[Math.floor(Math.random() * fresh.length)];
+  lastPickedId = picked.id;
+
+  pickHeading.hidden = false;
+  pickResult.append(makeRecipeButton(picked));
+  pickAgain.hidden = choices.length < 2; // "Pick another" only if there is another
+  if (choices.length === 1) {
+    pickMessage.textContent = pickTag === ""
+      ? "It's your only recipe so far!"
+      : "It's your only “" + pickTag + "” recipe.";
+    pickMessage.hidden = false;
+  }
+}
+
+document.getElementById("pick-button").addEventListener("click", function () {
+  homeMessage.hidden = true;
+  pickRecipe();
+});
+pickAgain.addEventListener("click", pickRecipe);
+document.getElementById("pick-close").addEventListener("click", function () {
+  pickCard.hidden = true;
+});
+
+// Choosing a filter chip picks again from that tag straight away.
+pickTags.addEventListener("change", function (event) {
+  pickTag = event.target.value;
+  pickRecipe();
+});
 
 // When the app opens, show the count, the list and the backup reminder straight away.
 refreshHome();
