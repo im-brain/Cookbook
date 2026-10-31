@@ -356,3 +356,12 @@ textarea:focus {
 .add-row {
   margin-top: 0;
 }
+
+/* ---------- 7. Version number ---------- */
+/* The small "Version 7" line at the bottom of the home screen. */
+.version {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  margin: 32px 0 0;
+}
