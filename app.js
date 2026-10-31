@@ -47,9 +47,19 @@ function showScreen(screenToShow) {
 const form = document.getElementById("recipe-form");
 const sourceField = document.getElementById("source-field");
 const formMessage = document.getElementById("form-message");
+const formHeading = document.getElementById("form-heading");
+const kindField = document.getElementById("kind-field");
+const tagChips = document.getElementById("tag-chips");
+
+// Which recipe the form is editing. null means "a new recipe".
+let editingId = null;
 
 // "Add a recipe" button → open an empty form.
 document.getElementById("add-recipe-button").addEventListener("click", function () {
+  editingId = null;
+  formHeading.textContent = "New recipe";
+  kindField.hidden = false;    // a new recipe asks where it's from
+  removeExtraTagChips();       // drop tag chips that only an edited recipe needed
   form.reset();                // empty all the boxes
   resetList(ingredientsList);  // back to one empty ingredient box
   resetList(stepsList);        // back to one empty step box
@@ -59,9 +69,13 @@ document.getElementById("add-recipe-button").addEventListener("click", function 
   showScreen(formScreen);
 });
 
-// "Cancel" button → go back home without saving.
+// "Cancel" button → go back without saving: to the recipe if editing, otherwise home.
 document.getElementById("cancel-button").addEventListener("click", function () {
-  showScreen(homeScreen);
+  if (editingId) {
+    showRecipe(editingId, false);
+  } else {
+    showScreen(homeScreen);
+  }
 });
 
 // Show the Source box only for recipes "From somewhere else".
@@ -92,6 +106,20 @@ form.addEventListener("submit", function (event) {
     return;
   }
 
+  // Editing? Save the changes into the existing recipe instead (see saveEditedRecipe below).
+  if (editingId) {
+    const editResult = saveEditedRecipe(editingId, recipe);
+    if (!editResult.ok) {
+      formMessage.textContent = editResult.problem;
+      formMessage.hidden = false;
+      return;
+    }
+    refreshHome();
+    showRecipe(editingId, false);
+    showViewMessage("✓ Changes saved.");
+    return;
+  }
+
   // Try to save it. If something goes wrong, stay on the form and explain, so nothing is lost.
   const result = saveNewRecipe(recipe);
   if (!result.ok) {
@@ -102,9 +130,7 @@ form.addEventListener("submit", function (event) {
 
   // Saved! Go home and say so.
   showHomeMessage("✓ Saved “" + recipe.current.title + "”.");
-  updateRecipeCount();
-  renderRecipeList();
-  updateBackupReminder();
+  refreshHome();
   showScreen(homeScreen);
 });
 
@@ -432,19 +458,30 @@ function fillList(listElement, items) {
   });
 }
 
+// Which recipe the recipe page is showing, and whether it's showing the original.
+let shownRecipeId = null;
+let showingOriginal = false;
+
 // Open the page for the recipe with this id.
-function showRecipe(id) {
+// If "original" is true (recipes from somewhere else only), show the original instead of my version.
+function showRecipe(id, original) {
   const recipes = loadRecipes() || [];
   const recipe = recipes.find(function (r) { return r.id === id; });
   if (!recipe) {
     return; // shouldn't happen, but don't crash if it does
   }
-  const current = recipe.current;
+  const hasOriginal = recipe.kind === "elsewhere" && recipe.original !== null;
+  shownRecipeId = id;
+  showingOriginal = Boolean(original) && hasOriginal;
+  viewMessage.hidden = true;
+
+  // "current" is the version we're about to show: the original, or my version.
+  const current = showingOriginal ? recipe.original : recipe.current;
 
   document.getElementById("view-title").textContent = current.title;
 
   const details = document.getElementById("view-details");
-  details.textContent = describeRecipe(recipe, false);
+  details.textContent = describeRecipe({ current: current }, false);
   details.hidden = details.textContent === "";
 
   // Source: "From: ..." If it's a web link, make it tappable (opens in Safari).
@@ -486,8 +523,185 @@ function showRecipe(id) {
   fillList(document.getElementById("view-steps"), current.steps);
   document.getElementById("view-steps-section").hidden = current.steps.length === 0;
 
+  // Buttons: which ones make sense right now?
+  const changed = hasOriginal && fingerprint(recipe.current) !== fingerprint(recipe.original);
+  document.getElementById("original-banner").hidden = !showingOriginal;
+  document.getElementById("edit-button").hidden = showingOriginal;
+  document.getElementById("view-original-button").hidden = showingOriginal || !hasOriginal;
+  document.getElementById("back-to-mine-button").hidden = !showingOriginal;
+  document.getElementById("reset-button").hidden = !showingOriginal || !changed;
+  document.getElementById("unchanged-note").hidden = !showingOriginal || changed;
+  document.getElementById("delete-button").hidden = showingOriginal;
+
   showScreen(viewScreen);
 }
+
+const viewMessage = document.getElementById("view-message");
+
+function showViewMessage(text) {
+  viewMessage.textContent = text;
+  viewMessage.hidden = false;
+}
+
+// Refresh everything on the home screen after saved recipes change.
+function refreshHome() {
+  updateRecipeCount();
+  renderRecipeList();
+  updateBackupReminder();
+}
+
+// Find one recipe, change it with "change", and store everything again.
+// Returns { ok: true } or { ok: false, problem: "..." }, like saveNewRecipe.
+function changeRecipe(id, change) {
+  const recipes = loadRecipes();
+  if (recipes === null) {
+    return { ok: false, problem: "Sorry, your saved recipes couldn't be read, so nothing was changed. Please tell Claude." };
+  }
+  const index = recipes.findIndex(function (r) { return r.id === id; });
+  if (index === -1) {
+    return { ok: false, problem: "Sorry, that recipe couldn't be found. Nothing was changed." };
+  }
+  change(recipes, index);
+  if (!storeRecipes(recipes)) {
+    return { ok: false, problem: "Sorry, the change couldn't be saved. The phone's storage for the cookbook may be full." };
+  }
+  return { ok: true };
+}
+
+// ======================================================================
+// ---------- Edit, delete, original ----------
+// ======================================================================
+
+// Tag chips the starter list doesn't have (e.g. from a backup) are added while editing,
+// so editing never drops a tag. They're marked "extra" and removed for a new recipe.
+function removeExtraTagChips() {
+  tagChips.querySelectorAll(".chip[data-extra]").forEach(function (chip) { chip.remove(); });
+}
+
+function addExtraTagChip(tag) {
+  const chip = document.createElement("label");
+  chip.className = "chip";
+  chip.dataset.extra = "yes";
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.name = "tags";
+  box.value = tag;
+  const text = document.createElement("span");
+  text.textContent = tag;
+  chip.append(box, text);
+  tagChips.append(chip);
+  return box;
+}
+
+// Fill a list of typing boxes (ingredients or steps) with saved items.
+function fillEditList(list, items) {
+  list.innerHTML = "";
+  if (items.length === 0) {
+    addRow(list);
+    return;
+  }
+  items.forEach(function (text) {
+    const box = addRow(list);
+    box.value = text;
+  });
+}
+
+// "Edit recipe" → open the form, filled in with my version of the recipe.
+document.getElementById("edit-button").addEventListener("click", function () {
+  const recipe = (loadRecipes() || []).find(function (r) { return r.id === shownRecipeId; });
+  if (!recipe) {
+    return;
+  }
+  const c = recipe.current;
+  editingId = recipe.id;
+  formHeading.textContent = "Edit recipe";
+  kindField.hidden = true;     // the kind stays as it was saved
+  removeExtraTagChips();
+  form.reset();
+  formMessage.hidden = true;
+
+  form.elements.kind.value = recipe.kind;
+  updateSourceField();
+  form.elements.source.value = recipe.source;
+  form.elements.title.value = c.title;
+  fillEditList(ingredientsList, c.ingredients);
+  fillEditList(stepsList, c.steps);
+  form.elements.servings.value = c.servings === null ? "" : c.servings;
+  form.elements.time.value = c.timeMinutes === null ? "" : c.timeMinutes;
+  c.tags.forEach(function (tag) {
+    let box = tagChips.querySelector('input[name="tags"][value="' + CSS.escape(tag) + '"]');
+    if (!box) {
+      box = addExtraTagChip(tag);
+    }
+    box.checked = true;
+  });
+  form.elements.notes.value = recipe.notes;
+
+  showScreen(formScreen);
+  // Boxes can only measure their height once they're on screen, so size them now.
+  form.querySelectorAll(".list-editor textarea").forEach(fitHeight);
+});
+
+// Save the edited form into the existing recipe. Its id, kind, original and createdAt stay the same.
+function saveEditedRecipe(id, fromForm) {
+  return changeRecipe(id, function (recipes, index) {
+    const recipe = recipes[index];
+    recipe.source = fromForm.source;
+    recipe.current = fromForm.current;
+    recipe.notes = fromForm.notes;
+    recipe.updatedAt = todayAsText();
+  });
+}
+
+// "View original" / "Back to my version"
+document.getElementById("view-original-button").addEventListener("click", function () {
+  showRecipe(shownRecipeId, true);
+});
+document.getElementById("back-to-mine-button").addEventListener("click", function () {
+  showRecipe(shownRecipeId, false);
+});
+
+// "Reset to original" → asks first, then makes my version a copy of the original. Notes are kept.
+document.getElementById("reset-button").addEventListener("click", function () {
+  const ok = window.confirm("Reset to the original?\n\nYour changes to this recipe will be lost. Your notes stay.");
+  if (!ok) {
+    return;
+  }
+  const result = changeRecipe(shownRecipeId, function (recipes, index) {
+    const recipe = recipes[index];
+    recipe.current = JSON.parse(JSON.stringify(recipe.original)); // a separate copy
+    recipe.updatedAt = todayAsText();
+  });
+  if (!result.ok) {
+    showViewMessage(result.problem);
+    return;
+  }
+  refreshHome();
+  showRecipe(shownRecipeId, false);
+  showViewMessage("✓ Reset to the original.");
+});
+
+// "Delete recipe" → asks first, then removes it and goes home.
+document.getElementById("delete-button").addEventListener("click", function () {
+  const recipe = (loadRecipes() || []).find(function (r) { return r.id === shownRecipeId; });
+  if (!recipe) {
+    return;
+  }
+  const ok = window.confirm("Delete “" + recipe.current.title + "”?\n\nAre you sure? It can only come back from a backup file.");
+  if (!ok) {
+    return;
+  }
+  const result = changeRecipe(shownRecipeId, function (recipes, index) {
+    recipes.splice(index, 1); // take it out of the list
+  });
+  if (!result.ok) {
+    showViewMessage(result.problem);
+    return;
+  }
+  refreshHome();
+  showHomeMessage("Deleted “" + recipe.current.title + "”.");
+  showScreen(homeScreen);
+});
 
 // "‹ My Cookbook" button → back to the list.
 document.getElementById("back-button").addEventListener("click", function () {
@@ -795,12 +1009,8 @@ function importBackupText(text) {
   done += ".";
   if (skipped) done += " " + recipesWord(skipped) + " in the file couldn't be read and were skipped.";
   showBackupMessage(done);
-  updateRecipeCount();
-  renderRecipeList();
-  updateBackupReminder();
+  refreshHome();
 }
 
 // When the app opens, show the count, the list and the backup reminder straight away.
-updateRecipeCount();
-renderRecipeList();
-updateBackupReminder();
+refreshHome();

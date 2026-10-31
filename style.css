@@ -511,3 +511,27 @@ textarea:focus {
 .backup-hint {
   margin: 8px 0 0;
 }
+
+/* ---------- 11. Edit, delete, original (recipe page) ---------- */
+
+/* The buttons at the bottom of a recipe page. */
+.recipe-actions {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.recipe-actions .hint {
+  margin: 12px 0 0;
+}
+
+/* Delete gets red text, so it's not tapped by accident instead of something else. */
+.button-danger {
+  color: var(--accent);
+  margin-top: 24px;
+}
+
+/* The "You're looking at the original" banner: a stronger outline so it's hard to miss. */
+.original-banner {
+  border-color: var(--accent);
+}

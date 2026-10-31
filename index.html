@@ -30,12 +30,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- ===== VERSION NUMBER =====
-         Phones keep saved copies of style.css and app.js for a while. Adding "?v=10" makes them look like
+         Phones keep saved copies of style.css and app.js for a while. Adding "?v=11" makes them look like
          new files, so the phone downloads fresh ones. Every update raises this number in THREE places:
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=10">
+    <link rel="stylesheet" href="style.css?v=11">
   </head>
 
   <body>
@@ -100,13 +100,18 @@
         </div>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 10</p>
+        <p class="version">Version 11</p>
       </section>
 
       <!-- ===================== RECIPE PAGE SCREEN ===================== -->
       <!-- Shows one recipe. app.js fills in every part when you tap a recipe in the list. -->
       <section id="recipe-view-screen" hidden>
         <button type="button" class="back-button" id="back-button">‹ My Cookbook</button>
+
+        <!-- A message after a change, e.g. "✓ Changes saved". -->
+        <p class="message" id="view-message" hidden></p>
+        <!-- Shown only while you look at the ORIGINAL of a recipe from somewhere else. -->
+        <p class="message original-banner" id="original-banner" hidden>You're looking at the <strong>original</strong>, as first saved.</p>
 
         <h1 id="view-title"></h1>
         <!-- e.g. "Serves 4 · 30 min" -->
@@ -131,19 +136,34 @@
           <h2>Steps</h2>
           <ol id="view-steps"></ol>
         </div>
+
+        <!-- Buttons at the bottom of the recipe page. app.js shows the ones that fit. -->
+        <div class="recipe-actions">
+          <!-- While looking at "my version": -->
+          <button type="button" class="button" id="edit-button">Edit recipe</button>
+          <button type="button" class="button button-secondary" id="view-original-button">View original</button>
+          <!-- While looking at the original: -->
+          <button type="button" class="button" id="back-to-mine-button">Back to my version</button>
+          <button type="button" class="button button-secondary" id="reset-button">Reset to original</button>
+          <p class="hint" id="unchanged-note">You haven't changed this recipe, so it's the same as the original.</p>
+          <!-- Always: -->
+          <button type="button" class="button button-secondary button-danger" id="delete-button">Delete recipe</button>
+        </div>
       </section>
 
       <!-- ===================== RECIPE FORM SCREEN ===================== -->
       <!-- Hidden until you tap "Add a recipe". -->
       <section id="recipe-form-screen" hidden>
-        <h1>New recipe</h1>
+        <!-- app.js changes this to "Edit recipe" when editing. -->
+        <h1 id="form-heading">New recipe</h1>
 
         <!-- A <form> groups all the boxes you fill in. -->
         <form id="recipe-form">
 
           <!-- ----- Kind of recipe ----- -->
           <!-- <fieldset> groups related choices; <legend> is the group's title. -->
-          <fieldset class="field">
+          <!-- Hidden when editing: a recipe's kind is set when it's first saved. -->
+          <fieldset class="field" id="kind-field">
             <legend>Where is this recipe from?</legend>
             <!-- Radio buttons: you can pick only one. They share the same name="kind". -->
             <label class="choice">
@@ -209,7 +229,7 @@
             <legend>Tags</legend>
             <p class="hint">Tap any that fit. You can add your own tags in a later step.</p>
             <!-- Checkboxes: you can pick as many as you like. Styled as round "chips". -->
-            <div class="chips">
+            <div class="chips" id="tag-chips">
               <label class="chip"><input type="checkbox" name="tags" value="breakfast"><span>breakfast</span></label>
               <label class="chip"><input type="checkbox" name="tags" value="lunch"><span>lunch</span></label>
               <label class="chip"><input type="checkbox" name="tags" value="dinner"><span>dinner</span></label>
@@ -230,13 +250,13 @@
           <p class="message" id="form-message" hidden></p>
 
           <!-- type="submit" means "this button sends the form". -->
-          <button type="submit" class="button">Save recipe</button>
+          <button type="submit" class="button" id="save-button">Save recipe</button>
           <button type="button" class="button button-secondary" id="cancel-button">Cancel</button>
         </form>
       </section>
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=10"></script>
+    <script src="app.js?v=11"></script>
   </body>
 </html>
