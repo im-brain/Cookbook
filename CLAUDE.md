@@ -10,21 +10,23 @@ This is a personal cookbook website. The full plan and progress are in `PLAN.md`
 ## How we work
 
 1. Work on **one step from `PLAN.md` at a time**.
-2. Claude writes the code and explains what changed and why, in plain words.
-3. Claude checks the step in a simulated iPhone screen (Playwright, iPhone viewport) and sends the user a screenshot.
-4. Claude raises the **version number** (see Lessons learned) and opens a pull request that says which version to look for. The user taps **Merge** on GitHub.
-5. About a minute later the live site updates at **https://im-brain.github.io/Cookbook/**. The phone may keep an old copy for up to 10 minutes, so the user waits, fully closes the app (swipe it away) and reopens it from the icon, checks the version number at the bottom of the home screen, then tests.
-6. If something is broken, fix it before starting the next step.
+2. **Plan first.** Before changing any files in the repo or committing, Claude shows a short plan: what will change, which files (including which notes in `CLAUDE.md` / `PLAN.md`), and any choices made. Then Claude waits for the user's OK. Scratch work (test scripts, trying ideas in the scratchpad) doesn't need asking first.
+3. Claude writes the code and explains what changed and why, in plain words.
+4. Claude checks the step in a simulated iPhone screen (Playwright, iPhone viewport) and sends the user a screenshot.
+5. Claude raises the **version number** (see Lessons learned) and opens a pull request that says which version to look for. The user taps **Merge** on GitHub.
+6. About a minute later the live site updates at **https://im-brain.github.io/Cookbook/**. The phone may keep an old copy for up to 10 minutes, so the user waits, fully closes the app (swipe it away) and reopens it from the icon, checks the version number at the bottom of the home screen, then tests.
+7. If something is broken, fix it before starting the next step.
 
 ## Memory rule (important)
 
 New sessions start with no memory of earlier conversations, so this file and `PLAN.md` are the memory.
-At the end of every step, in the same pull request:
-- In `PLAN.md`: tick the step's checkbox and add a dated line to the **Progress log**.
-- In this file: add any new decision or lesson to **Key decisions** or **Lessons learned**.
+**Every pull request that changes anything** (not only numbered steps) also updates the notes, in the same pull request:
+- In `PLAN.md`: tick any finished checkbox, update **Current status**, and add a dated line to the **Progress log**.
+- In this file: add any new decision or lesson to **Key decisions** or **Lessons learned**, and keep the version-number list current.
 
 ## Key decisions (and why)
 
+- **Plan before doing (2026-10-31, user's request):** the user liked getting a plan before any work, so every change starts with a plan and waits for an OK (see "How we work", step 2).
 - **Plain HTML, CSS and JavaScript.** No framework, no build tools. Simplest to learn; edit a file, see the change.
 - **Recipes are stored on the phone (localStorage).** No account, database or cost. Online sync is a "maybe someday".
 - **Public repository + GitHub Pages.** Free Pages doesn't work for private repos. Only code is public; recipes never go in the repo.
