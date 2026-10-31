@@ -87,7 +87,7 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
   **Test it:** Share → Add to Home Screen. The icon opens it full screen. **From now on, always use the icon.**
 - [x] **Step 5 — Recipe form.** Title, ingredients and steps (one box each, with "+ Add ingredient" / "+ Add step"), servings, time, tags, notes, and "My own" / "From somewhere else" with a source box. Save does nothing yet.
   **Test it:** I can fill in every box comfortably on my phone.
-- [ ] **Step 6 — Save a recipe.** `app.js` stores it on the phone.
+- [x] **Step 6 — Save a recipe.** `app.js` stores it on the phone.
   **Test it:** Save one, close the app, reopen it: a message says "1 recipe saved".
 - [ ] **Step 7 — See my cookbook.** A list of titles; tapping one shows the full recipe with notes above the ingredients.
   **Test it:** Save two recipes; both appear and open correctly.
@@ -127,3 +127,4 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Step 5 done: "Add a recipe" opens a form with every field (kind + source, title, ingredients, steps, servings, time, tag chips, notes). Save shows a "step 6" message and stores nothing; Cancel goes home.
 - 2026-10-31 — Step 5 follow-up: ingredients and steps changed from one big text box to one box per item, with "+ Add" buttons, the keyboard's Next key, and × to remove. Steps are numbered and long ones wrap.
 - 2026-10-31 — Fix: the phone kept showing an old copy after merging (caching). Added version numbers to the file links and a "Version 7" label on the home screen. Every update raises the number.
+- 2026-10-31 — Step 6 done (Version 8): Save stores the recipe on the phone (localStorage key `cookbook.recipes`). Home shows "N recipes saved" and "✓ Saved …". Recipes from somewhere else keep an untouched `original` copy. If saved data can't be read, nothing is overwritten.
