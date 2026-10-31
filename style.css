@@ -142,8 +142,162 @@ li {
   opacity: 0.8;
 }
 
+/* A quieter button (outline only), used for things like Cancel. */
+.button-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  margin-top: 12px;
+}
+
 /* A greyed-out look for buttons that don't work yet. */
 .button:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* ---------- 6. Forms (the boxes you type in) ---------- */
+
+/* A bit of space between the form's heading and the first question. */
+#recipe-form-screen h1 {
+  margin-bottom: 20px;
+}
+
+/* One question on the form: its label, an optional hint, and the box. */
+.field {
+  margin: 0 0 20px;
+}
+
+/* <fieldset> normally draws a box around itself. We don't want that. */
+fieldset.field {
+  border: none;
+  padding: 0;
+  min-width: 0;
+}
+
+/* The name above each box, e.g. "Title".
+   ":not(.choice)" = every label except the big tappable choices, which have their own style below. */
+.field > label:not(.choice),
+.field > legend {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+/* Small helper text under a label, e.g. "One ingredient per line." */
+.hint {
+  color: var(--muted);
+  font-size: 16px;
+  margin: -2px 0 8px;
+}
+
+/* All typing boxes. "font: inherit" keeps text at 18px.
+   (Under 16px, iPhone zooms in when you tap the box, which is annoying.) */
+input[type="text"],
+input[type="number"],
+textarea {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+/* Let big boxes be made taller, but not wider. */
+textarea {
+  resize: vertical;
+}
+
+/* Placeholder text (the grey example inside an empty box). */
+::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* A clear colored outline around the box you're typing in. */
+input:focus,
+textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+/* Two boxes side by side (Servings and Time). */
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+.field-row > .field {
+  flex: 1;
+}
+
+/* ----- Big tappable choices ("My own recipe" / "From somewhere else") ----- */
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.choice input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--accent);   /* color the round dot in our tomato red */
+}
+/* Highlight the choice that's picked. ":has(...)" means "a choice that has a checked input inside". */
+.choice:has(input:checked) {
+  border-color: var(--accent);
+  outline: 1px solid var(--accent);
+}
+
+/* ----- Tag "chips": round pills you tap on and off ----- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;   /* move to the next line when there's no more room */
+  gap: 8px;
+}
+/* Hide the real checkbox square; the pill itself shows if it's on or off. */
+.chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.chip span {
+  display: inline-block;
+  min-height: 44px;
+  padding: 9px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;   /* very round ends = pill shape */
+  background: var(--card);
+}
+/* A ticked chip is filled with the accent color. */
+.chip input:checked + span {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+/* Show a ring when the chip is selected with a keyboard. */
+.chip input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A message box shown after tapping Save. */
+.message {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 0 0 16px;
 }
