@@ -104,6 +104,7 @@ form.addEventListener("submit", function (event) {
   showHomeMessage("✓ Saved “" + recipe.current.title + "”.");
   updateRecipeCount();
   renderRecipeList();
+  updateBackupReminder();
   showScreen(homeScreen);
 });
 
@@ -494,6 +495,312 @@ document.getElementById("back-button").addEventListener("click", function () {
   showScreen(homeScreen);
 });
 
-// When the app opens, show the count and the list straight away.
+// ======================================================================
+// ---------- Backup: Export and Import ----------
+// Export puts every recipe into one file. You save it in iCloud Drive, so the recipes
+// survive even if the phone is lost. Import reads that file back in.
+// ======================================================================
+
+// A second "drawer" in the storage box, remembering what the last backup contained.
+// Never rename it either, or the reminder would think you never backed up.
+const BACKUP_KEY = "cookbook.lastBackup";
+
+const backupReminder = document.getElementById("backup-reminder");
+const backupStatus = document.getElementById("backup-status");
+const backupMessage = document.getElementById("backup-message");
+const importFile = document.getElementById("import-file");
+
+// Turn a recipe into a short "fingerprint" (a number written as text).
+// If anything in the recipe changes, the fingerprint changes too. We keep only
+// fingerprints (not whole copies) of the backup, so it uses almost no storage.
+function fingerprint(recipe) {
+  const text = JSON.stringify(recipe);
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619) >>> 0;
+  }
+  return hash.toString(36);
+}
+
+// Remember "this is what the backup contains": the date and one fingerprint per recipe.
+function rememberBackup(recipes) {
+  const fingerprints = {};
+  recipes.forEach(function (recipe) {
+    fingerprints[recipe.id] = fingerprint(recipe);
+  });
+  try {
+    localStorage.setItem(BACKUP_KEY, JSON.stringify({ date: todayAsText(), fingerprints: fingerprints }));
+  } catch (error) {
+    // Not serious: the reminder will just say the recipes aren't backed up.
+  }
+}
+
+// Read what the last backup contained, or null if there has never been one.
+function loadLastBackup() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(BACKUP_KEY));
+    return saved && saved.fingerprints ? saved : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+// Count recipes that are new, edited or deleted since the last backup.
+function countChangesSinceBackup(recipes, lastBackup) {
+  let changes = 0;
+  const stillHere = {};
+  recipes.forEach(function (recipe) {
+    stillHere[recipe.id] = true;
+    if (lastBackup.fingerprints[recipe.id] !== fingerprint(recipe)) {
+      changes++; // new or edited
+    }
+  });
+  Object.keys(lastBackup.fingerprints).forEach(function (id) {
+    if (!stillHere[id]) {
+      changes++; // deleted
+    }
+  });
+  return changes;
+}
+
+// "1 recipe" / "3 recipes"
+function recipesWord(number) {
+  return number + (number === 1 ? " recipe" : " recipes");
+}
+
+// Show the warning ("N recipes changed since your last backup") or the quiet "all backed up" line.
+function updateBackupReminder() {
+  const recipes = loadRecipes();
+  const lastBackup = loadLastBackup();
+  backupReminder.hidden = true;
+  backupStatus.hidden = true;
+  if (recipes === null) {
+    return; // the top of the screen already says the recipes couldn't be read
+  }
+
+  if (lastBackup === null) {
+    if (recipes.length > 0) {
+      backupReminder.textContent = "You haven't made a backup yet. " +
+        recipesWord(recipes.length) + (recipes.length === 1 ? " isn't" : " aren't") + " backed up.";
+      backupReminder.hidden = false;
+    }
+    return;
+  }
+
+  const changes = countChangesSinceBackup(recipes, lastBackup);
+  if (changes > 0) {
+    backupReminder.textContent = recipesWord(changes) + " changed since your last backup (" + lastBackup.date + ").";
+    backupReminder.hidden = false;
+  } else {
+    backupStatus.textContent = "✓ All recipes backed up (last backup " + lastBackup.date + ").";
+    backupStatus.hidden = false;
+  }
+}
+
+function showBackupMessage(text) {
+  backupMessage.textContent = text;
+  backupMessage.hidden = false;
+}
+
+// ----- Export -----
+document.getElementById("export-button").addEventListener("click", function () {
+  homeMessage.hidden = true;
+  backupMessage.hidden = true;
+
+  const recipes = loadRecipes();
+  if (recipes === null) {
+    showBackupMessage("Sorry, your saved recipes couldn't be read, so there's nothing to export. Please tell Claude.");
+    return;
+  }
+  if (recipes.length === 0) {
+    showBackupMessage("There are no recipes to back up yet.");
+    return;
+  }
+
+  // The file's contents: a label saying what it is, the date, and every recipe.
+  const backup = {
+    app: "my-cookbook",
+    formatVersion: 1,
+    exportedAt: todayAsText(),
+    recipes: recipes
+  };
+  const fileName = "cookbook-backup-" + todayAsText() + ".json";
+  const file = new File([JSON.stringify(backup, null, 2)], fileName, { type: "application/json" });
+
+  // On iPhone, open the Share menu with the file, so you can tap "Save to Files".
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file] })
+      .then(function () {
+        // You finished sharing (e.g. saved it to Files): count this as a backup.
+        rememberBackup(recipes);
+        updateBackupReminder();
+        showBackupMessage("✓ Backup of " + recipesWord(recipes.length) + " made. Check it's in iCloud Drive (Files app).");
+      })
+      .catch(function (error) {
+        if (error.name === "AbortError") {
+          showBackupMessage("Backup cancelled. Nothing was saved.");
+        } else {
+          showBackupMessage("Sorry, the backup file couldn't be shared. Please tell Claude.");
+        }
+      });
+    return;
+  }
+
+  // Other browsers (e.g. a computer): download the file instead.
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(file);
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(function () { URL.revokeObjectURL(link.href); }, 10000);
+  rememberBackup(recipes);
+  updateBackupReminder();
+  showBackupMessage("✓ Backup file of " + recipesWord(recipes.length) + " downloaded.");
+});
+
+// ----- Import -----
+
+// The Import button opens the phone's file picker (the hidden file box).
+document.getElementById("import-button").addEventListener("click", function () {
+  homeMessage.hidden = true;
+  backupMessage.hidden = true;
+  importFile.value = ""; // so picking the same file twice still works
+  importFile.click();
+});
+
+// Check one recipe from a file has the parts we need, and fill in anything missing.
+// Returns the tidied recipe, or null if it's not usable.
+function cleanImportedRecipe(recipe) {
+  if (!recipe || typeof recipe.id !== "string" || !recipe.current ||
+      typeof recipe.current.title !== "string" || recipe.current.title.trim() === "") {
+    return null;
+  }
+  const c = recipe.current;
+  function textList(value) {
+    return Array.isArray(value) ? value.filter(function (x) { return typeof x === "string"; }) : [];
+  }
+  function cleanPart(part) {
+    return {
+      title: String(part.title || ""),
+      ingredients: textList(part.ingredients),
+      steps: textList(part.steps),
+      servings: typeof part.servings === "number" ? part.servings : null,
+      timeMinutes: typeof part.timeMinutes === "number" ? part.timeMinutes : null,
+      tags: textList(part.tags)
+    };
+  }
+  return {
+    id: recipe.id,
+    kind: recipe.kind === "elsewhere" ? "elsewhere" : "mine",
+    source: typeof recipe.source === "string" ? recipe.source : "",
+    current: cleanPart(c),
+    original: recipe.original ? cleanPart(recipe.original) : null,
+    notes: typeof recipe.notes === "string" ? recipe.notes : "",
+    createdAt: typeof recipe.createdAt === "string" ? recipe.createdAt : todayAsText(),
+    updatedAt: typeof recipe.updatedAt === "string" ? recipe.updatedAt : todayAsText()
+  };
+}
+
+// When a file is picked, read it and merge its recipes in.
+importFile.addEventListener("change", function () {
+  const picked = importFile.files[0];
+  if (!picked) {
+    return; // you closed the picker without choosing
+  }
+  picked.text().then(function (text) {
+    importBackupText(text);
+  }).catch(function () {
+    showBackupMessage("Sorry, that file couldn't be opened.");
+  });
+});
+
+// Merge the recipes in a backup file into the ones on the phone.
+// Rule: nothing on the phone is ever deleted. Recipes missing from the phone are added back.
+// If a recipe is in both, the one changed more recently is kept (if it's a tie, the phone's copy stays).
+function importBackupText(text) {
+  const onPhone = loadRecipes();
+  if (onPhone === null) {
+    showBackupMessage("Sorry, your saved recipes couldn't be read, so nothing was changed. Please tell Claude.");
+    return;
+  }
+
+  // Read the file. It should be a cookbook backup (or, just in case, a plain list of recipes).
+  let fileRecipes;
+  try {
+    const data = JSON.parse(text);
+    fileRecipes = Array.isArray(data) ? data : (data && data.app === "my-cookbook" ? data.recipes : null);
+  } catch (error) {
+    fileRecipes = null;
+  }
+  if (!Array.isArray(fileRecipes)) {
+    showBackupMessage("That file isn't a cookbook backup. Nothing was changed.");
+    return;
+  }
+
+  const cleaned = fileRecipes.map(cleanImportedRecipe).filter(function (r) { return r !== null; });
+  const skipped = fileRecipes.length - cleaned.length;
+  if (cleaned.length === 0) {
+    showBackupMessage("No usable recipes were found in that file. Nothing was changed.");
+    return;
+  }
+
+  // Work out what would happen, before changing anything.
+  const merged = onPhone.slice();
+  let added = 0;
+  let updated = 0;
+  let same = 0;
+  cleaned.forEach(function (fromFile) {
+    const index = merged.findIndex(function (r) { return r.id === fromFile.id; });
+    if (index === -1) {
+      merged.push(fromFile);
+      added++;
+    } else if (fingerprint(merged[index]) === fingerprint(fromFile)) {
+      same++;
+    } else if (fromFile.updatedAt > merged[index].updatedAt) {
+      merged[index] = fromFile; // the file's copy is newer
+      updated++;
+    } else {
+      same++; // the phone's copy is newer (or same day): keep it
+    }
+  });
+
+  if (added === 0 && updated === 0) {
+    rememberBackup(cleaned); // the file is a backup of these recipes
+    updateBackupReminder();
+    showBackupMessage("Everything in that backup is already on your phone. Nothing to add.");
+    return;
+  }
+
+  // Ask first.
+  let question = "This backup has " + recipesWord(cleaned.length) + ".\n";
+  if (added) question += "• " + recipesWord(added) + " will be added.\n";
+  if (updated) question += "• " + recipesWord(updated) + " will be replaced by the newer copy in the file.\n";
+  if (same) question += "• " + recipesWord(same) + " already on your phone " + (same === 1 ? "stays as it is" : "stay as they are") + ".\n";
+  question += "Nothing on your phone will be deleted. Go ahead?";
+  if (!window.confirm(question)) {
+    showBackupMessage("Import cancelled. Nothing was changed.");
+    return;
+  }
+
+  if (!storeRecipes(merged)) {
+    showBackupMessage("Sorry, the recipes couldn't be saved. The phone's storage for the cookbook may be full. Nothing was changed.");
+    return;
+  }
+  rememberBackup(cleaned); // the file is a backup of these recipes
+
+  let done = "✓ Imported: " + recipesWord(added) + " added";
+  if (updated) done += ", " + updated + " replaced";
+  done += ".";
+  if (skipped) done += " " + recipesWord(skipped) + " in the file couldn't be read and were skipped.";
+  showBackupMessage(done);
+  updateRecipeCount();
+  renderRecipeList();
+  updateBackupReminder();
+}
+
+// When the app opens, show the count, the list and the backup reminder straight away.
 updateRecipeCount();
 renderRecipeList();
+updateBackupReminder();
