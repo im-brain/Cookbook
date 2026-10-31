@@ -634,3 +634,100 @@ textarea:focus {
 .pick-card .chips {
   margin-bottom: 16px;
 }
+
+/* ---------- 15. Cooking screen (step 13) ---------- */
+
+/* "Start cooking" on the recipe page: the main button, right under the tags. */
+.start-cooking {
+  margin-top: 16px;
+}
+
+/* Bigger text, so you can read it from the counter. */
+.cooking {
+  font-size: 22px;
+}
+
+.cooking .hint {
+  margin-top: -4px;
+}
+
+.cooking .recipe-section .cook-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: cook-step;   /* for numbering the steps ourselves */
+}
+
+.cooking .recipe-section li {
+  margin: 0 0 10px;
+  padding: 0;
+}
+
+/* Each ingredient or step is one big tappable box. */
+.cook-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;    /* very long words wrap instead of running off the screen */
+}
+
+/* A round tick box in front of each item. */
+.cook-item::before {
+  content: "";
+  flex: none;
+  width: 26px;
+  height: 26px;
+  margin-top: 3px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+}
+
+/* Steps show their number in the circle instead. */
+.cook-list.numbered li {
+  counter-increment: cook-step;
+}
+.cook-list.numbered .cook-item::before {
+  content: counter(cook-step);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* Ticked off: a filled tick, faded and crossed out. */
+.cook-list li.done .cook-item {
+  opacity: 0.55;
+}
+.cook-list li.done .cook-text {
+  text-decoration: line-through;
+}
+.cook-list li.done .cook-item::before {
+  content: "✓";
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
+
+/* Cooking times in steps ("20 minutes"), easy to spot. */
+.cook-time {
+  color: var(--accent);
+}
+
+.cook-done {
+  margin-top: 24px;
+}

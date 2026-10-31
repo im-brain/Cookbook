@@ -30,12 +30,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- ===== VERSION NUMBER =====
-         Phones keep saved copies of style.css and app.js for a while. Adding "?v=14" makes them look like
+         Phones keep saved copies of style.css and app.js for a while. Adding "?v=15" makes them look like
          new files, so the phone downloads fresh ones. Every update raises this number in THREE places:
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=14">
+    <link rel="stylesheet" href="style.css?v=15">
   </head>
 
   <body>
@@ -131,7 +131,7 @@
         </div>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 14</p>
+        <p class="version">Version 15</p>
       </section>
 
       <!-- ===================== RECIPE PAGE SCREEN ===================== -->
@@ -151,6 +151,9 @@
         <p class="details" id="view-source"></p>
         <!-- Tag pills, e.g. dinner, vegetarian -->
         <div class="tags" id="view-tags"></div>
+
+        <!-- Opens the cooking screen (hidden while you look at the original). -->
+        <button type="button" class="button start-cooking" id="start-cooking-button">🍳 Start cooking</button>
 
         <!-- Notes come first, so you see them before you start cooking. -->
         <div class="notes-box" id="view-notes-box">
@@ -180,6 +183,33 @@
           <!-- Always: -->
           <button type="button" class="button button-secondary button-danger" id="delete-button">Delete recipe</button>
         </div>
+      </section>
+
+      <!-- ===================== COOKING SCREEN ===================== -->
+      <!-- Opened by "Start cooking". Big text; tap an ingredient or step to tick it off.
+           The ticks are forgotten when you tap "Done cooking". -->
+      <section id="cooking-screen" class="cooking" hidden>
+        <button type="button" class="back-button" id="done-cooking-top">‹ Done cooking</button>
+
+        <h1 id="cook-title"></h1>
+        <p class="hint">Tap an item to tick it off. The screen stays on while you cook.</p>
+
+        <div class="notes-box" id="cook-notes-box">
+          <h2>Notes</h2>
+          <p id="cook-notes"></p>
+        </div>
+
+        <div class="recipe-section" id="cook-ingredients-section">
+          <h2>Ingredients</h2>
+          <ul class="cook-list" id="cook-ingredients"></ul>
+        </div>
+
+        <div class="recipe-section" id="cook-steps-section">
+          <h2>Steps</h2>
+          <ol class="cook-list numbered" id="cook-steps"></ol>
+        </div>
+
+        <button type="button" class="button cook-done" id="done-cooking-bottom">Done cooking</button>
       </section>
 
       <!-- ===================== RECIPE FORM SCREEN ===================== -->
@@ -288,6 +318,6 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=14"></script>
+    <script src="app.js?v=15"></script>
   </body>
 </html>
