@@ -83,7 +83,7 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
   **Test it:** Open `im-brain.github.io/Cookbook` on my iPhone and see "My Cookbook".
 - [x] **Step 3 — Phone-friendly look.** `style.css`: readable text, big buttons, fits the screen.
   **Test it:** Nothing is tiny; no sideways scrolling.
-- [ ] **Step 4 — Add to Home Screen.** Icon + manifest so it installs like an app.
+- [x] **Step 4 — Add to Home Screen.** Icon + manifest so it installs like an app.
   **Test it:** Share → Add to Home Screen. The icon opens it full screen. **From now on, always use the icon.**
 - [ ] **Step 5 — Recipe form.** Title, ingredients (one per line), steps (one per line), servings, time, tags, notes, and "My own" / "From somewhere else" with a source box. Save does nothing yet.
   **Test it:** I can fill in every box comfortably on my phone.
@@ -123,3 +123,4 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Step 1 done: `index.html` with the title "My Cookbook". Checked on a simulated iPhone screen.
 - 2026-10-31 — Step 2 done: repo made public, GitHub Pages turned on (main branch, root). Site is live at https://im-brain.github.io/Cookbook/.
 - 2026-10-31 — Step 3 done: `style.css` added (warm colors, iPhone font, 18px text, 48px-tall buttons, automatic Dark Mode, notch-safe edges). Checked in light and dark mode: no sideways scrolling.
+- 2026-10-31 — Step 4 done: app icon (`icons/`), `manifest.json`, iPhone Home Screen settings, and `app.js` started. In a Safari tab the page shows "Add me to your Home Screen" instructions; from the icon it shows "✓ Opened from your Home Screen".

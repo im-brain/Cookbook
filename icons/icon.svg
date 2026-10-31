@@ -1,0 +1,18 @@
+<!-- The cookbook's app icon: an open book on a tomato-red background.
+     iPhone rounds the corners itself, so the square fills the whole space. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#c0502d"/>
+  <!-- left page -->
+  <path d="M256 150 C 210 120, 150 115, 96 128 L 96 372 C 150 359, 210 364, 256 394 Z" fill="#fbf7f2"/>
+  <!-- right page -->
+  <path d="M256 150 C 302 120, 362 115, 416 128 L 416 372 C 362 359, 302 364, 256 394 Z" fill="#f3e9dd"/>
+  <!-- lines of text on the pages -->
+  <g stroke="#c0502d" stroke-width="12" stroke-linecap="round" opacity="0.55">
+    <line x1="136" y1="185" x2="216" y2="195"/>
+    <line x1="136" y1="225" x2="216" y2="235"/>
+    <line x1="136" y1="265" x2="196" y2="273"/>
+    <line x1="296" y1="195" x2="376" y2="185"/>
+    <line x1="296" y1="235" x2="376" y2="225"/>
+    <line x1="296" y1="275" x2="356" y2="267"/>
+  </g>
+</svg>

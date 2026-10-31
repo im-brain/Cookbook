@@ -46,4 +46,7 @@ At the end of every step, in the same pull request:
 - After a PR is merged, restart the working branch from `main` before the next step.
 - Styling conventions (`style.css`): colors are variables in `:root` with a Dark Mode version; use the classes `.card`, `.button` and `.subtitle`; tap targets are at least 48px tall.
 - For step 5: form inputs must use a font size of at least 16px, or iPhone Safari zooms in when you tap them. The page uses 18px, so `font: inherit` on inputs is enough.
+- The app icon's source is `icons/icon.svg`. PNGs (180, 192, 512) are made from it with a Playwright screenshot script in the scratchpad. Re-run that script if the SVG changes.
+- `app.js` checks `navigator.standalone` (iPhone) or `display-mode: standalone` to tell the Home Screen app from a Safari tab. In tests, fake it with `addInitScript` defining `navigator.standalone = true`.
+- iPhone keeps the icon and name from the moment it's added, so later icon changes won't show unless it's re-added. **Deleting the Home Screen icon also deletes the recipes saved in it.** Never tell the user to delete or re-add the icon without exporting a backup first (step 8).
 - Screenshot both light and dark mode (Playwright `colorScheme`), and check that `scrollWidth` equals the window width, which means no sideways scrolling.
