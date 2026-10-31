@@ -126,3 +126,4 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Step 4 done: app icon (`icons/`), `manifest.json`, iPhone Home Screen settings, and `app.js` started. In a Safari tab the page shows "Add me to your Home Screen" instructions; from the icon it shows "✓ Opened from your Home Screen".
 - 2026-10-31 — Step 5 done: "Add a recipe" opens a form with every field (kind + source, title, ingredients, steps, servings, time, tag chips, notes). Save shows a "step 6" message and stores nothing; Cancel goes home.
 - 2026-10-31 — Step 5 follow-up: ingredients and steps changed from one big text box to one box per item, with "+ Add" buttons, the keyboard's Next key, and × to remove. Steps are numbered and long ones wrap.
+- 2026-10-31 — Fix: the phone kept showing an old copy after merging (caching). Added version numbers to the file links and a "Version 7" label on the home screen. Every update raises the number.

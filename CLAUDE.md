@@ -12,8 +12,8 @@ This is a personal cookbook website. The full plan and progress are in `PLAN.md`
 1. Work on **one step from `PLAN.md` at a time**.
 2. Claude writes the code and explains what changed and why, in plain words.
 3. Claude checks the step in a simulated iPhone screen (Playwright, iPhone viewport) and sends the user a screenshot.
-4. Claude opens a pull request. The user taps **Merge** on GitHub.
-5. About a minute later the live site updates at **https://im-brain.github.io/Cookbook/**, and the user tests it on their phone.
+4. Claude raises the **version number** (see Lessons learned) and opens a pull request that says which version to look for. The user taps **Merge** on GitHub.
+5. About a minute later the live site updates at **https://im-brain.github.io/Cookbook/**. The phone may keep an old copy for up to 10 minutes, so the user waits, fully closes the app (swipe it away) and reopens it from the icon, checks the version number at the bottom of the home screen, then tests.
 6. If something is broken, fix it before starting the next step.
 
 ## Memory rule (important)
@@ -56,3 +56,4 @@ At the end of every step, in the same pull request:
 - CSS gotcha: `.field > label` also matched the `.choice` labels and broke their layout. It's now `.field > label:not(.choice)`. Watch for broad selectors overriding specific ones.
 - Form field names (`kind`, `source`, `title`, `servings`, `time`, `tags`, `notes`) are what step 6 reads when saving. Ingredients and steps are lists: read them with `readList(ingredientsList)` / `readList(stepsList)` in `app.js` (empty boxes are skipped). To fill a list when editing (step 9), use `resetList` + `addRow`.
 - Testing gotcha: Playwright's `text=+ Add ingredient` matched the hint text before the button. Target buttons by selector (e.g. `button.add-row[data-list=...]`).
+- **Caching / version number (do this in every PR that changes the site):** GitHub Pages lets phones reuse saved copies of files for up to 10 minutes, and a Home Screen app has no refresh button. The phone can even mix a new `index.html` with an old `app.js`. Fix: raise the version number in **three places in `index.html`**: `style.css?v=N`, `app.js?v=N`, and the `<p class="version">Version N</p>` line on the home screen. Version 7 was the first (2026-10-31). Tell the user which number to look for.
