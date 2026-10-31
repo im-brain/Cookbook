@@ -5,9 +5,10 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 
 ## Current status (2026-10-31)
 
-- **Version 1 is complete: steps 1–12 done.** The live site is at **Version 14**. Steps 7–11 are confirmed on the phone. Step 12 ("What should I cook?") is merged but **not yet confirmed on the phone**; check that first.
+- **Version 1 is complete and confirmed on the phone** (steps 1–12, Version 14).
+- **Now building "Cooking mode"** (steps 13–15 below), planned in a grill-me interview. **Step 13 (cooking screen) is done as Version 15**, waiting for merge and a phone test. Next: step 14 (scaling, Version 16), then step 15 (converter, Version 17). Each step gets its own plan, OK and pull request.
 - **Working rule:** Claude shows a plan and waits for the user's OK before changing or committing anything (see `CLAUDE.md`).
-- **Next:** the user uses the cookbook for real for a while. Then **plan together** the first **Later** item: save from a web link + smart paste (needs a small free Cloudflare Worker; secret keys live there, never in the repo). The next site version will be 15.
+- After cooking mode: **plan together** save from a web link + smart paste (needs a small free Cloudflare Worker; secret keys live there, never in the repo).
 - Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first.
 
 ## What "done" means (version 1)
@@ -111,6 +112,17 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 
 **→ Version 1 is done here.**
 
+## Cooking mode — steps 13–15
+
+Decided in a grill-me interview (2026-10-31). Details in `CLAUDE.md` → Key decisions.
+
+- [x] **Step 13 — Cooking screen (Version 15).** "🍳 Start cooking" under the title opens a big-text screen: notes, ingredients and steps you tap to tick off (forgotten when you tap Done cooking). Times in steps ("20 minutes") are bold, for Siri or the Clock app. The screen stays awake while cooking. No timer in the cookbook (user's choice).
+  **Test it:** Start cooking a recipe: tick a few things off, put the phone down for a few minutes (the screen should stay on), tap Done cooking, then Start cooking again: no ticks.
+- [ ] **Step 14 — Scale the recipe (Version 16).** − / + servings (when the recipe has a servings number) and ½×, 1×, 2×, 3× buttons on the cooking screen. Amounts shown as kitchen fractions (1½, ⅓) and highlighted. Only for this cooking session; the saved recipe doesn't change. Lines without a number stay as they are.
+  **Test it:** A "serves 4" recipe at 6 servings: "2 cups stock" shows "3 cups stock"; "salt to taste" unchanged; reopen the recipe: original amounts.
+- [ ] **Step 15 — Converter (Version 17).** "⚖️ Convert" box on the cooking screen. US measures (cup 240 ml). Volumes (cups, tbsp, tsp, fl oz, ml, l), weights (oz, lb, g, kg), °F ↔ °C, and cups ↔ grams for flour, white/brown/powdered sugar, butter, rice, rolled oats, cocoa, milk/water, honey, oil, grated cheese.
+  **Test it:** 1 cup flour → about 120 g; 350 °F → about 175 °C; 1 lb → about 454 g.
+
 ## Later — in this order
 
 1. **Save from a web link + smart paste.** Paste a recipe URL (or a whole recipe's text) and the form fills itself in. Needs a small free helper (Cloudflare Worker) because browsers block one site from reading another.
@@ -149,3 +161,5 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Step 12 done (Version 14): a "🎲 What should I cook?" button under "+ Add a recipe" opens a box with a random recipe (tap it to open), **Pick another**, and "Pick from" chips (any, or one tag used on your recipes). Never the same recipe twice in a row. Friendly messages for an empty cookbook or a tag with only one recipe. **Version 1 is complete.**
 - 2026-10-31 — Step 12 merged. Working rule added at the user's request: Claude shows a plan and waits for an OK before changing or committing anything, and `CLAUDE.md` / `PLAN.md` are updated in every pull request. (Notes only, so no version bump; the site stays at Version 14.)
 - 2026-10-31 — Handoff to a new conversation. "Current status" updated. (PLAN.md only, so no version bump.)
+- 2026-10-31 — Step 12 confirmed on the user's phone. Planned "Cooking mode" in a grill-me interview: a cooking screen (step 13), scaling (step 14), a converter (step 15). No timer in the cookbook: the user uses Siri / Clock, and times in steps are shown in bold. Cooking mode comes before link import.
+- 2026-10-31 — Step 13 done (Version 15): "🍳 Start cooking" on the recipe page (hidden while viewing the original) opens the cooking screen: bigger text, notes, ingredients and numbered steps as big tap-to-tick boxes, bold times, Done cooking at the top and bottom. The screen stays awake while cooking (Wake Lock; older iPhones just dim).

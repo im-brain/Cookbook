@@ -32,6 +32,7 @@ if (openedFromHomeScreen) {
 const homeScreen = document.getElementById("home-screen");
 const formScreen = document.getElementById("recipe-form-screen");
 const viewScreen = document.getElementById("recipe-view-screen");
+const cookingScreen = document.getElementById("cooking-screen");
 
 // A "function" is a named set of instructions we can reuse.
 // This one shows the screen you give it and hides the rest.
@@ -39,6 +40,7 @@ function showScreen(screenToShow) {
   homeScreen.hidden = screenToShow !== homeScreen;
   formScreen.hidden = screenToShow !== formScreen;
   viewScreen.hidden = screenToShow !== viewScreen;
+  cookingScreen.hidden = screenToShow !== cookingScreen;
   window.scrollTo(0, 0); // jump back to the top of the page
 }
 
@@ -686,6 +688,7 @@ function showRecipe(id, original) {
   document.getElementById("reset-button").hidden = !showingOriginal || !changed;
   document.getElementById("unchanged-note").hidden = !showingOriginal || changed;
   document.getElementById("delete-button").hidden = showingOriginal;
+  document.getElementById("start-cooking-button").hidden = showingOriginal;
 
   showScreen(viewScreen);
 }
@@ -835,6 +838,119 @@ document.getElementById("back-button").addEventListener("click", function () {
   homeMessage.hidden = true;
   showScreen(homeScreen);
 });
+
+// ======================================================================
+// ---------- Cooking screen (step 13) ----------
+// ======================================================================
+
+// Finds cooking times in a step, e.g. "20 minutes", "1 1/2 hours", "10-15 min", "30 secs".
+// (No "look-behind" in this pattern on purpose: older iPhones don't understand it,
+// and one pattern they can't read would stop the whole app from working.)
+const NUMBER = "(?:\\d+(?:[.,]\\d+)?(?:\\s+\\d+\\/\\d+)?|\\d+\\/\\d+|[½¼¾⅓⅔])";
+const TIME_PATTERN = new RegExp(
+  NUMBER + "(?:\\s*(?:-|–|—|to)\\s*" + NUMBER + ")?" +
+  "\\s*-?\\s*(?:seconds?|secs?|minutes?|mins?|hours?|hrs?)\\b",
+  "gi"
+);
+
+// Put a step's text into "element", with every cooking time in bold.
+// Only textContent and real elements are used, so odd characters can't break the page.
+function appendWithBoldTimes(element, text) {
+  let last = 0;
+  TIME_PATTERN.lastIndex = 0;
+  let match;
+  while ((match = TIME_PATTERN.exec(text)) !== null) {
+    element.append(text.slice(last, match.index));
+    const strong = document.createElement("strong");
+    strong.className = "cook-time";
+    strong.textContent = match[0];
+    element.append(strong);
+    last = match.index + match[0].length;
+  }
+  element.append(text.slice(last));
+}
+
+// Fill a cooking list: one big tappable item per line. Tapping ticks it off (or back on).
+function fillCookList(listElement, items, boldTimes) {
+  listElement.innerHTML = "";
+  items.forEach(function (text) {
+    const item = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "cook-item";
+    button.setAttribute("aria-pressed", "false"); // tells screen readers "not ticked"
+    const words = document.createElement("span"); // keeps the text together, next to the tick circle
+    words.className = "cook-text";
+    if (boldTimes) {
+      appendWithBoldTimes(words, text);
+    } else {
+      words.textContent = text;
+    }
+    button.append(words);
+    button.addEventListener("click", function () {
+      const done = item.classList.toggle("done");
+      button.setAttribute("aria-pressed", done ? "true" : "false");
+    });
+    item.append(button);
+    listElement.append(item);
+  });
+}
+
+// ----- Keep the screen awake while cooking -----
+// "Wake Lock" asks the phone not to dim or lock. Older iPhones don't have it; then nothing happens.
+let wakeLock = null;
+
+async function keepAwake() {
+  if (!("wakeLock" in navigator) || wakeLock !== null) {
+    return;
+  }
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", function () { wakeLock = null; });
+  } catch (error) {
+    wakeLock = null; // e.g. Low Power Mode: the screen just dims as usual
+  }
+}
+
+function letSleep() {
+  if (wakeLock !== null) {
+    wakeLock.release().catch(function () {});
+    wakeLock = null;
+  }
+}
+
+// The phone drops the wake lock when you switch apps. Ask again when you come back to cooking.
+document.addEventListener("visibilitychange", function () {
+  if (document.visibilityState === "visible" && !cookingScreen.hidden) {
+    keepAwake();
+  }
+});
+
+// "Start cooking" → open the cooking screen with my version of the recipe. Ticks start empty.
+document.getElementById("start-cooking-button").addEventListener("click", function () {
+  const recipe = (loadRecipes() || []).find(function (r) { return r.id === shownRecipeId; });
+  if (!recipe) {
+    return;
+  }
+  const c = recipe.current;
+  document.getElementById("cook-title").textContent = c.title;
+  document.getElementById("cook-notes").textContent = recipe.notes;
+  document.getElementById("cook-notes-box").hidden = !recipe.notes;
+  fillCookList(document.getElementById("cook-ingredients"), c.ingredients, false);
+  document.getElementById("cook-ingredients-section").hidden = c.ingredients.length === 0;
+  fillCookList(document.getElementById("cook-steps"), c.steps, true);
+  document.getElementById("cook-steps-section").hidden = c.steps.length === 0;
+  showScreen(cookingScreen);
+  keepAwake();
+});
+
+// "Done cooking" (top or bottom) → back to the recipe page; the screen may sleep again.
+function doneCooking() {
+  letSleep();
+  showRecipe(shownRecipeId, false);
+}
+document.getElementById("done-cooking-top").addEventListener("click", doneCooking);
+document.getElementById("done-cooking-bottom").addEventListener("click", doneCooking);
 
 // ======================================================================
 // ---------- Backup: Export and Import ----------
