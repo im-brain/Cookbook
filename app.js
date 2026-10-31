@@ -27,16 +27,18 @@ if (openedFromHomeScreen) {
 }
 
 // ---------- Switching screens ----------
-// The app has "screens" (home, recipe form). We show one and hide the others.
+// The app has "screens" (home, recipe page, recipe form). We show one and hide the others.
 
 const homeScreen = document.getElementById("home-screen");
 const formScreen = document.getElementById("recipe-form-screen");
+const viewScreen = document.getElementById("recipe-view-screen");
 
 // A "function" is a named set of instructions we can reuse.
 // This one shows the screen you give it and hides the rest.
 function showScreen(screenToShow) {
   homeScreen.hidden = screenToShow !== homeScreen;
   formScreen.hidden = screenToShow !== formScreen;
+  viewScreen.hidden = screenToShow !== viewScreen;
   window.scrollTo(0, 0); // jump back to the top of the page
 }
 
@@ -101,6 +103,7 @@ form.addEventListener("submit", function (event) {
   // Saved! Go home and say so.
   showHomeMessage("✓ Saved “" + recipe.current.title + "”.");
   updateRecipeCount();
+  renderRecipeList();
   showScreen(homeScreen);
 });
 
@@ -333,5 +336,164 @@ function updateRecipeCount() {
   }
 }
 
-// When the app opens, show the count straight away.
+// ======================================================================
+// ---------- The list of recipes (home screen) ----------
+// ======================================================================
+
+const recipeList = document.getElementById("recipe-list");
+const emptyNote = document.getElementById("empty-note");
+
+// Turn minutes into friendly text: 30 → "30 min", 75 → "1 hr 15 min".
+function describeTime(minutes) {
+  if (!minutes) {
+    return "";
+  }
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) {
+    return rest + " min";
+  }
+  return hours + " hr" + (rest ? " " + rest + " min" : "");
+}
+
+// Build a short details line like "30 min · Serves 4 · dinner, quick". Empty parts are left out.
+function describeRecipe(recipe, includeTags) {
+  const parts = [];
+  if (recipe.current.timeMinutes) {
+    parts.push(describeTime(recipe.current.timeMinutes));
+  }
+  if (recipe.current.servings) {
+    parts.push("Serves " + recipe.current.servings);
+  }
+  if (includeTags && recipe.current.tags.length > 0) {
+    parts.push(recipe.current.tags.join(", "));
+  }
+  return parts.join(" · ");
+}
+
+// Fill the home screen list with every saved recipe, A to Z.
+// Note: we only ever set "textContent" (plain text), never raw HTML,
+// so unusual characters in a recipe can't break the page.
+function renderRecipeList() {
+  recipeList.innerHTML = ""; // start from an empty list
+  const recipes = loadRecipes();
+  if (recipes === null) {
+    emptyNote.hidden = true; // the count line at the top already says they couldn't be read
+    return;
+  }
+  emptyNote.hidden = recipes.length > 0;
+
+  // Sort A to Z by title, ignoring upper/lower case.
+  const sorted = recipes.slice().sort(function (a, b) {
+    return a.current.title.localeCompare(b.current.title, undefined, { sensitivity: "base" });
+  });
+
+  sorted.forEach(function (recipe) {
+    const row = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "recipe-row";
+
+    const title = document.createElement("span");
+    title.className = "recipe-row-title";
+    title.textContent = recipe.current.title;
+    button.append(title);
+
+    const detailsText = describeRecipe(recipe, true);
+    if (detailsText) {
+      const details = document.createElement("span");
+      details.className = "recipe-row-details";
+      details.textContent = detailsText;
+      button.append(details);
+    }
+
+    // Tapping the row opens that recipe.
+    button.addEventListener("click", function () {
+      showRecipe(recipe.id);
+    });
+
+    row.append(button);
+    recipeList.append(row);
+  });
+}
+
+// ======================================================================
+// ---------- One recipe's page ----------
+// ======================================================================
+
+// Fill a list (<ul> or <ol>) with one item per line of text.
+function fillList(listElement, items) {
+  listElement.innerHTML = "";
+  items.forEach(function (text) {
+    const item = document.createElement("li");
+    item.textContent = text;
+    listElement.append(item);
+  });
+}
+
+// Open the page for the recipe with this id.
+function showRecipe(id) {
+  const recipes = loadRecipes() || [];
+  const recipe = recipes.find(function (r) { return r.id === id; });
+  if (!recipe) {
+    return; // shouldn't happen, but don't crash if it does
+  }
+  const current = recipe.current;
+
+  document.getElementById("view-title").textContent = current.title;
+
+  const details = document.getElementById("view-details");
+  details.textContent = describeRecipe(recipe, false);
+  details.hidden = details.textContent === "";
+
+  // Source: "From: ..." If it's a web link, make it tappable (opens in Safari).
+  const source = document.getElementById("view-source");
+  source.innerHTML = "";
+  source.hidden = !(recipe.kind === "elsewhere" && recipe.source);
+  if (!source.hidden) {
+    source.append("From: ");
+    if (/^https?:\/\//i.test(recipe.source)) {
+      const link = document.createElement("a");
+      link.href = recipe.source;
+      link.textContent = recipe.source;
+      link.target = "_blank";       // open in Safari, not inside the app
+      link.rel = "noopener";
+      source.append(link);
+    } else {
+      source.append(recipe.source);
+    }
+  }
+
+  // Tags as pills.
+  const tags = document.getElementById("view-tags");
+  tags.innerHTML = "";
+  current.tags.forEach(function (tag) {
+    const pill = document.createElement("span");
+    pill.className = "tag";
+    pill.textContent = tag;
+    tags.append(pill);
+  });
+  tags.hidden = current.tags.length === 0;
+
+  // Notes (only if there are any).
+  document.getElementById("view-notes").textContent = recipe.notes;
+  document.getElementById("view-notes-box").hidden = !recipe.notes;
+
+  // Ingredients and steps (each section hidden if empty).
+  fillList(document.getElementById("view-ingredients"), current.ingredients);
+  document.getElementById("view-ingredients-section").hidden = current.ingredients.length === 0;
+  fillList(document.getElementById("view-steps"), current.steps);
+  document.getElementById("view-steps-section").hidden = current.steps.length === 0;
+
+  showScreen(viewScreen);
+}
+
+// "‹ My Cookbook" button → back to the list.
+document.getElementById("back-button").addEventListener("click", function () {
+  homeMessage.hidden = true;
+  showScreen(homeScreen);
+});
+
+// When the app opens, show the count and the list straight away.
 updateRecipeCount();
+renderRecipeList();
