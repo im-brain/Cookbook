@@ -30,12 +30,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- ===== VERSION NUMBER =====
-         Phones keep saved copies of style.css and app.js for a while. Adding "?v=12" makes them look like
+         Phones keep saved copies of style.css and app.js for a while. Adding "?v=13" makes them look like
          new files, so the phone downloads fresh ones. Every update raises this number in THREE places:
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=12">
+    <link rel="stylesheet" href="style.css?v=13">
   </head>
 
   <body>
@@ -75,6 +75,18 @@
         <button type="button" class="button" id="add-recipe-button">+ Add a recipe</button>
 
         <!-- The list of saved recipes. app.js fills it in, one row per recipe (A to Z). -->
+        <!-- Search box: filters the list below as you type (title, ingredient or tag).
+             Being inside a <form role="search"> makes the iPhone keyboard show a "Search" key.
+             Hidden while there are no recipes (app.js decides). -->
+        <form class="search" id="search-form" role="search" hidden>
+          <input type="search" id="search-box" placeholder="Search title, ingredient or tag"
+                 aria-label="Search recipes" autocomplete="off" autocorrect="off" enterkeyhint="search">
+          <!-- The × button empties the box. Only shown while something is typed. -->
+          <button type="button" class="search-clear" id="search-clear" aria-label="Clear search" hidden>×</button>
+        </form>
+        <!-- e.g. "2 of 5 recipes" or "Nothing matches "chicken"". -->
+        <p class="search-result" id="search-result" hidden></p>
+
         <ul class="recipe-list" id="recipe-list"></ul>
 
         <!-- Shown only when there are no recipes yet. -->
@@ -100,7 +112,7 @@
         </div>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 12</p>
+        <p class="version">Version 13</p>
       </section>
 
       <!-- ===================== RECIPE PAGE SCREEN ===================== -->
@@ -257,6 +269,6 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=12"></script>
+    <script src="app.js?v=13"></script>
   </body>
 </html>

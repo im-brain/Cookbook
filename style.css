@@ -197,6 +197,7 @@ fieldset.field {
    (Under 16px, iPhone zooms in when you tap the box, which is annoying.) */
 input[type="text"],
 input[type="number"],
+input[type="search"],
 textarea {
   display: block;
   width: 100%;
@@ -554,4 +555,45 @@ textarea:focus {
   width: auto;      /* the button is only as wide as its words */
   margin-top: 0;
   white-space: nowrap;
+}
+
+/* ---------- 13. Search (home screen) ---------- */
+
+/* The box and its × button. "position: relative" lets the × sit inside the box's right end. */
+.search {
+  position: relative;
+  margin: 16px 0 0;
+}
+
+.search input {
+  -webkit-appearance: none;   /* use our own look, not Safari's built-in search style */
+  appearance: none;
+  padding-right: 52px;        /* leave room for the × button */
+}
+
+/* Hide Safari's own small clear button; we have a bigger one. */
+.search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  display: none;
+}
+
+.search-clear {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* "2 of 5 recipes" under the box. */
+.search-result {
+  color: var(--muted);
+  font-size: 16px;
+  margin: 8px 0 0;
 }

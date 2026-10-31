@@ -492,6 +492,45 @@ function describeRecipe(recipe, includeTags) {
   return parts.join(" · ");
 }
 
+// ---------- Search ----------
+// Typing in the search box shows only recipes whose title, ingredients or tags contain
+// every word you typed. Upper/lower case and accents don't matter ("jalapeno" finds "Jalapeño").
+
+const searchForm = document.getElementById("search-form");
+const searchBox = document.getElementById("search-box");
+const searchClear = document.getElementById("search-clear");
+const searchResult = document.getElementById("search-result");
+
+// Make text easy to compare: lower case, accents removed. "Jalapeño" → "jalapeno".
+function simplify(text) {
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// Does this recipe match all the typed words? (Only "my version" is searched, not the original.)
+function matchesSearch(recipe, words) {
+  const c = recipe.current;
+  const haystack = simplify([c.title].concat(c.ingredients, c.tags).join("\n"));
+  return words.every(function (word) { return haystack.indexOf(word) !== -1; });
+}
+
+// Re-filter the list on every letter typed.
+searchBox.addEventListener("input", function () {
+  renderRecipeList();
+});
+
+// × button → empty the box and show everything again.
+searchClear.addEventListener("click", function () {
+  searchBox.value = "";
+  renderRecipeList();
+  searchBox.focus();
+});
+
+// The keyboard's Search key → just hide the keyboard (the list is already filtered).
+searchForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+  searchBox.blur();
+});
+
 // Fill the home screen list with every saved recipe, A to Z.
 // Note: we only ever set "textContent" (plain text), never raw HTML,
 // so unusual characters in a recipe can't break the page.
@@ -504,8 +543,23 @@ function renderRecipeList() {
   }
   emptyNote.hidden = recipes.length > 0;
 
+  // Search: only offer it once there are recipes, then keep only the matching ones.
+  searchForm.hidden = recipes.length === 0;
+  const typed = searchBox.value.trim();
+  const words = simplify(typed).split(/\s+/).filter(Boolean);
+  const shown = words.length === 0 ? recipes : recipes.filter(function (recipe) {
+    return matchesSearch(recipe, words);
+  });
+  searchClear.hidden = searchBox.value === "";
+  searchResult.hidden = words.length === 0 || recipes.length === 0;
+  if (shown.length === 0) {
+    searchResult.textContent = "Nothing matches “" + typed + "”.";
+  } else {
+    searchResult.textContent = shown.length + " of " + recipesWord(recipes.length);
+  }
+
   // Sort A to Z by title, ignoring upper/lower case.
-  const sorted = recipes.slice().sort(function (a, b) {
+  const sorted = shown.slice().sort(function (a, b) {
     return a.current.title.localeCompare(b.current.title, undefined, { sensitivity: "base" });
   });
 
