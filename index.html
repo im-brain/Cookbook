@@ -18,6 +18,17 @@
     <!-- The name shown on the browser tab and in bookmarks. -->
     <title>My Cookbook</title>
 
+    <!-- ===== Home Screen app settings ===== -->
+    <!-- The "app card": name, icon and colors used when it's added to the Home Screen. -->
+    <link rel="manifest" href="manifest.json">
+    <!-- The icon iPhone shows on the Home Screen. -->
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
+    <!-- The name under the icon (kept short so it isn't cut off). -->
+    <meta name="apple-mobile-web-app-title" content="Cookbook">
+    <!-- Open full screen, like an app, without Safari's address bar. -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <!-- Load the look of the page from style.css. -->
     <link rel="stylesheet" href="style.css">
   </head>
@@ -33,6 +44,21 @@
       <!-- class="subtitle" tells style.css to show this in a softer color. -->
       <p class="subtitle">Recipes coming soon.</p>
 
+      <!-- Shown only in a normal Safari tab (app.js decides). "hidden" starts it hidden. -->
+      <div class="card notice" id="install-help" hidden>
+        <h2>Add me to your Home Screen</h2>
+        <p>Your recipes are only kept safe when you use the cookbook from its Home Screen icon.</p>
+        <ol>
+          <li>Tap the <strong>Share</strong> button (the square with an arrow). On newer iPhones it may be inside the <strong>•••</strong> menu.</li>
+          <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+          <li>Tap <strong>Add</strong>.</li>
+          <li>From now on, always open the cookbook from the new icon.</li>
+        </ol>
+      </div>
+
+      <!-- Shown only when opened from the Home Screen icon. -->
+      <p class="installed" id="installed-note" hidden>✓ Opened from your Home Screen. Your recipes will be kept here.</p>
+
       <!-- A "card" is a box with rounded corners. -->
       <div class="card">
         <p>This is where your recipes will appear.</p>
@@ -40,5 +66,8 @@
         <button class="button" disabled>Add a recipe (coming in step 5)</button>
       </div>
     </main>
+
+    <!-- Load the behavior last, after everything above exists on the page. -->
+    <script src="app.js"></script>
   </body>
 </html>
