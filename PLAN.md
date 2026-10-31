@@ -5,8 +5,8 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 
 ## Current status (2026-10-31)
 
-- **Steps 1–10 done.** Steps 7–9 confirmed on the phone. Step 10 (own tags) is **Version 12**; check it on the phone after merging.
-- **Next: Step 11, Search** (filter by title, ingredient or tag). It will be Version 13.
+- **Steps 1–11 done.** Steps 7–10 checked on the phone. Step 11 (Search) is **Version 13**; check it on the phone after merging.
+- **Next: Step 12, "What should I cook?"** (random pick, optional tag filter). It will be Version 14, and it finishes Version 1.
 - Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first.
 
 ## What "done" means (version 1)
@@ -15,7 +15,7 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 - [ ] I can **save** recipes from elsewhere (typed or pasted) into my cookbook, with their source.
 - [x] I can **edit** a saved recipe, see the **original**, and **add my own notes**.
 - [x] I can **back up** my recipes and get them back.
-- [ ] I can **search** my cookbook.
+- [x] I can **search** my cookbook.
 - [ ] A **"What should I cook?"** button suggests a random recipe, optionally by tag.
 
 ## Decisions (from the planning interview)
@@ -103,7 +103,7 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
   **Test it:** Change a step, reload: change kept. View original shows the old step. Reset brings it back. Delete removes it.
 - [x] **Step 10 — Tags.** Starter tags plus my own.
   **Test it:** Add a new tag "soup" to a recipe; it's offered next time.
-- [ ] **Step 11 — Search.** Filter by title, ingredient or tag.
+- [x] **Step 11 — Search.** Filter by title, ingredient or tag.
   **Test it:** Typing "chicken" shows only recipes with chicken.
 - [ ] **Step 12 — "What should I cook?"** Random pick, optional tag filter.
   **Test it:** Tap several times: different recipes. Filter "quick": only quick ones. Empty cookbook: a friendly message.
@@ -142,3 +142,5 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Step 9 done (Version 11): the recipe page has **Edit recipe** (the same form, filled in), **Delete recipe** (asks first), and, for recipes from somewhere else, **View original** (with a banner) → **Back to my version** / **Reset to original** (asks first; notes are kept). The kind of recipe can't be changed when editing. Tags the starter list doesn't have are kept when editing.
 - 2026-10-31 — Step 9 confirmed on the user's phone.
 - 2026-10-31 — Step 10 done (Version 12): the form has a "New tag" box with "+ Add" (or the keyboard's Done). New tags appear as ticked chips. Tags are tidied to lower case, and duplicates are ignored. A tag typed but not added still counts when you tap Save. Your own tags are offered on every recipe form after the starter tags, A–Z.
+- 2026-10-31 — Step 10 merged; the user moved on to the next step.
+- 2026-10-31 — Step 11 done (Version 13): a search box above the recipe list filters it as you type, by title, ingredient or tag. Upper/lower case and accents don't matter, and several words must all match ("chicken dinner"). Shows "3 of 5 recipes" or "Nothing matches …"; × clears it. Hidden when the cookbook is empty. Only "my version" is searched, not the original.
