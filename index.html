@@ -30,12 +30,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- ===== VERSION NUMBER =====
-         Phones keep saved copies of style.css and app.js for a while. Adding "?v=13" makes them look like
+         Phones keep saved copies of style.css and app.js for a while. Adding "?v=14" makes them look like
          new files, so the phone downloads fresh ones. Every update raises this number in THREE places:
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=13">
+    <link rel="stylesheet" href="style.css?v=14">
   </head>
 
   <body>
@@ -73,6 +73,25 @@
 
         <!-- type="button" means "just a button" (it doesn't send a form). app.js decides what it does. -->
         <button type="button" class="button" id="add-recipe-button">+ Add a recipe</button>
+
+        <!-- ----- "What should I cook?" ----- -->
+        <!-- Tapping this picks a random recipe and opens the box below. -->
+        <button type="button" class="button button-secondary" id="pick-button">🎲 What should I cook?</button>
+        <div class="card pick-card" id="pick-card" hidden>
+          <!-- The picked recipe (app.js puts a tappable row here), or a friendly message. -->
+          <p class="pick-heading" id="pick-heading">How about…</p>
+          <div class="pick-result" id="pick-result"></div>
+          <p class="pick-message" id="pick-message" hidden></p>
+
+          <!-- Optional filter: "Any" or one tag. Only tags used on your recipes are offered. -->
+          <div id="pick-filter">
+            <p class="field-label">Pick from</p>
+            <div class="chips" id="pick-tags"></div>
+          </div>
+
+          <button type="button" class="button" id="pick-again">Pick another</button>
+          <button type="button" class="button button-secondary" id="pick-close">Close</button>
+        </div>
 
         <!-- The list of saved recipes. app.js fills it in, one row per recipe (A to Z). -->
         <!-- Search box: filters the list below as you type (title, ingredient or tag).
@@ -112,7 +131,7 @@
         </div>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 13</p>
+        <p class="version">Version 14</p>
       </section>
 
       <!-- ===================== RECIPE PAGE SCREEN ===================== -->
@@ -269,6 +288,6 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=14"></script>
   </body>
 </html>
