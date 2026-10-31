@@ -38,33 +38,133 @@
 
     <!-- <main> is the main column of the page. style.css gives it space around the edges. -->
     <main>
-      <!-- <h1> is the main heading: the biggest title on the page. -->
-      <h1>My Cookbook</h1>
+      <!-- ===================== HOME SCREEN ===================== -->
+      <!-- A <section> is one "screen" of the app. app.js shows one screen at a time. -->
+      <section id="home-screen">
+        <!-- <h1> is the main heading: the biggest title on the page. -->
+        <h1>My Cookbook</h1>
 
-      <!-- class="subtitle" tells style.css to show this in a softer color. -->
-      <p class="subtitle">Recipes coming soon.</p>
+        <!-- class="subtitle" tells style.css to show this in a softer color. -->
+        <p class="subtitle">Recipes coming soon.</p>
 
-      <!-- Shown only in a normal Safari tab (app.js decides). "hidden" starts it hidden. -->
-      <div class="card notice" id="install-help" hidden>
-        <h2>Add me to your Home Screen</h2>
-        <p>Your recipes are only kept safe when you use the cookbook from its Home Screen icon.</p>
-        <ol>
-          <li>Tap the <strong>Share</strong> button (the square with an arrow). On newer iPhones it may be inside the <strong>•••</strong> menu.</li>
-          <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
-          <li>Tap <strong>Add</strong>.</li>
-          <li>From now on, always open the cookbook from the new icon.</li>
-        </ol>
-      </div>
+        <!-- Shown only in a normal Safari tab (app.js decides). "hidden" starts it hidden. -->
+        <div class="card notice" id="install-help" hidden>
+          <h2>Add me to your Home Screen</h2>
+          <p>Your recipes are only kept safe when you use the cookbook from its Home Screen icon.</p>
+          <ol>
+            <li>Tap the <strong>Share</strong> button (the square with an arrow). On newer iPhones it may be inside the <strong>•••</strong> menu.</li>
+            <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+            <li>Tap <strong>Add</strong>.</li>
+            <li>From now on, always open the cookbook from the new icon.</li>
+          </ol>
+        </div>
 
-      <!-- Shown only when opened from the Home Screen icon. -->
-      <p class="installed" id="installed-note" hidden>✓ Opened from your Home Screen. Your recipes will be kept here.</p>
+        <!-- Shown only when opened from the Home Screen icon. -->
+        <p class="installed" id="installed-note" hidden>✓ Opened from your Home Screen. Your recipes will be kept here.</p>
 
-      <!-- A "card" is a box with rounded corners. -->
-      <div class="card">
-        <p>This is where your recipes will appear.</p>
-        <!-- A preview of how buttons will look. "disabled" means it doesn't do anything yet. -->
-        <button class="button" disabled>Add a recipe (coming in step 5)</button>
-      </div>
+        <!-- A "card" is a box with rounded corners. -->
+        <div class="card">
+          <p>This is where your recipes will appear.</p>
+          <!-- type="button" means "just a button" (it doesn't send a form). app.js decides what it does. -->
+          <button type="button" class="button" id="add-recipe-button">+ Add a recipe</button>
+        </div>
+      </section>
+
+      <!-- ===================== RECIPE FORM SCREEN ===================== -->
+      <!-- Hidden until you tap "Add a recipe". -->
+      <section id="recipe-form-screen" hidden>
+        <h1>New recipe</h1>
+
+        <!-- A <form> groups all the boxes you fill in. -->
+        <form id="recipe-form">
+
+          <!-- ----- Kind of recipe ----- -->
+          <!-- <fieldset> groups related choices; <legend> is the group's title. -->
+          <fieldset class="field">
+            <legend>Where is this recipe from?</legend>
+            <!-- Radio buttons: you can pick only one. They share the same name="kind". -->
+            <label class="choice">
+              <input type="radio" name="kind" value="mine" checked>
+              <span>My own recipe</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="kind" value="elsewhere">
+              <span>From somewhere else</span>
+            </label>
+          </fieldset>
+
+          <!-- Only shown when "From somewhere else" is picked (app.js decides). -->
+          <div class="field" id="source-field" hidden>
+            <!-- for="source" links this label to the box with id="source": tapping the label jumps into the box. -->
+            <label for="source">Source</label>
+            <input type="text" id="source" name="source" placeholder="Website link, book, or Grandma's card">
+          </div>
+
+          <!-- ----- Title ----- -->
+          <div class="field">
+            <label for="title">Title</label>
+            <!-- "required" means the form won't continue without a title. -->
+            <input type="text" id="title" name="title" required placeholder="e.g. Tomato soup">
+          </div>
+
+          <!-- ----- Ingredients ----- -->
+          <div class="field">
+            <label for="ingredients">Ingredients</label>
+            <p class="hint">One ingredient per line.</p>
+            <!-- <textarea> is a big box for several lines of text. -->
+            <textarea id="ingredients" name="ingredients" rows="6" placeholder="4 tomatoes&#10;1 onion&#10;2 cups stock"></textarea>
+          </div>
+
+          <!-- ----- Steps ----- -->
+          <div class="field">
+            <label for="steps">Steps</label>
+            <p class="hint">One step per line.</p>
+            <textarea id="steps" name="steps" rows="6" placeholder="Chop everything&#10;Simmer 20 minutes&#10;Blend"></textarea>
+          </div>
+
+          <!-- ----- Servings and time, side by side ----- -->
+          <div class="field-row">
+            <div class="field">
+              <label for="servings">Servings</label>
+              <!-- inputmode="numeric" opens the number keypad on iPhone. -->
+              <input type="number" id="servings" name="servings" inputmode="numeric" min="1" placeholder="4">
+            </div>
+            <div class="field">
+              <label for="time">Time (minutes)</label>
+              <input type="number" id="time" name="time" inputmode="numeric" min="1" placeholder="30">
+            </div>
+          </div>
+
+          <!-- ----- Tags ----- -->
+          <fieldset class="field">
+            <legend>Tags</legend>
+            <p class="hint">Tap any that fit. You can add your own tags in a later step.</p>
+            <!-- Checkboxes: you can pick as many as you like. Styled as round "chips". -->
+            <div class="chips">
+              <label class="chip"><input type="checkbox" name="tags" value="breakfast"><span>breakfast</span></label>
+              <label class="chip"><input type="checkbox" name="tags" value="lunch"><span>lunch</span></label>
+              <label class="chip"><input type="checkbox" name="tags" value="dinner"><span>dinner</span></label>
+              <label class="chip"><input type="checkbox" name="tags" value="dessert"><span>dessert</span></label>
+              <label class="chip"><input type="checkbox" name="tags" value="quick"><span>quick</span></label>
+              <label class="chip"><input type="checkbox" name="tags" value="vegetarian"><span>vegetarian</span></label>
+            </div>
+          </fieldset>
+
+          <!-- ----- Notes ----- -->
+          <div class="field">
+            <label for="notes">Notes</label>
+            <p class="hint">Your own reminders, like "add a pinch of sugar next time".</p>
+            <textarea id="notes" name="notes" rows="3"></textarea>
+          </div>
+
+          <!-- A message box app.js fills in after you tap Save. -->
+          <p class="message" id="form-message" hidden></p>
+
+          <!-- type="submit" means "this button sends the form". -->
+          <button type="submit" class="button">Save recipe</button>
+          <button type="button" class="button button-secondary" id="cancel-button">Cancel</button>
+        </form>
+      </section>
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->

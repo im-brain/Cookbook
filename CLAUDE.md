@@ -50,3 +50,7 @@ At the end of every step, in the same pull request:
 - `app.js` checks `navigator.standalone` (iPhone) or `display-mode: standalone` to tell the Home Screen app from a Safari tab. In tests, fake it with `addInitScript` defining `navigator.standalone = true`.
 - iPhone keeps the icon and name from the moment it's added, so later icon changes won't show unless it's re-added. **Deleting the Home Screen icon also deletes the recipes saved in it.** Never tell the user to delete or re-add the icon without exporting a backup first (step 8).
 - Screenshot both light and dark mode (Playwright `colorScheme`), and check that `scrollWidth` equals the window width, which means no sideways scrolling.
+- Screens: each screen is a `<section>` in `index.html` (`#home-screen`, `#recipe-form-screen`). `showScreen(...)` in `app.js` shows one and hides the rest. Add new screens to that function.
+- Form classes in `style.css`: `.field` (label + hint + box), `.hint`, `.field-row` (side by side), `.choice` (big radio option), `.chips`/`.chip` (tag pills), `.message` (notice box), `.button-secondary` (outline button).
+- CSS gotcha: `.field > label` also matched the `.choice` labels and broke their layout. It's now `.field > label:not(.choice)`. Watch for broad selectors overriding specific ones.
+- Form field names (`kind`, `source`, `title`, `ingredients`, `steps`, `servings`, `time`, `tags`, `notes`) are what step 6 reads when saving.

@@ -85,7 +85,7 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
   **Test it:** Nothing is tiny; no sideways scrolling.
 - [x] **Step 4 — Add to Home Screen.** Icon + manifest so it installs like an app.
   **Test it:** Share → Add to Home Screen. The icon opens it full screen. **From now on, always use the icon.**
-- [ ] **Step 5 — Recipe form.** Title, ingredients (one per line), steps (one per line), servings, time, tags, notes, and "My own" / "From somewhere else" with a source box. Save does nothing yet.
+- [x] **Step 5 — Recipe form.** Title, ingredients (one per line), steps (one per line), servings, time, tags, notes, and "My own" / "From somewhere else" with a source box. Save does nothing yet.
   **Test it:** I can fill in every box comfortably on my phone.
 - [ ] **Step 6 — Save a recipe.** `app.js` stores it on the phone.
   **Test it:** Save one, close the app, reopen it: a message says "1 recipe saved".
@@ -124,3 +124,4 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Step 2 done: repo made public, GitHub Pages turned on (main branch, root). Site is live at https://im-brain.github.io/Cookbook/.
 - 2026-10-31 — Step 3 done: `style.css` added (warm colors, iPhone font, 18px text, 48px-tall buttons, automatic Dark Mode, notch-safe edges). Checked in light and dark mode: no sideways scrolling.
 - 2026-10-31 — Step 4 done: app icon (`icons/`), `manifest.json`, iPhone Home Screen settings, and `app.js` started. In a Safari tab the page shows "Add me to your Home Screen" instructions; from the icon it shows "✓ Opened from your Home Screen".
+- 2026-10-31 — Step 5 done: "Add a recipe" opens a form with every field (kind + source, title, ingredients, steps, servings, time, tag chips, notes). Save shows a "step 6" message and stores nothing; Cancel goes home.
