@@ -1,0 +1,121 @@
+/* style.css: how the cookbook LOOKS (colors, sizes, spacing).
+   index.html says WHAT is on the page; this file says how it looks. */
+
+/* ---------- 1. Colors ----------
+   We name our colors once here ("variables") and reuse the names below.
+   To change a color everywhere, change it in one place. */
+:root {
+  --background: #fbf7f2;   /* warm off-white, like recipe paper */
+  --text: #2b2420;         /* very dark brown, softer than pure black */
+  --muted: #6f625a;        /* lighter brown for less important text */
+  --accent: #c0502d;       /* tomato red for buttons */
+  --accent-text: #ffffff;  /* text on top of the accent color */
+  --card: #ffffff;         /* background of boxes ("cards") */
+  --border: #e6ddd3;       /* thin lines around boxes */
+}
+
+/* If the iPhone is in Dark Mode, swap to darker colors automatically. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #1d1916;
+    --text: #f3ece6;
+    --muted: #b3a69c;
+    --accent: #e0714d;
+    --accent-text: #1d1916;
+    --card: #28221e;
+    --border: #3a322c;
+  }
+}
+
+/* ---------- 2. The whole page ---------- */
+
+/* Make widths include padding, so things don't accidentally get too wide. */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+
+  /* Use the iPhone's own font (San Francisco). */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Comfortable reading size and spacing between lines. */
+  font-size: 18px;
+  line-height: 1.5;
+
+  /* Stop iPhone from enlarging text by itself when the phone is turned sideways. */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* The main column. Keeps text from stretching too wide on bigger screens,
+   and leaves space around the edges. The "env(safe-area-...)" parts keep
+   content clear of the iPhone's notch and rounded corners. */
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+/* ---------- 3. Text ---------- */
+
+h1 {
+  font-size: 32px;
+  line-height: 1.2;
+  margin: 8px 0 4px;
+}
+
+/* A smaller line of text under the title. */
+.subtitle {
+  color: var(--muted);
+  margin: 0 0 24px;
+}
+
+/* ---------- 4. Boxes ("cards") ---------- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* Remove the extra gap above the first thing inside a card. */
+.card > :first-child {
+  margin-top: 0;
+}
+
+/* ---------- 5. Buttons ---------- */
+
+/* Apple recommends tap targets at least 44 pixels tall. We use 48 to be safe. */
+.button {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;          /* use the same font and size as the page */
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* A slight dim while your finger is on the button, so you know it was tapped. */
+.button:active {
+  opacity: 0.8;
+}
+
+/* A greyed-out look for buttons that don't work yet. */
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

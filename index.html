@@ -7,20 +7,38 @@
     <!-- Use a character set that handles every letter and symbol (é, ½, °). -->
     <meta charset="utf-8">
 
-    <!-- Make the page fit the phone's screen instead of looking like a shrunken desktop site. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Make the page fit the phone's screen instead of looking like a shrunken desktop site.
+         "viewport-fit=cover" lets us use the whole iPhone screen, including around the notch. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <!-- The color Safari uses for its top bar, so it blends with the page. -->
+    <meta name="theme-color" content="#fbf7f2" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1d1916" media="(prefers-color-scheme: dark)">
 
     <!-- The name shown on the browser tab and in bookmarks. -->
     <title>My Cookbook</title>
+
+    <!-- Load the look of the page from style.css. -->
+    <link rel="stylesheet" href="style.css">
   </head>
 
   <body>
     <!-- The <body> is everything you see on the page. -->
 
-    <!-- <h1> is the main heading: the biggest title on the page. -->
-    <h1>My Cookbook</h1>
+    <!-- <main> is the main column of the page. style.css gives it space around the edges. -->
+    <main>
+      <!-- <h1> is the main heading: the biggest title on the page. -->
+      <h1>My Cookbook</h1>
 
-    <!-- <p> is a paragraph of normal text. -->
-    <p>Recipes coming soon.</p>
+      <!-- class="subtitle" tells style.css to show this in a softer color. -->
+      <p class="subtitle">Recipes coming soon.</p>
+
+      <!-- A "card" is a box with rounded corners. -->
+      <div class="card">
+        <p>This is where your recipes will appear.</p>
+        <!-- A preview of how buttons will look. "disabled" means it doesn't do anything yet. -->
+        <button class="button" disabled>Add a recipe (coming in step 5)</button>
+      </div>
+    </main>
   </body>
 </html>

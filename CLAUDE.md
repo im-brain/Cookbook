@@ -44,3 +44,6 @@ At the end of every step, in the same pull request:
 - GitHub Pages publishes from `main`, folder `/ (root)`. Every merge to `main` redeploys the site within about a minute.
 - The cloud session's network can't open `*.github.io`, so Claude can't load the live site directly. To confirm a deploy, check the "pages build and deployment" workflow run via the GitHub tools; the user does the real-phone test.
 - After a PR is merged, restart the working branch from `main` before the next step.
+- Styling conventions (`style.css`): colors are variables in `:root` with a Dark Mode version; use the classes `.card`, `.button` and `.subtitle`; tap targets are at least 48px tall.
+- For step 5: form inputs must use a font size of at least 16px, or iPhone Safari zooms in when you tap them. The page uses 18px, so `font: inherit` on inputs is enough.
+- Screenshot both light and dark mode (Playwright `colorScheme`), and check that `scrollWidth` equals the window width, which means no sideways scrolling.
