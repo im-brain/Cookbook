@@ -6,7 +6,7 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 ## Current status (2026-10-31)
 
 - **Version 1 is complete and confirmed on the phone** (steps 1–12, Version 14).
-- **Now building "Cooking mode"** (steps 13–15 below), planned in a grill-me interview. **Step 13 (cooking screen) is done as Version 15**, waiting for merge and a phone test. Next: step 14 (scaling, Version 16), then step 15 (converter, Version 17). Each step gets its own plan, OK and pull request.
+- **Now building "Cooking mode"** (steps 13–15 below), planned in a grill-me interview. Step 13 (cooking screen, Version 15) is confirmed on the phone. **Step 14 (scaling) is done as Version 16**, waiting for merge and a phone test. Next: step 15 (converter, Version 17). Each step gets its own plan, OK and pull request.
 - **Working rule:** Claude shows a plan and waits for the user's OK before changing or committing anything (see `CLAUDE.md`).
 - After cooking mode: **plan together** save from a web link + smart paste (needs a small free Cloudflare Worker; secret keys live there, never in the repo).
 - Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first.
@@ -118,7 +118,7 @@ Decided in a grill-me interview (2026-10-31). Details in `CLAUDE.md` → Key dec
 
 - [x] **Step 13 — Cooking screen (Version 15).** "🍳 Start cooking" under the title opens a big-text screen: notes, ingredients and steps you tap to tick off (forgotten when you tap Done cooking). Times in steps ("20 minutes") are bold, for Siri or the Clock app. The screen stays awake while cooking. No timer in the cookbook (user's choice).
   **Test it:** Start cooking a recipe: tick a few things off, put the phone down for a few minutes (the screen should stay on), tap Done cooking, then Start cooking again: no ticks.
-- [ ] **Step 14 — Scale the recipe (Version 16).** − / + servings (when the recipe has a servings number) and ½×, 1×, 2×, 3× buttons on the cooking screen. Amounts shown as kitchen fractions (1½, ⅓) and highlighted. Only for this cooking session; the saved recipe doesn't change. Lines without a number stay as they are.
+- [x] **Step 14 — Scale the recipe (Version 16).** − / + servings (when the recipe has a servings number) and ½×, 1×, 2×, 3× buttons on the cooking screen. Amounts shown as kitchen fractions (1½, ⅓) and highlighted. Only for this cooking session; the saved recipe doesn't change. Only the amount at the **start** of a line changes ("2 (14 oz) cans" → "3 (14 oz) cans"; "Juice of 1 lemon" stays). Amounts of 10 or more are rounded to whole numbers (250 g ÷ 3 → 83 g).
   **Test it:** A "serves 4" recipe at 6 servings: "2 cups stock" shows "3 cups stock"; "salt to taste" unchanged; reopen the recipe: original amounts.
 - [ ] **Step 15 — Converter (Version 17).** "⚖️ Convert" box on the cooking screen. US measures (cup 240 ml). Volumes (cups, tbsp, tsp, fl oz, ml, l), weights (oz, lb, g, kg), °F ↔ °C, and cups ↔ grams for flour, white/brown/powdered sugar, butter, rice, rolled oats, cocoa, milk/water, honey, oil, grated cheese.
   **Test it:** 1 cup flour → about 120 g; 350 °F → about 175 °C; 1 lb → about 454 g.
@@ -163,3 +163,5 @@ Decided in a grill-me interview (2026-10-31). Details in `CLAUDE.md` → Key dec
 - 2026-10-31 — Handoff to a new conversation. "Current status" updated. (PLAN.md only, so no version bump.)
 - 2026-10-31 — Step 12 confirmed on the user's phone. Planned "Cooking mode" in a grill-me interview: a cooking screen (step 13), scaling (step 14), a converter (step 15). No timer in the cookbook: the user uses Siri / Clock, and times in steps are shown in bold. Cooking mode comes before link import.
 - 2026-10-31 — Step 13 done (Version 15): "🍳 Start cooking" on the recipe page (hidden while viewing the original) opens the cooking screen: bigger text, notes, ingredients and numbered steps as big tap-to-tick boxes, bold times, Done cooking at the top and bottom. The screen stays awake while cooking (Wake Lock; older iPhones just dim).
+- 2026-10-31 — Step 13 confirmed on the user's phone ("Works!").
+- 2026-10-31 — Step 14 done (Version 16): a box at the top of the cooking screen with "Serves − 4 +" (only if the recipe has servings) and ½×, 1×, 2×, 3× buttons. The amount at the start of each ingredient changes and is shown in color, as kitchen fractions (1½, ¾, ⅓); 10 or more are whole numbers. Ranges ("2-3 cloves") scale both ends. Ticks are kept when you change the amounts. Starting to cook again begins at the saved amounts; the saved recipe never changes. Known limit: words don't change ("1 cups", "1 tomatoes").
