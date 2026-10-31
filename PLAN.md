@@ -1,148 +1,122 @@
 # My Cookbook — Plan
 
-A personal cookbook website that I use on my phone.
+A personal cookbook website that I use on my iPhone.
+How we work and the reasons behind each decision are in `CLAUDE.md`.
 
 ## What "done" means (version 1)
 
 - [ ] I can **create** my own recipes.
-- [ ] I can **save** recipes into my personal cookbook (typed, pasted, or from a built-in collection).
-- [ ] I can **edit** a saved recipe and **add my own notes** to it.
-- [ ] A **"What should I cook?"** button suggests a random recipe from my cookbook.
+- [ ] I can **save** recipes from elsewhere (typed or pasted) into my cookbook, with their source.
+- [ ] I can **edit** a saved recipe, see the **original**, and **add my own notes**.
+- [ ] I can **back up** my recipes and get them back.
+- [ ] I can **search** my cookbook.
+- [ ] A **"What should I cook?"** button suggests a random recipe, optionally by tag.
 
-Later (planned, not a priority now):
+## Decisions (from the planning interview)
 
-- Suggest recipes from **what's in my fridge** (from my saved recipes first).
-- Suggest **new recipes from an outside service**.
-- **Paste a web link** and have the recipe filled in automatically.
-
-## My answers to the planning questions
-
-| Question | Answer |
+| Topic | Decision |
 |---|---|
-| What should it suggest? | Random pick from my cookbook now. Fridge-based and outside suggestions later. |
-| Where do recipes come from? | All three: I type/paste them, a built-in collection, and (later) a web link. |
-| Where will I use it? | My phone. |
+| Phone | iPhone, Safari. Always open from the Home Screen icon. |
+| Storage | On the phone (localStorage), plus backups to iCloud Drive. |
+| Hosting | Public repo + GitHub Pages at `im-brain.github.io/Cookbook`. Recipes never go in the repo. |
+| Kinds of recipe | "My own" or "From somewhere else" (with optional source). |
+| Original vs mine | Recipes from elsewhere keep an untouched original. Show mine by default; View original; Reset to original. |
+| Fields | Title, ingredients, steps, servings, time, tags, notes. No photos. |
+| Notes | Separate from edits, shown above the ingredients. |
+| Tags | breakfast, lunch, dinner, dessert, quick, vegetarian + my own. |
+| Random pick | From all saved recipes, optional tag filter. |
+| Outside recipe services | None for now (TheMealDB and Spoonacular dropped). |
+| Offline mode | Not yet. |
+| Workflow | Claude writes + explains, checks on a simulated iPhone and sends a screenshot, I tap Merge, I test live. |
 
-## The simplest way to build it
+## Tools, in plain language
 
-**A small website made of three plain files, hosted for free on GitHub Pages, that saves recipes inside my phone's browser.**
-
-### The tools, in plain language
-
-| Tool | What it is | Why this one |
+| Tool | What it is | Why |
 |---|---|---|
-| **HTML** | The structure of the page: headings, buttons, text boxes. | Every website uses it. Nothing to install. |
-| **CSS** | The look: colors, sizes, layout that fits a phone screen. | Same — built into every browser. |
+| **HTML** | The structure: headings, buttons, text boxes. | Every website uses it. Nothing to install. |
+| **CSS** | The look: colors, sizes, layout for a phone screen. | Built into every browser. |
 | **JavaScript** | The behavior: "when I tap Save, store this recipe." | Runs in the browser. No server needed. |
-| **localStorage** | A small storage box built into the browser that keeps data after you close the page. | Saves my recipes on my phone with no database, account, or cost. |
-| **GitHub Pages** | Free hosting that turns this repository into a real web address. | My code already lives on GitHub. Each time I push, the site updates. |
-| **"Add to Home Screen"** | A phone feature that turns a website into an app-like icon. | Opens like an app, full screen, no app store. |
-
-### What I'm deliberately *not* using (yet)
-
-- **No framework** (React, etc.) — more to learn, and not needed for a project this size.
-- **No server or database** — the phone stores everything. We can add an online database (for example, Supabase) later if I want sync between devices or protection against losing my phone.
-- **No build tools** — I edit a file, refresh the page, and see the change.
-
-### One important caution
-
-Recipes live **only in my phone's browser**. If I clear browser data or lose the phone, they're gone. To protect against that, step 9 adds **Export / Import backup**. (On iPhone, adding the site to the Home Screen also helps Safari keep the data.)
+| **localStorage** | A small storage box in the browser that keeps data after closing. | Saves recipes on my phone for free, no account. |
+| **GitHub Pages** | Free hosting that turns this repo into a web address. | The code already lives on GitHub. |
+| **Add to Home Screen** | Turns the website into an app-like icon. | Opens like an app, and protects my data from Safari's clean-up. |
 
 ## Files
 
 ```
-index.html      the page
-style.css       the look
-app.js          the behavior
-recipes.js      the built-in starter collection (step 8)
-PLAN.md         this plan
+index.html               the page
+style.css                the look
+app.js                   the behavior
+manifest.json + icon     what "Add to Home Screen" uses (step 4)
+PLAN.md                  this plan
+CLAUDE.md                memory for future sessions
 ```
 
 ## Recipe shape (what we store for each recipe)
 
 ```js
 {
-  id: "abc123",            // unique label, made automatically
-  title: "Tomato Soup",
-  ingredients: ["4 tomatoes", "1 onion", "2 cups stock"],
-  steps: ["Chop everything", "Simmer 20 minutes", "Blend"],
+  id: "abc123",
+  kind: "elsewhere",           // "mine" or "elsewhere"
+  source: "Grandma's card",    // optional, for "elsewhere"
+  current: {                   // what I see and edit
+    title: "Tomato Soup",
+    ingredients: ["4 tomatoes", "1 onion", "2 cups stock"],
+    steps: ["Chop everything", "Simmer 20 minutes", "Blend"],
+    servings: 4,
+    timeMinutes: 30,
+    tags: ["dinner", "vegetarian"]
+  },
+  original: { ... },           // only for "elsewhere": the first saved version, never changed
   notes: "Add a pinch of sugar next time.",
-  source: "mine",          // "mine", "collection", or a web link
-  createdAt: "2026-10-31"
+  createdAt: "2026-10-31",
+  updatedAt: "2026-10-31"
 }
 ```
 
-## Steps — small and testable one at a time
+## Version 1 steps — small and testable one at a time
 
-Each step ends with **"Test it"** — something I can check myself before we move on.
+Each step ends with **"Test it"**: something I check on my phone before we move on.
 
-### Step 1 — Hello, cookbook
-Create `index.html` with a title, "My Cookbook".
-**Test it:** Open the file in a browser. I see the title.
-
-### Step 2 — Put it on the internet
-Turn on GitHub Pages for this repository.
-**Test it:** Open the web address on my phone. I see "My Cookbook".
-
-### Step 3 — Make it look right on a phone
-Add `style.css`: readable text, big tap-friendly buttons, fits the screen.
-**Test it:** On my phone, nothing is tiny and I don't need to scroll sideways.
-
-### Step 4 — A form to create a recipe
-Add a form: title, ingredients (one per line), steps (one per line), notes. A Save button. (Saving does nothing yet.)
-**Test it:** I can type in every box on my phone.
-
-### Step 5 — Save a recipe
-Add `app.js`. Tapping Save stores the recipe in localStorage.
-**Test it:** Save a recipe, close the browser, reopen it. (Step 6 will show it; for now, I'll check with a temporary message like "Saved 1 recipe".)
-
-### Step 6 — See my cookbook
-Show a list of saved recipe titles. Tapping a title opens the full recipe.
-**Test it:** Save two recipes. Both appear. Tapping one shows its ingredients and steps.
-
-### Step 7 — Edit, add notes, and delete
-On a recipe's page: **Edit** button (change anything, including notes), and **Delete** (asks "Are you sure?").
-**Test it:** Change a note, save, reload the page — the new note is still there. Delete a recipe — it's gone from the list.
-
-### Step 8 — Built-in collection
-Add `recipes.js` with ~10 starter recipes. A "Browse" screen lists them with a **Save to my cookbook** button. Once saved, it's my copy, so I can edit it and add notes.
-**Test it:** Save one from Browse. It appears in my cookbook. Editing my copy doesn't change the original.
-
-### Step 9 — Backup (Export / Import)
-**Export** downloads all my recipes as one file. **Import** loads that file back.
-**Test it:** Export, delete a recipe, import — the recipe comes back.
-
-### Step 10 — "What should I cook?" button
-Picks a random recipe from my cookbook and opens it.
-**Test it:** Tap it several times; I get different recipes. With an empty cookbook, it shows a friendly message instead of breaking.
-
-### Step 11 — Search
-A search box that filters my cookbook by title or ingredient.
-**Test it:** Typing "chicken" shows only recipes with chicken.
-
-### Step 12 — Install on my phone
-Add an icon and a small "manifest" file so the site can be added to the Home Screen like an app.
-**Test it:** Add to Home Screen. Tapping the icon opens my cookbook full screen.
+- [ ] **Step 1 — Hello, cookbook.** An `index.html` page titled "My Cookbook".
+  **Test it:** Claude's screenshot shows the title.
+- [ ] **Step 2 — Put it on the internet.** Make the repo public and turn on GitHub Pages.
+  **Test it:** Open `im-brain.github.io/Cookbook` on my iPhone and see "My Cookbook".
+- [ ] **Step 3 — Phone-friendly look.** `style.css`: readable text, big buttons, fits the screen.
+  **Test it:** Nothing is tiny; no sideways scrolling.
+- [ ] **Step 4 — Add to Home Screen.** Icon + manifest so it installs like an app.
+  **Test it:** Share → Add to Home Screen. The icon opens it full screen. **From now on, always use the icon.**
+- [ ] **Step 5 — Recipe form.** Title, ingredients (one per line), steps (one per line), servings, time, tags, notes, and "My own" / "From somewhere else" with a source box. Save does nothing yet.
+  **Test it:** I can fill in every box comfortably on my phone.
+- [ ] **Step 6 — Save a recipe.** `app.js` stores it on the phone.
+  **Test it:** Save one, close the app, reopen it: a message says "1 recipe saved".
+- [ ] **Step 7 — See my cookbook.** A list of titles; tapping one shows the full recipe with notes above the ingredients.
+  **Test it:** Save two recipes; both appear and open correctly.
+- [ ] **Step 8 — Backup.** Export (save the file to iCloud Drive) and Import. Reminder: "N recipes changed since your last backup".
+  **Test it:** Export, delete a recipe, import: it comes back. The reminder appears after a change and disappears after a backup.
+- [ ] **Step 9 — Edit, delete, original vs mine.** Edit anything; delete asks "Are you sure?". For recipes from elsewhere: View original and Reset to original.
+  **Test it:** Change a step, reload: change kept. View original shows the old step. Reset brings it back. Delete removes it.
+- [ ] **Step 10 — Tags.** Starter tags plus my own.
+  **Test it:** Add a new tag "soup" to a recipe; it's offered next time.
+- [ ] **Step 11 — Search.** Filter by title, ingredient or tag.
+  **Test it:** Typing "chicken" shows only recipes with chicken.
+- [ ] **Step 12 — "What should I cook?"** Random pick, optional tag filter.
+  **Test it:** Tap several times: different recipes. Filter "quick": only quick ones. Empty cookbook: a friendly message.
 
 **→ Version 1 is done here.**
 
-## Later — planned, not a priority
+## Later — in this order
 
-### Step 13 — Suggest from my fridge (my saved recipes)
-I type what I have ("eggs, spinach, cheese"). The site ranks my saved recipes by how many of their ingredients I have and shows what's missing.
-**Test it:** Enter ingredients from one recipe — that recipe is at the top.
+1. **Save from a web link + smart paste.** Paste a recipe URL (or a whole recipe's text) and the form fills itself in. Needs a small free helper (Cloudflare Worker) because browsers block one site from reading another.
+   - **Then an AI upgrade** for sites and messy text that plain import can't handle. AI service and budget decided when we get there; the key stays hidden in the helper.
+2. **Suggest from my fridge.** I type what I have; my saved recipes are ranked by how many ingredients I have, with what's missing.
 
-### Step 14 — Suggest new recipes from an outside service
-Use a free recipe service such as **TheMealDB** (free, no sign-up for basic use). Show suggestions (random, or by ingredient) with a **Save to my cookbook** button.
-**Test it:** Tap "Suggest something new", see a recipe, save it, find it in my cookbook.
+## Maybe someday
 
-### Step 15 — Save from a web link
-Paste a recipe URL and fill in the form automatically. This is the hardest part: many recipe sites block other websites from reading them directly, so this will likely need a small helper service. Until then, copy and paste works fine.
+- Suggestions from an outside recipe service
+- Photos
+- Offline mode
+- Sync across devices / online storage
 
-### Step 16 (optional) — Sync and safety online
-If I want my recipes on more than one device, or safe if I lose my phone: move storage to an online database with a login (for example, Supabase, which has a free tier).
+## Progress log
 
-## How we'll work
-
-- One step at a time. I test it, then we commit and move on.
-- If a step breaks something, we fix it before starting the next one.
+- 2026-10-31 — First plan written, then refined in a planning interview (grill-me). `CLAUDE.md` added as memory for future sessions.
