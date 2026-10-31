@@ -494,3 +494,20 @@ textarea:focus {
   margin-bottom: 10px;
   padding-left: 4px;
 }
+
+/* ---------- 10. Backup (bottom of the home screen) ---------- */
+
+.backup {
+  margin-top: 32px;
+}
+
+/* The quiet "✓ All recipes backed up" line. */
+.backup-status {
+  font-size: 16px;
+  margin: 0 0 16px;
+}
+
+/* The "Then choose Save to Files…" tip under the Export button. */
+.backup-hint {
+  margin: 8px 0 0;
+}

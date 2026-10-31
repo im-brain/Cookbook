@@ -5,17 +5,16 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 
 ## Current status (2026-10-31)
 
-- **Steps 1–7 done and merged.** The live site is at **Version 9** (https://im-brain.github.io/Cookbook/).
-- Step 7 (recipe list and recipe page) is merged but **not yet confirmed on the user's phone**. Check that first.
-- **Next: Step 8, Backup** (Export to iCloud Drive / Import + "N recipes changed since your last backup" reminder). It will be Version 10.
-- Recipes the user saves now are real and stay on the phone. **Do step 8 before anything risky.**
+- **Steps 1–8 done.** Step 7 confirmed on the phone. Step 8 (Backup) is **Version 10**; check it on the phone after merging.
+- **Next: Step 9, Edit, delete, original vs mine.** It will be Version 11.
+- Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first.
 
 ## What "done" means (version 1)
 
 - [ ] I can **create** my own recipes.
 - [ ] I can **save** recipes from elsewhere (typed or pasted) into my cookbook, with their source.
 - [ ] I can **edit** a saved recipe, see the **original**, and **add my own notes**.
-- [ ] I can **back up** my recipes and get them back.
+- [x] I can **back up** my recipes and get them back.
 - [ ] I can **search** my cookbook.
 - [ ] A **"What should I cook?"** button suggests a random recipe, optionally by tag.
 
@@ -98,7 +97,7 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
   **Test it:** Save one, close the app, reopen it: a message says "1 recipe saved".
 - [x] **Step 7 — See my cookbook.** A list of titles; tapping one shows the full recipe with notes above the ingredients.
   **Test it:** Save two recipes; both appear and open correctly.
-- [ ] **Step 8 — Backup.** Export (save the file to iCloud Drive) and Import. Reminder: "N recipes changed since your last backup".
+- [x] **Step 8 — Backup.** Export (save the file to iCloud Drive) and Import. Reminder: "N recipes changed since your last backup".
   **Test it:** Export, delete a recipe, import: it comes back. The reminder appears after a change and disappears after a backup.
 - [ ] **Step 9 — Edit, delete, original vs mine.** Edit anything; delete asks "Are you sure?". For recipes from elsewhere: View original and Reset to original.
   **Test it:** Change a step, reload: change kept. View original shows the old step. Reset brings it back. Delete removes it.
@@ -137,3 +136,5 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Step 6 done (Version 8): Save stores the recipe on the phone (localStorage key `cookbook.recipes`). Home shows "N recipes saved" and "✓ Saved …". Recipes from somewhere else keep an untouched `original` copy. If saved data can't be read, nothing is overwritten.
 - 2026-10-31 — Step 7 done (Version 9): home screen lists saved recipes A–Z (title + time · servings · tags). Tapping one opens its page: details, source (web links tappable), tags, notes above ingredients, bulleted ingredients, numbered steps, and a "‹ My Cookbook" back button.
 - 2026-10-31 — Handoff to a new conversation. Added "Current status" above. (PLAN.md only, so no version bump.)
+- 2026-10-31 — Step 7 confirmed on the user's phone.
+- 2026-10-31 — Step 8 done (Version 10): a Backup box on the home screen. **Export** opens the iPhone Share menu with `cookbook-backup-YYYY-MM-DD.json` (Save to Files → iCloud Drive). **Import** merges a backup in: missing recipes come back, the newer copy wins, nothing on the phone is deleted, and it asks first. The reminder says "N recipes changed since your last backup" (new, edited or deleted), or "✓ All recipes backed up".

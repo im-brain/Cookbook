@@ -30,12 +30,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- ===== VERSION NUMBER =====
-         Phones keep saved copies of style.css and app.js for a while. Adding "?v=9" makes them look like
+         Phones keep saved copies of style.css and app.js for a while. Adding "?v=10" makes them look like
          new files, so the phone downloads fresh ones. Every update raises this number in THREE places:
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="style.css?v=10">
   </head>
 
   <body>
@@ -80,8 +80,27 @@
         <!-- Shown only when there are no recipes yet. -->
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap <strong>+ Add a recipe</strong> to start.</p>
 
+        <!-- ----- Backup ----- -->
+        <!-- Export saves all recipes into one file (you put it in iCloud Drive).
+             Import reads such a file back in. app.js does the work. -->
+        <div class="card backup" id="backup-card">
+          <h2>Backup</h2>
+          <!-- app.js fills these in: a warning when recipes changed, or a quiet "all backed up" line. -->
+          <p class="message" id="backup-reminder" hidden></p>
+          <p class="subtitle backup-status" id="backup-status" hidden></p>
+          <!-- A message after Export or Import, e.g. "✓ 3 recipes added back". -->
+          <p class="message" id="backup-message" hidden></p>
+
+          <button type="button" class="button" id="export-button">Export a backup file</button>
+          <p class="hint backup-hint">Then choose <strong>Save to Files</strong> → <strong>iCloud Drive</strong>.</p>
+
+          <button type="button" class="button button-secondary" id="import-button">Import a backup file</button>
+          <!-- The real "pick a file" box is hidden; the Import button above opens it. -->
+          <input type="file" id="import-file" hidden>
+        </div>
+
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 9</p>
+        <p class="version">Version 10</p>
       </section>
 
       <!-- ===================== RECIPE PAGE SCREEN ===================== -->
@@ -218,6 +237,6 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=9"></script>
+    <script src="app.js?v=10"></script>
   </body>
 </html>
