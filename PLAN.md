@@ -5,8 +5,9 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 
 ## Current status (2026-10-31)
 
-- **Version 1 is complete: steps 1–12 done.** Steps 7–11 confirmed on the phone. Step 12 ("What should I cook?") is **Version 14**; check it on the phone after merging.
-- **Next:** use the cookbook for real for a while, then pick from **Later** (first: save from a web link + smart paste). The next site version will be 15.
+- **Version 1 is complete: steps 1–12 done.** The live site is at **Version 14**. Steps 7–11 are confirmed on the phone. Step 12 ("What should I cook?") is merged but **not yet confirmed on the phone**; check that first.
+- **Working rule:** Claude shows a plan and waits for the user's OK before changing or committing anything (see `CLAUDE.md`).
+- **Next:** the user uses the cookbook for real for a while. Then **plan together** the first **Later** item: save from a web link + smart paste (needs a small free Cloudflare Worker; secret keys live there, never in the repo). The next site version will be 15.
 - Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first.
 
 ## What "done" means (version 1)
@@ -147,3 +148,4 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Step 11 confirmed on the user's phone ("everything is looking good").
 - 2026-10-31 — Step 12 done (Version 14): a "🎲 What should I cook?" button under "+ Add a recipe" opens a box with a random recipe (tap it to open), **Pick another**, and "Pick from" chips (any, or one tag used on your recipes). Never the same recipe twice in a row. Friendly messages for an empty cookbook or a tag with only one recipe. **Version 1 is complete.**
 - 2026-10-31 — Step 12 merged. Working rule added at the user's request: Claude shows a plan and waits for an OK before changing or committing anything, and `CLAUDE.md` / `PLAN.md` are updated in every pull request. (Notes only, so no version bump; the site stays at Version 14.)
+- 2026-10-31 — Handoff to a new conversation. "Current status" updated. (PLAN.md only, so no version bump.)
