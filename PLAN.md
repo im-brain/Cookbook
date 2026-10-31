@@ -81,7 +81,7 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
   **Test it:** Claude's screenshot shows the title.
 - [x] **Step 2 — Put it on the internet.** Make the repo public and turn on GitHub Pages.
   **Test it:** Open `im-brain.github.io/Cookbook` on my iPhone and see "My Cookbook".
-- [ ] **Step 3 — Phone-friendly look.** `style.css`: readable text, big buttons, fits the screen.
+- [x] **Step 3 — Phone-friendly look.** `style.css`: readable text, big buttons, fits the screen.
   **Test it:** Nothing is tiny; no sideways scrolling.
 - [ ] **Step 4 — Add to Home Screen.** Icon + manifest so it installs like an app.
   **Test it:** Share → Add to Home Screen. The icon opens it full screen. **From now on, always use the icon.**
@@ -122,3 +122,4 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — First plan written, then refined in a planning interview (grill-me). `CLAUDE.md` added as memory for future sessions.
 - 2026-10-31 — Step 1 done: `index.html` with the title "My Cookbook". Checked on a simulated iPhone screen.
 - 2026-10-31 — Step 2 done: repo made public, GitHub Pages turned on (main branch, root). Site is live at https://im-brain.github.io/Cookbook/.
+- 2026-10-31 — Step 3 done: `style.css` added (warm colors, iPhone font, 18px text, 48px-tall buttons, automatic Dark Mode, notch-safe edges). Checked in light and dark mode: no sideways scrolling.
