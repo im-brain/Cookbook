@@ -40,4 +40,5 @@ At the end of every step, in the same pull request:
 
 ## Lessons learned
 
-_(Add short notes here as we go.)_
+- Screenshot check: a Playwright script with `devices['iPhone 13']` opening `index.html` works in the cloud session (keep the script in the scratchpad, not the repo).
+- Until Step 2 turns on GitHub Pages, the screenshot is the only test.

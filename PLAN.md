@@ -77,7 +77,7 @@ CLAUDE.md                memory for future sessions
 
 Each step ends with **"Test it"**: something I check on my phone before we move on.
 
-- [ ] **Step 1 — Hello, cookbook.** An `index.html` page titled "My Cookbook".
+- [x] **Step 1 — Hello, cookbook.** An `index.html` page titled "My Cookbook".
   **Test it:** Claude's screenshot shows the title.
 - [ ] **Step 2 — Put it on the internet.** Make the repo public and turn on GitHub Pages.
   **Test it:** Open `im-brain.github.io/Cookbook` on my iPhone and see "My Cookbook".
@@ -120,3 +120,4 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 ## Progress log
 
 - 2026-10-31 — First plan written, then refined in a planning interview (grill-me). `CLAUDE.md` added as memory for future sessions.
+- 2026-10-31 — Step 1 done: `index.html` with the title "My Cookbook". Checked on a simulated iPhone screen.
