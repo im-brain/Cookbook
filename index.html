@@ -30,12 +30,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- ===== VERSION NUMBER =====
-         Phones keep saved copies of style.css and app.js for a while. Adding "?v=8" makes them look like
+         Phones keep saved copies of style.css and app.js for a while. Adding "?v=9" makes them look like
          new files, so the phone downloads fresh ones. Every update raises this number in THREE places:
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=9">
   </head>
 
   <body>
@@ -71,15 +71,47 @@
         <!-- Shown only when opened from the Home Screen icon. -->
         <p class="installed" id="installed-note" hidden>✓ Opened from your Home Screen. Your recipes will be kept here.</p>
 
-        <!-- A "card" is a box with rounded corners. -->
-        <div class="card">
-          <p>Your list of recipes arrives in the next step.</p>
-          <!-- type="button" means "just a button" (it doesn't send a form). app.js decides what it does. -->
-          <button type="button" class="button" id="add-recipe-button">+ Add a recipe</button>
-        </div>
+        <!-- type="button" means "just a button" (it doesn't send a form). app.js decides what it does. -->
+        <button type="button" class="button" id="add-recipe-button">+ Add a recipe</button>
+
+        <!-- The list of saved recipes. app.js fills it in, one row per recipe (A to Z). -->
+        <ul class="recipe-list" id="recipe-list"></ul>
+
+        <!-- Shown only when there are no recipes yet. -->
+        <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap <strong>+ Add a recipe</strong> to start.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 8</p>
+        <p class="version">Version 9</p>
+      </section>
+
+      <!-- ===================== RECIPE PAGE SCREEN ===================== -->
+      <!-- Shows one recipe. app.js fills in every part when you tap a recipe in the list. -->
+      <section id="recipe-view-screen" hidden>
+        <button type="button" class="back-button" id="back-button">‹ My Cookbook</button>
+
+        <h1 id="view-title"></h1>
+        <!-- e.g. "Serves 4 · 30 min" -->
+        <p class="details" id="view-details"></p>
+        <!-- "From: Grandma's card" (only for recipes from somewhere else) -->
+        <p class="details" id="view-source"></p>
+        <!-- Tag pills, e.g. dinner, vegetarian -->
+        <div class="tags" id="view-tags"></div>
+
+        <!-- Notes come first, so you see them before you start cooking. -->
+        <div class="notes-box" id="view-notes-box">
+          <h2>Notes</h2>
+          <p id="view-notes"></p>
+        </div>
+
+        <div class="recipe-section" id="view-ingredients-section">
+          <h2>Ingredients</h2>
+          <ul id="view-ingredients"></ul>
+        </div>
+
+        <div class="recipe-section" id="view-steps-section">
+          <h2>Steps</h2>
+          <ol id="view-steps"></ol>
+        </div>
       </section>
 
       <!-- ===================== RECIPE FORM SCREEN ===================== -->
@@ -186,6 +218,6 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=8"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>

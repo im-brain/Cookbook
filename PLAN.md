@@ -89,7 +89,7 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
   **Test it:** I can fill in every box comfortably on my phone.
 - [x] **Step 6 — Save a recipe.** `app.js` stores it on the phone.
   **Test it:** Save one, close the app, reopen it: a message says "1 recipe saved".
-- [ ] **Step 7 — See my cookbook.** A list of titles; tapping one shows the full recipe with notes above the ingredients.
+- [x] **Step 7 — See my cookbook.** A list of titles; tapping one shows the full recipe with notes above the ingredients.
   **Test it:** Save two recipes; both appear and open correctly.
 - [ ] **Step 8 — Backup.** Export (save the file to iCloud Drive) and Import. Reminder: "N recipes changed since your last backup".
   **Test it:** Export, delete a recipe, import: it comes back. The reminder appears after a change and disappears after a backup.
@@ -128,3 +128,4 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Step 5 follow-up: ingredients and steps changed from one big text box to one box per item, with "+ Add" buttons, the keyboard's Next key, and × to remove. Steps are numbered and long ones wrap.
 - 2026-10-31 — Fix: the phone kept showing an old copy after merging (caching). Added version numbers to the file links and a "Version 7" label on the home screen. Every update raises the number.
 - 2026-10-31 — Step 6 done (Version 8): Save stores the recipe on the phone (localStorage key `cookbook.recipes`). Home shows "N recipes saved" and "✓ Saved …". Recipes from somewhere else keep an untouched `original` copy. If saved data can't be read, nothing is overwritten.
+- 2026-10-31 — Step 7 done (Version 9): home screen lists saved recipes A–Z (title + time · servings · tags). Tapping one opens its page: details, source (web links tappable), tags, notes above ingredients, bulleted ingredients, numbered steps, and a "‹ My Cookbook" back button.
