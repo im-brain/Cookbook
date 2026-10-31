@@ -3,6 +3,13 @@
 A personal cookbook website that I use on my iPhone.
 How we work and the reasons behind each decision are in `CLAUDE.md`.
 
+## Current status (2026-10-31)
+
+- **Steps 1–7 done and merged.** The live site is at **Version 9** (https://im-brain.github.io/Cookbook/).
+- Step 7 (recipe list and recipe page) is merged but **not yet confirmed on the user's phone**. Check that first.
+- **Next: Step 8, Backup** (Export to iCloud Drive / Import + "N recipes changed since your last backup" reminder). It will be Version 10.
+- Recipes the user saves now are real and stay on the phone. **Do step 8 before anything risky.**
+
 ## What "done" means (version 1)
 
 - [ ] I can **create** my own recipes.
@@ -129,3 +136,4 @@ Each step ends with **"Test it"**: something I check on my phone before we move 
 - 2026-10-31 — Fix: the phone kept showing an old copy after merging (caching). Added version numbers to the file links and a "Version 7" label on the home screen. Every update raises the number.
 - 2026-10-31 — Step 6 done (Version 8): Save stores the recipe on the phone (localStorage key `cookbook.recipes`). Home shows "N recipes saved" and "✓ Saved …". Recipes from somewhere else keep an untouched `original` copy. If saved data can't be read, nothing is overwritten.
 - 2026-10-31 — Step 7 done (Version 9): home screen lists saved recipes A–Z (title + time · servings · tags). Tapping one opens its page: details, source (web links tappable), tags, notes above ingredients, bulleted ingredients, numbered steps, and a "‹ My Cookbook" back button.
+- 2026-10-31 — Handoff to a new conversation. Added "Current status" above. (PLAN.md only, so no version bump.)
