@@ -108,18 +108,24 @@
           </div>
 
           <!-- ----- Ingredients ----- -->
+          <!-- One box per ingredient. app.js adds the boxes into the empty list below. -->
           <div class="field">
-            <label for="ingredients">Ingredients</label>
-            <p class="hint">One ingredient per line.</p>
-            <!-- <textarea> is a big box for several lines of text. -->
-            <textarea id="ingredients" name="ingredients" rows="6" placeholder="4 tomatoes&#10;1 onion&#10;2 cups stock"></textarea>
+            <p class="field-label" id="ingredients-label">Ingredients</p>
+            <p class="hint">Type one, then tap <strong>+ Add ingredient</strong> (or the keyboard's Next) for the next one.</p>
+            <!-- <ul> is a list without numbers. data-... settings tell app.js how to fill it. -->
+            <ul class="list-editor" id="ingredients-list" aria-labelledby="ingredients-label"
+                data-name="ingredients" data-item="ingredient" data-example="e.g. 4 tomatoes"></ul>
+            <button type="button" class="button button-secondary add-row" data-list="ingredients-list">+ Add ingredient</button>
           </div>
 
           <!-- ----- Steps ----- -->
           <div class="field">
-            <label for="steps">Steps</label>
-            <p class="hint">One step per line.</p>
-            <textarea id="steps" name="steps" rows="6" placeholder="Chop everything&#10;Simmer 20 minutes&#10;Blend"></textarea>
+            <p class="field-label" id="steps-label">Steps</p>
+            <p class="hint">One step at a time, in order.</p>
+            <!-- <ol> is a numbered list, so steps show 1, 2, 3... -->
+            <ol class="list-editor numbered" id="steps-list" aria-labelledby="steps-label"
+                data-name="steps" data-item="step" data-example="e.g. Chop the tomatoes and onion"></ol>
+            <button type="button" class="button button-secondary add-row" data-list="steps-list">+ Add step</button>
           </div>
 
           <!-- ----- Servings and time, side by side ----- -->
