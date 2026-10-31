@@ -1,0 +1,44 @@
+# CLAUDE.md — read this first every session
+
+This is a personal cookbook website. The full plan and progress are in `PLAN.md`.
+
+## About the user
+
+- New to coding. Explain every change in plain language and avoid jargon (or explain it the first time).
+- Uses an **iPhone with Safari** only. Design and test for that.
+
+## How we work
+
+1. Work on **one step from `PLAN.md` at a time**.
+2. Claude writes the code and explains what changed and why, in plain words.
+3. Claude checks the step in a simulated iPhone screen (Playwright, iPhone viewport) and sends the user a screenshot.
+4. Claude opens a pull request. The user taps **Merge** on GitHub.
+5. About a minute later the live site updates at **https://im-brain.github.io/Cookbook/**, and the user tests it on their phone.
+6. If something is broken, fix it before starting the next step.
+
+## Memory rule (important)
+
+New sessions start with no memory of earlier conversations, so this file and `PLAN.md` are the memory.
+At the end of every step, in the same pull request:
+- In `PLAN.md`: tick the step's checkbox and add a dated line to the **Progress log**.
+- In this file: add any new decision or lesson to **Key decisions** or **Lessons learned**.
+
+## Key decisions (and why)
+
+- **Plain HTML, CSS and JavaScript.** No framework, no build tools. Simplest to learn; edit a file, see the change.
+- **Recipes are stored on the phone (localStorage).** No account, database or cost. Online sync is a "maybe someday".
+- **Public repository + GitHub Pages.** Free Pages doesn't work for private repos. Only code is public; recipes never go in the repo.
+- **Always open the cookbook from the Home Screen icon.** Safari deletes a website's saved data after ~7 days of Safari use without visiting it, but Home Screen apps are exempt. The Home Screen app and a Safari tab have **separate storage**, so recipes saved in one don't appear in the other. That's why the install step comes early, before real recipes are saved.
+- **Backups:** Export a file (save it to iCloud Drive), Import it back. The reminder shows "N recipes changed since your last backup" whenever there are unbacked-up changes (risk is losing the phone, not Safari).
+- **Two kinds of recipe:** "My own" (no original) and "From somewhere else" (optional source, e.g. a link or "Grandma's card"). For the second kind, the first saved version is kept as the **original**; edits are "mine". Show "mine" by default, with **View original** and **Reset to original** (asks first).
+- **Recipe fields:** title, ingredients (one per line), steps (one per line), servings, total time, tags, notes, kind, source. **No photos** (phone storage is about 5 MB).
+- **Notes** are separate from edits and shown **above the ingredients**.
+- **Tags:** starter list (breakfast, lunch, dinner, dessert, quick, vegetarian) plus the user's own.
+- **No outside recipe service for now.** TheMealDB and Spoonacular were considered and dropped.
+- **Secret keys** (for the future link-import helper or AI) must live in a small Cloudflare Worker, **never** in the website's code, because the repo is public.
+- **No offline mode yet.**
+
+## Lessons learned
+
+- Screenshot check: a Playwright script with `devices['iPhone 13']` opening `index.html` works in the cloud session (keep the script in the scratchpad, not the repo).
+- Until Step 2 turns on GitHub Pages, the screenshot is the only test.
