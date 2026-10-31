@@ -30,12 +30,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- ===== VERSION NUMBER =====
-         Phones keep saved copies of style.css and app.js for a while. Adding "?v=7" makes them look like
+         Phones keep saved copies of style.css and app.js for a while. Adding "?v=8" makes them look like
          new files, so the phone downloads fresh ones. Every update raises this number in THREE places:
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="style.css?v=8">
   </head>
 
   <body>
@@ -50,7 +50,8 @@
         <h1>My Cookbook</h1>
 
         <!-- class="subtitle" tells style.css to show this in a softer color. -->
-        <p class="subtitle">Recipes coming soon.</p>
+        <!-- id="recipe-count": app.js replaces this text with how many recipes are saved. -->
+        <p class="subtitle" id="recipe-count">No recipes saved yet.</p>
 
         <!-- Shown only in a normal Safari tab (app.js decides). "hidden" starts it hidden. -->
         <div class="card notice" id="install-help" hidden>
@@ -64,18 +65,21 @@
           </ol>
         </div>
 
+        <!-- A message app.js shows after saving, e.g. "Saved Tomato soup". -->
+        <p class="message" id="home-message" hidden></p>
+
         <!-- Shown only when opened from the Home Screen icon. -->
         <p class="installed" id="installed-note" hidden>✓ Opened from your Home Screen. Your recipes will be kept here.</p>
 
         <!-- A "card" is a box with rounded corners. -->
         <div class="card">
-          <p>This is where your recipes will appear.</p>
+          <p>Your list of recipes arrives in the next step.</p>
           <!-- type="button" means "just a button" (it doesn't send a form). app.js decides what it does. -->
           <button type="button" class="button" id="add-recipe-button">+ Add a recipe</button>
         </div>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 7</p>
+        <p class="version">Version 8</p>
       </section>
 
       <!-- ===================== RECIPE FORM SCREEN ===================== -->
@@ -182,6 +186,6 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=8"></script>
   </body>
 </html>
