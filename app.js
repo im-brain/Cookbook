@@ -940,8 +940,153 @@ document.getElementById("start-cooking-button").addEventListener("click", functi
   document.getElementById("cook-ingredients-section").hidden = c.ingredients.length === 0;
   fillCookList(document.getElementById("cook-steps"), c.steps, true);
   document.getElementById("cook-steps-section").hidden = c.steps.length === 0;
+
+  // Scaling starts at the saved amounts (1×) every time.
+  cookIngredients = c.ingredients;
+  cookBaseServings = c.servings;   // a number, or null if the recipe doesn't say
+  cookServings = c.servings;
+  document.querySelector(".scale-card").hidden = c.ingredients.length === 0;
+  document.getElementById("servings-row").hidden = c.servings === null;
+  setCookFactor(1);
+
   showScreen(cookingScreen);
   keepAwake();
+});
+
+// ----- Scaling the recipe (step 14) -----
+// Only while cooking: the saved recipe never changes.
+
+let cookIngredients = [];     // the ingredient lines as saved
+let cookBaseServings = null;  // servings as saved (or null)
+let cookServings = null;      // servings shown right now
+let cookFactor = 1;           // 1 = as saved, 2 = double, 0.5 = half, ...
+
+const FRACTION_CHARACTERS = { "½": 1 / 2, "¼": 1 / 4, "¾": 3 / 4, "⅓": 1 / 3, "⅔": 2 / 3, "⅛": 1 / 8 };
+
+// One amount: "1 1/2", "1½", "1/2", "1.5", "2" or "½".
+const AMOUNT = "(?:\\d+\\s+\\d+\\/\\d+|\\d+\\s*[½¼¾⅓⅔⅛]|\\d+\\/\\d+|\\d+(?:\\.\\d+)?|[½¼¾⅓⅔⅛])";
+// An amount at the very start of a line, maybe a range ("2-3", "2 to 3").
+const LEADING_AMOUNT = new RegExp(
+  "^(\\s*)(" + AMOUNT + ")(?:(\\s*(?:-|–|—|to)\\s*)(" + AMOUNT + "))?"
+);
+
+// Turn amount text like "1 1/2" or "1½" into a number (1.5). null if it makes no sense.
+function amountToNumber(text) {
+  let rest = text.trim();
+  let total = 0;
+  const fraction = rest.match(/(\d+)\/(\d+)$/);
+  if (fraction) {
+    total += Number(fraction[1]) / Number(fraction[2]);
+    rest = rest.slice(0, fraction.index);
+  }
+  const character = rest.match(/[½¼¾⅓⅔⅛]$/);
+  if (character) {
+    total += FRACTION_CHARACTERS[character[0]];
+    rest = rest.slice(0, character.index);
+  }
+  rest = rest.trim();
+  if (rest !== "") {
+    total += Number(rest);
+  }
+  return Number.isFinite(total) && total > 0 ? total : null;
+}
+
+// Look for an amount at the start of an ingredient line.
+// Returns { before, low, separator, high, rest } (high/separator only for ranges), or null.
+function readAmount(line) {
+  const match = line.match(LEADING_AMOUNT);
+  if (!match) {
+    return null;
+  }
+  const low = amountToNumber(match[2]);
+  const high = match[4] ? amountToNumber(match[4]) : null;
+  if (low === null || (match[4] && high === null)) {
+    return null;
+  }
+  return {
+    before: match[1],
+    low: low,
+    separator: match[3] || "",
+    high: high,
+    rest: line.slice(match[0].length)
+  };
+}
+
+// Write a number the way a cook would: 1.5 → "1½", 0.33 → "⅓", 375.2 → "375".
+// 10 or more: whole numbers. Smaller: whole part + the nearest ⅛, ¼, ⅓, ½, ⅔ or ¾.
+function kitchenNumber(value) {
+  if (value >= 10) {
+    return String(Math.round(value));
+  }
+  let whole = Math.floor(value);
+  const part = value - whole;
+  const choices = [[0, ""], [1 / 8, "⅛"], [1 / 4, "¼"], [1 / 3, "⅓"], [1 / 2, "½"], [2 / 3, "⅔"], [3 / 4, "¾"], [1, ""]];
+  let best = choices[0];
+  choices.forEach(function (choice) {
+    if (Math.abs(part - choice[0]) < Math.abs(part - best[0])) {
+      best = choice;
+    }
+  });
+  if (best[0] === 1) {
+    whole += 1;
+  }
+  const text = (whole > 0 ? String(whole) : "") + best[1];
+  return text === "" ? "⅛" : text; // a tiny amount never shows as nothing
+}
+
+// Change the amounts on the cooking screen. The ingredient boxes are updated in place,
+// so anything already ticked off stays ticked.
+function setCookFactor(factor) {
+  cookFactor = factor;
+  const texts = document.querySelectorAll("#cook-ingredients .cook-text");
+  texts.forEach(function (span, index) {
+    const line = cookIngredients[index];
+    span.innerHTML = ""; // empty it (no recipe text goes in through innerHTML)
+    const amount = factor === 1 ? null : readAmount(line);
+    if (amount === null) {
+      span.textContent = line;   // as saved: 1×, or no amount at the start
+      return;
+    }
+    let scaled = kitchenNumber(amount.low * factor);
+    if (amount.high !== null) {
+      scaled += amount.separator + kitchenNumber(amount.high * factor);
+    }
+    const strong = document.createElement("strong");
+    strong.className = "scaled";
+    strong.textContent = scaled;
+    span.append(amount.before, strong, amount.rest);
+  });
+
+  // Servings number, and the − button can't go below 1.
+  if (cookBaseServings !== null) {
+    document.getElementById("cook-servings").textContent = kitchenNumber(cookServings);
+    document.getElementById("servings-less").disabled = cookServings <= 1;
+  }
+
+  // Highlight the ×-button that matches (none for, say, 6 of 4 servings).
+  document.querySelectorAll(".scale-button").forEach(function (button) {
+    const matches = Math.abs(Number(button.dataset.factor) - factor) < 0.0001;
+    button.setAttribute("aria-pressed", matches ? "true" : "false");
+  });
+}
+
+// − / + change the servings by one; the amounts follow.
+function changeServings(step) {
+  cookServings = Math.max(1, Math.round(cookServings) + step);
+  setCookFactor(cookServings / cookBaseServings);
+}
+document.getElementById("servings-less").addEventListener("click", function () { changeServings(-1); });
+document.getElementById("servings-more").addEventListener("click", function () { changeServings(1); });
+
+// ½× 1× 2× 3×
+document.querySelectorAll(".scale-button").forEach(function (button) {
+  button.addEventListener("click", function () {
+    const factor = Number(button.dataset.factor);
+    if (cookBaseServings !== null) {
+      cookServings = cookBaseServings * factor;
+    }
+    setCookFactor(factor);
+  });
 });
 
 // "Done cooking" (top or bottom) → back to the recipe page; the screen may sleep again.

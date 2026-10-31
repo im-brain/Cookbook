@@ -731,3 +731,79 @@ textarea:focus {
 .cook-done {
   margin-top: 24px;
 }
+
+/* ---------- 16. Scaling on the cooking screen (step 14) ---------- */
+
+.scale-card {
+  margin-top: 16px;
+}
+
+/* "Serves  −  4  +" */
+.servings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.servings-row > span:first-child {
+  font-weight: 600;
+  margin-right: auto;   /* pushes − 4 + to the right */
+}
+.servings-number {
+  min-width: 2.2em;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Round − and + buttons, 48px so they're easy to tap. */
+.round-button {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--background);
+  color: var(--accent);
+  font: inherit;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+.round-button:active {
+  opacity: 0.7;
+}
+.round-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ½× 1× 2× 3×: pills like the tag chips; the chosen one is filled. */
+.scale-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.scale-button {
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.scale-button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.scale-card .hint {
+  margin: 12px 0 0;
+}
+
+/* A changed amount, so you can see it was scaled. */
+.scaled {
+  color: var(--accent);
+}
