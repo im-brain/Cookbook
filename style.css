@@ -311,7 +311,6 @@ textarea:focus {
   list-style: none;   /* we draw our own bullets and numbers below */
   margin: 0 0 8px;
   padding: 0;
-  counter-reset: row; /* start counting rows at 0 */
 }
 /* One row: marker, typing box, and a remove (×) button. */
 .list-editor li {
@@ -319,7 +318,6 @@ textarea:focus {
   align-items: flex-start;
   gap: 8px;
   margin: 0 0 8px;
-  counter-increment: row; /* count this row */
 }
 /* The marker in front of each row: a dot for ingredients... */
 .list-editor li::before {
@@ -331,7 +329,7 @@ textarea:focus {
 }
 /* ...and the row's number for steps (1., 2., 3. ...). */
 .list-editor.numbered li::before {
-  content: counter(row) ".";
+  content: attr(data-number) ".";   /* app.js numbers the rows (numberRows) */
   font-weight: 600;
 }
 /* The typing box takes up the rest of the row. */
@@ -657,7 +655,6 @@ textarea:focus {
   list-style: none;
   padding: 0;
   margin: 0;
-  counter-reset: cook-step;   /* for numbering the steps ourselves */
 }
 
 .cooking .recipe-section li {
@@ -694,11 +691,8 @@ textarea:focus {
 }
 
 /* Steps show their number in the circle instead. */
-.cook-list.numbered li {
-  counter-increment: cook-step;
-}
 .cook-list.numbered .cook-item::before {
-  content: counter(cook-step);
+  content: attr(data-number);   /* app.js numbers the steps (fillCookList) */
   font-size: 16px;
   font-weight: 700;
   line-height: 22px;
@@ -902,4 +896,34 @@ select {
 
 .autofill-card .message {
   margin: 12px 0 0;
+}
+
+/* ---------- 19. Section headings in ingredients and steps (Version 20) ----------
+   A line ending with ":" ("Brined Lamb:") is shown as a heading. Step numbers start again at 1 after it. */
+
+/* Recipe page */
+.recipe-section li.section-heading {
+  list-style: none;
+  font-weight: 700;
+  margin: 18px 0 8px -24px;   /* line up with the section's left edge, where the bullets are */
+}
+.recipe-section li.section-heading:first-child {
+  margin-top: 0;
+}
+
+/* Cooking screen */
+.cooking .recipe-section li.cook-section {
+  font-weight: 700;
+  margin: 22px 0 10px;
+}
+.cooking .recipe-section li.cook-section:first-child {
+  margin-top: 0;
+}
+
+/* The form: no bullet or number in front of a heading row, and bold text */
+.list-editor li.section-row::before {
+  content: "";
+}
+.list-editor li.section-row textarea {
+  font-weight: 700;
 }

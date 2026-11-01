@@ -270,7 +270,36 @@ function addRow(list, afterRow) {
   } else {
     list.append(row);
   }
+  numberRows(list);
   return box;
+}
+
+// A line ending with ":" ("Brined Lamb:", "For the sauce:") is a section heading, not an
+// ingredient or step. Nothing special is stored: it's just how the line is shown.
+function isSectionHeading(line) {
+  const text = line.trim();
+  return text.length > 1 && text.length <= 60 && text.endsWith(":");
+}
+
+// In the form: show a row as a section heading (no bullet or number) when its text ends with ":".
+function markSectionRow(box) {
+  box.closest("li").classList.toggle("section-row", isSectionHeading(box.value));
+  numberRows(box.closest("ol, ul"));
+}
+
+// Write each row's step number (1, 2, 3...) into data-number; style.css shows it.
+// After a section heading the numbers start again at 1.
+function numberRows(list) {
+  let number = 0;
+  Array.from(list.children).forEach(function (row) {
+    if (row.classList.contains("section-row")) {
+      number = 0;
+      row.dataset.number = "";
+    } else {
+      number += 1;
+      row.dataset.number = number;
+    }
+  });
 }
 
 // Empty a list and give it a single blank row.
@@ -311,6 +340,7 @@ document.querySelectorAll(".add-row").forEach(function (button) {
   list.addEventListener("input", function (event) {
     if (event.target.tagName === "TEXTAREA") {
       fitHeight(event.target);
+      markSectionRow(event.target);
     }
   });
 
@@ -320,10 +350,12 @@ document.querySelectorAll(".add-row").forEach(function (button) {
       const row = event.target.closest("li");
       if (list.children.length > 1) {
         row.remove();
+        numberRows(list);
       } else {
         const box = row.querySelector("textarea");
         box.value = "";
         fitHeight(box);
+        markSectionRow(box);
       }
     }
   });
@@ -609,9 +641,17 @@ function makeRecipeButton(recipe) {
 // Fill a list (<ul> or <ol>) with one item per line of text.
 function fillList(listElement, items) {
   listElement.innerHTML = "";
+  let afterHeading = false;
   items.forEach(function (text) {
     const item = document.createElement("li");
     item.textContent = text;
+    if (isSectionHeading(text)) {
+      item.className = "section-heading";   // bold, no bullet or number
+      afterHeading = true;
+    } else if (afterHeading) {
+      item.value = 1;                        // numbered lists start again at 1 after a heading
+      afterHeading = false;
+    }
     listElement.append(item);
   });
 }
@@ -742,6 +782,7 @@ function fillEditList(list, items) {
   items.forEach(function (text) {
     const box = addRow(list);
     box.value = text;
+    markSectionRow(box);
   });
 }
 
@@ -876,14 +917,25 @@ function appendWithBoldTimes(element, text) {
 // Fill a cooking list: one big tappable item per line. Tapping ticks it off (or back on).
 function fillCookList(listElement, items, boldTimes) {
   listElement.innerHTML = "";
-  items.forEach(function (text) {
+  let number = 0;                         // step numbers start again at 1 after a heading
+  items.forEach(function (text, index) {
     const item = document.createElement("li");
+    if (isSectionHeading(text)) {
+      item.className = "cook-section";    // a section heading: not tickable, not numbered
+      item.textContent = text;
+      listElement.append(item);
+      number = 0;
+      return;
+    }
+    number += 1;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "cook-item";
     button.setAttribute("aria-pressed", "false"); // tells screen readers "not ticked"
+    button.dataset.number = number;               // shown in the circle for steps (style.css)
     const words = document.createElement("span"); // keeps the text together, next to the tick circle
     words.className = "cook-text";
+    words.dataset.index = index;                   // which saved line this is (scaling uses it)
     if (boldTimes) {
       appendWithBoldTimes(words, text);
     } else {
@@ -1043,8 +1095,8 @@ function kitchenNumber(value) {
 function setCookFactor(factor) {
   cookFactor = factor;
   const texts = document.querySelectorAll("#cook-ingredients .cook-text");
-  texts.forEach(function (span, index) {
-    const line = cookIngredients[index];
+  texts.forEach(function (span) {
+    const line = cookIngredients[Number(span.dataset.index)];
     span.innerHTML = ""; // empty it (no recipe text goes in through innerHTML)
     const amount = factor === 1 ? null : readAmount(line);
     if (amount === null) {
