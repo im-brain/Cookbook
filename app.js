@@ -1751,7 +1751,7 @@ document.getElementById("autofill-go").addEventListener("click", function () {
     return;
   }
   if (/^https?:\/\/\S+$/i.test(text)) {
-    showAutofillMessage("Links come in the next update. For now, open the recipe in Safari, copy its text, and paste that here.");
+    fillFromLink(text, false);   // a web link: ask the helper (step 17)
     return;
   }
   const recipe = parseRecipeText(text);
@@ -1769,6 +1769,149 @@ document.getElementById("autofill-go").addEventListener("click", function () {
   }
   showAutofillMessage(message);
 });
+
+// ======================================================================
+// ---------- Fill in from a web link (step 17) ----------
+// ======================================================================
+// A web page can't read other websites, so a small helper on Cloudflare does it
+// (its code is in worker/recipe-helper.js). It sends back only the recipe parts.
+// This address isn't secret: the helper only answers the cookbook's own website.
+const HELPER_URL = "";   // filled in once the helper is set up on Cloudflare
+
+const autofillGo = document.getElementById("autofill-go");
+
+// Are two links the same recipe page? Ignores http/https, "www.", a final "/", and "#..." at the end.
+function sameLink(a, b) {
+  function tidy(link) {
+    return String(link || "").trim().toLowerCase()
+      .replace(/#.*$/, "").replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
+  }
+  return tidy(a) !== "" && tidy(a) === tidy(b);
+}
+
+// Show a message with buttons in the Fill-in box (e.g. "Open it" / "Fill in anyway").
+function showAutofillChoice(text, choices) {
+  autofillMessage.innerHTML = "";          // empty it; the text goes in with textContent below
+  const words = document.createElement("span");
+  words.textContent = text;
+  const row = document.createElement("span");
+  row.className = "autofill-choices";
+  choices.forEach(function (choice) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "button" + (choice.secondary ? " button-secondary" : "");
+    button.textContent = choice.label;
+    button.addEventListener("click", choice.action);
+    row.append(button);
+  });
+  autofillMessage.append(words, row);
+  autofillMessage.hidden = false;
+}
+
+// Tick website categories that match a tag chip; add new ones as unticked chips.
+// Tags you already ticked stay ticked.
+function suggestTags(categories) {
+  let added = 0;
+  categories.forEach(function (category) {
+    const tag = cleanTag(String(category));
+    if (tag === "") {
+      return;
+    }
+    const existing = Array.from(tagChips.querySelectorAll('input[name="tags"]')).find(function (box) {
+      return box.value === tag;
+    });
+    if (existing) {
+      existing.checked = true;
+    } else {
+      addTagChip(tag, false);
+      added += 1;
+    }
+  });
+  return added;
+}
+
+// Only keep text lists from the helper's answer (just in case).
+function textList(value) {
+  return Array.isArray(value) ? value.filter(function (item) { return typeof item === "string" && item.trim() !== ""; }) : [];
+}
+function wholeNumberOrNull(value) {
+  return typeof value === "number" && value > 0 && value < 100000 ? Math.round(value) : null;
+}
+
+// Ask the helper for the recipe at "link" and fill in the form.
+// "anyway" = true skips the "you already have this recipe" check.
+async function fillFromLink(link, anyway) {
+  if (HELPER_URL === "") {
+    showAutofillMessage("The link helper isn't set up yet. For now, open the recipe in Safari, copy its text, and paste that here.");
+    return;
+  }
+
+  // Already saved a recipe from this link?
+  if (!anyway) {
+    const existing = (loadRecipes() || []).find(function (r) { return sameLink(r.source, link); });
+    if (existing) {
+      showAutofillChoice("You already have “" + existing.current.title + "” from this link.", [
+        { label: "Open it", secondary: true, action: function () { showRecipe(existing.id, false); } },
+        { label: "Fill in anyway", action: function () { fillFromLink(link, true); } }
+      ]);
+      return;
+    }
+  }
+
+  // Ask the helper. Give up after 20 seconds.
+  autofillGo.disabled = true;
+  autofillGo.textContent = "Reading…";
+  showAutofillMessage("Reading the recipe from the website…");
+  const stopper = new AbortController();
+  const timer = setTimeout(function () { stopper.abort(); }, 20000);
+  let answer;
+  try {
+    const response = await fetch(HELPER_URL + "?url=" + encodeURIComponent(link), { signal: stopper.signal });
+    answer = await response.json();
+  } catch (error) {
+    answer = null;
+  } finally {
+    clearTimeout(timer);
+    autofillGo.disabled = false;
+    autofillGo.textContent = "Fill in";
+  }
+
+  if (answer === null || typeof answer !== "object") {
+    showAutofillMessage("Couldn't reach the link helper. Check your internet connection and try again.");
+    return;
+  }
+  if (!answer.ok || !answer.recipe) {
+    const reasons = {
+      "blocked": "This website didn't let the cookbook read it. Open the recipe in Safari, copy its text, and paste that here instead.",
+      "no-recipe": "I couldn't find a recipe on that page. Open it in Safari, copy the recipe's text, and paste that here instead.",
+      "not-found": "That page doesn't exist any more (or the link is incomplete). Check the link and try again.",
+      "bad-link": "That doesn't look like a web link. Copy it again from Safari (Share → Copy)."
+    };
+    showAutofillMessage(reasons[answer.reason] || "Something went wrong reading that page. Try copying the recipe's text instead.");
+    return;
+  }
+
+  const found = answer.recipe;
+  const recipe = {
+    title: typeof found.title === "string" ? found.title.slice(0, 200) : "",
+    ingredients: textList(found.ingredients),
+    steps: textList(found.steps),
+    servings: wholeNumberOrNull(found.servings),
+    timeMinutes: wholeNumberOrNull(found.timeMinutes),
+    source: link
+  };
+  if (formHasContent() && !window.confirm("Replace what you've typed?\n\nThe title, source, servings, time, ingredients and steps will be replaced. Notes and tags stay.")) {
+    autofillMessage.hidden = true;
+    return;
+  }
+  fillFormFromRecipe(recipe);
+  const newTags = suggestTags(textList(found.categories));
+  let message = "✓ Filled in from the website. Check everything below, add notes, then tap Save.";
+  if (newTags > 0) {
+    message += " New tags from the website are shown unticked; tick any you want.";
+  }
+  showAutofillMessage(message);
+}
 
 // "📋 Paste" button. The iPhone shows a small "Paste" bubble to confirm; tap it.
 document.getElementById("autofill-paste").addEventListener("click", async function () {

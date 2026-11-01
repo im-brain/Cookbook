@@ -30,12 +30,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- ===== VERSION NUMBER =====
-         Phones keep saved copies of style.css and app.js for a while. Adding "?v=20" makes them look like
+         Phones keep saved copies of style.css and app.js for a while. Adding "?v=21" makes them look like
          new files, so the phone downloads fresh ones. Every update raises this number in THREE places:
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=20">
+    <link rel="stylesheet" href="style.css?v=21">
   </head>
 
   <body>
@@ -131,7 +131,7 @@
         </div>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 20</p>
+        <p class="version">Version 21</p>
       </section>
 
       <!-- ===================== RECIPE PAGE SCREEN ===================== -->
@@ -300,8 +300,8 @@
                Nothing is saved until you tap Save. The box has no "name", so Save ignores it. -->
           <div class="card autofill-card" id="autofill-card">
             <label class="autofill-heading" for="autofill-text">✨ Fill in automatically</label>
-            <p class="hint">Copy a recipe's text in Safari, then paste it here. You can check and fix everything before saving.</p>
-            <textarea id="autofill-text" rows="3" placeholder="Paste a recipe here"></textarea>
+            <p class="hint">Copy a recipe's link (Share → Copy) or its text in Safari, then paste it here. You can check and fix everything before saving.</p>
+            <textarea id="autofill-text" rows="3" placeholder="Paste a recipe link or text here"></textarea>
             <div class="autofill-buttons">
               <button type="button" class="button button-secondary" id="autofill-paste">📋 Paste</button>
               <button type="button" class="button" id="autofill-go">Fill in</button>
@@ -406,6 +406,6 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=20"></script>
+    <script src="app.js?v=21"></script>
   </body>
 </html>
