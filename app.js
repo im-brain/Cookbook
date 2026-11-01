@@ -1776,7 +1776,7 @@ document.getElementById("autofill-go").addEventListener("click", function () {
 // A web page can't read other websites, so a small helper on Cloudflare does it
 // (its code is in worker/recipe-helper.js). It sends back only the recipe parts.
 // This address isn't secret: the helper only answers the cookbook's own website.
-const HELPER_URL = "";   // filled in once the helper is set up on Cloudflare
+const HELPER_URL = "https://cookbook-helper.heydenberkbrian.workers.dev/";   // set up on Cloudflare (step 17)
 
 const autofillGo = document.getElementById("autofill-go");
 
