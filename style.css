@@ -688,6 +688,13 @@ textarea:focus {
   height: 26px;
   border: 2px solid var(--muted);
   border-radius: 50%;
+  /* The circle centers its number or ✓ itself (Version 22). A fixed line-height
+     left the number about 2px too high on the iPhone. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;   /* every digit the same width */
 }
 
 /* Steps show their number in the circle instead. */
@@ -695,8 +702,6 @@ textarea:focus {
   content: attr(data-number);   /* app.js numbers the steps (fillCookList) */
   font-size: 16px;
   font-weight: 700;
-  line-height: 22px;
-  text-align: center;
   color: var(--muted);
 }
 
@@ -723,8 +728,6 @@ textarea:focus {
   color: var(--accent-text);
   font-size: 16px;
   font-weight: 700;
-  line-height: 22px;
-  text-align: center;
 }
 
 /* Cooking times in steps ("20 minutes"), easy to spot. */
