@@ -5,10 +5,9 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 
 ## Current status (2026-11-01)
 
-- **Version 1 is complete and confirmed on the phone** (steps 1–12, Version 14).
-- **Cooking mode is built** (steps 13–15). Steps 13–14 and the Version 17 look fix are merged. **Step 15 (converter) is done as Version 18**, waiting for merge and a phone test.
+- **Version 1** (steps 1–12) and **Cooking mode** (steps 13–15, Version 18) are done.
+- **Now building "Import a recipe"** (steps 16–17 below), planned in a grill-me interview. **Step 16 (smart paste) is done as Version 19**, waiting for merge and a phone test. Next: step 17 (from a link, with a free Cloudflare helper, Version 20). The user will need to create a free Cloudflare account for it; Claude gives tap-by-tap steps.
 - **Working rule:** Claude shows a plan and waits for the user's OK before changing or committing anything (see `CLAUDE.md`).
-- Next: **plan together** save from a web link + smart paste (needs a small free Cloudflare Worker; secret keys live there, never in the repo).
 - Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first.
 
 ## What "done" means (version 1)
@@ -123,9 +122,18 @@ Decided in a grill-me interview (2026-10-31). Details in `CLAUDE.md` → Key dec
 - [x] **Step 15 — Converter (Version 18).** "⚖️ Convert" box on the cooking screen. US measures (cup 240 ml). Volumes (cups, tbsp, tsp, fl oz, ml, l), weights (oz, lb, g, kg), °F ↔ °C, and cups ↔ grams for flour, white/brown/powdered sugar, butter, rice, rolled oats, cocoa, milk/water, honey, oil, grated cheese.
   **Test it:** 1 cup flour → about 120 g; 350 °F → about 175 °C; 1 lb → about 454 g.
 
+## Import a recipe — steps 16–17
+
+Decided in a grill-me interview (2026-11-01). Details in `CLAUDE.md` → Key decisions.
+
+- [x] **Step 16 — Smart paste (Version 19).** A "✨ Fill in automatically" box at the top of the New recipe form (not when editing): paste a recipe's text (📋 Paste button or press-and-hold), tap **Fill in**, and the title, ingredients, steps, servings, time and any web link (as Source) are filled in, with "From somewhere else" picked. Nothing is saved until you tap Save. Asks first if you've already typed something. Without "Ingredients"/"Instructions" headings it guesses and says so. Runs only on the phone.
+  **Test it:** In Safari, open a recipe, select from the title down to the last step, Copy. In the cookbook: + Add a recipe → 📋 Paste → Fill in. Check the boxes, Save, and open the recipe.
+- [ ] **Step 17 — From a link (Version 20).** Paste a recipe's web link instead; a free Cloudflare Worker helper reads the page (most recipe sites include a hidden, tidy copy of the recipe) and sends back only the recipe. Website categories: ones matching your tags are ticked, new ones show as unticked chips. The description is ignored. Warns if you already saved a recipe from that link. If a site refuses the helper, it suggests copying the text instead (step 16). The user creates the free Cloudflare account; the helper's code is kept in `worker/` (no secrets) and only answers the cookbook's site.
+  **Test it:** Paste a link from a big recipe site → Fill in → everything filled in; paste the same link again after saving → the "already saved" warning.
+
 ## Later — in this order
 
-1. **Save from a web link + smart paste.** Paste a recipe URL (or a whole recipe's text) and the form fills itself in. Needs a small free helper (Cloudflare Worker) because browsers block one site from reading another.
+1. **Save from a web link + smart paste.** *(Now steps 16–17 above.)* Paste a recipe URL (or a whole recipe's text) and the form fills itself in. Needs a small free helper (Cloudflare Worker) because browsers block one site from reading another.
    - **Then an AI upgrade** for sites and messy text that plain import can't handle. AI service and budget decided when we get there; the key stays hidden in the helper.
 2. **Suggest from my fridge.** I type what I have; my saved recipes are ranked by how many ingredients I have, with what's missing.
 
@@ -167,3 +175,5 @@ Decided in a grill-me interview (2026-10-31). Details in `CLAUDE.md` → Key dec
 - 2026-10-31 — Step 14 done (Version 16): a box at the top of the cooking screen with "Serves − 4 +" (only if the recipe has servings) and ½×, 1×, 2×, 3× buttons. The amount at the start of each ingredient changes and is shown in color, as kitchen fractions (1½, ¾, ⅓); 10 or more are whole numbers. Ranges ("2-3 cloves") scale both ends. Ticks are kept when you change the amounts. Starting to cook again begins at the saved amounts; the saved recipe never changes. Known limit: words don't change ("1 cups", "1 tomatoes").
 - 2026-10-31 — Step 14 merged. Look fix (Version 17), from the user's screenshot review: text is now centered next to the tick circles (also for two-line items) and inside the − / + and ½×–3× buttons. The ½×, 1×, 2×, 3× buttons are kept but smaller (user's choice), since − / + servings is the main control. The converter moves to Version 18.
 - 2026-11-01 — Step 15 done (Version 18): a "⚖️ Convert" button under the scaling box opens a calculator: Amount, From (cups, tbsp, tsp, fl oz, ml, liters, oz, lb, g, kg, °F, °C) and an optional Ingredient for cups ↔ grams (12 common ingredients). Answers show as you type, one per line (e.g. 1 cup flour = 120 g; 350 °F = 177 °C). It starts closed each time you Start cooking and saves nothing. **Cooking mode is complete.**
+- 2026-11-01 — Planned "Import a recipe" in a grill-me interview: smart paste first (step 16, on the phone), then from a link (step 17, Cloudflare helper). Fill in only, review, then Save. Website categories → tags (matching ticked, new ones unticked); descriptions ignored; duplicate-link warning. AI upgrade left for later.
+- 2026-11-01 — Step 16 done (Version 19): "✨ Fill in automatically" on the New recipe form. Understands typical recipe-site text (headings, "Prep Time / Cook Time / Total Time", "Servings", tick boxes ▢, numbered steps, "Notes" left out, website buttons like "1x 2x 3x" or "Print Recipe" skipped) and plain text without headings (guesses, with a warning).
