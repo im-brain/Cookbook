@@ -948,6 +948,7 @@ document.getElementById("start-cooking-button").addEventListener("click", functi
   document.querySelector(".scale-card").hidden = c.ingredients.length === 0;
   document.getElementById("servings-row").hidden = c.servings === null;
   setCookFactor(1);
+  closeConverter();   // the converter starts closed each time
 
   showScreen(cookingScreen);
   keepAwake();
@@ -1503,6 +1504,138 @@ pickTags.addEventListener("change", function (event) {
   pickTag = event.target.value;
   pickRecipe();
 });
+
+// ======================================================================
+// ---------- Converter on the cooking screen (step 15) ----------
+// ======================================================================
+// A calculator only: nothing is saved. US measures (1 cup = 240 ml).
+
+// Every unit: what kind it is, and its size in ml (volume), g (weight).
+// "kitchen" units are shown as fractions (1½); the others as plain numbers.
+const UNITS = {
+  cup:  { kind: "volume", size: 240,    one: "cup",    many: "cups",   kitchen: true },
+  tbsp: { kind: "volume", size: 15,     one: "tbsp",   many: "tbsp",   kitchen: true },
+  tsp:  { kind: "volume", size: 5,      one: "tsp",    many: "tsp",    kitchen: true },
+  floz: { kind: "volume", size: 30,     one: "fl oz",  many: "fl oz",  kitchen: true },
+  ml:   { kind: "volume", size: 1,      one: "ml",     many: "ml" },
+  l:    { kind: "volume", size: 1000,   one: "liter",  many: "liters", big: true },
+  oz:   { kind: "weight", size: 28.35,  one: "oz",     many: "oz",     kitchen: true },
+  lb:   { kind: "weight", size: 453.6,  one: "lb",     many: "lb",     kitchen: true },
+  g:    { kind: "weight", size: 1,      one: "g",      many: "g" },
+  kg:   { kind: "weight", size: 1000,   one: "kg",     many: "kg",     big: true },
+  f:    { kind: "temp",   one: "°F", many: "°F" },
+  c:    { kind: "temp",   one: "°C", many: "°C" }
+};
+
+// How many grams one US cup of each ingredient weighs (common published values).
+const GRAMS_PER_CUP = {
+  flour: 120, sugar: 200, brownsugar: 213, powderedsugar: 120, butter: 227, rice: 185,
+  oats: 90, cocoa: 85, milk: 240, honey: 340, oil: 218, cheese: 113
+};
+
+const convertCard = document.getElementById("convert-card");
+const convertButton = document.getElementById("convert-button");
+const convertAmount = document.getElementById("convert-amount");
+const convertFrom = document.getElementById("convert-from");
+const convertIngredient = document.getElementById("convert-ingredient");
+const convertIngredientField = document.getElementById("convert-ingredient-field");
+const convertResults = document.getElementById("convert-results");
+
+// Write one answer, e.g. "1½ cups", "355 ml", "0.24 liters". Returns null if it's too tiny to be useful.
+function describeAmount(value, unitId) {
+  const unit = UNITS[unitId];
+  let number;
+  if (unit.kitchen) {
+    if (value < 0.1) {
+      return null;            // e.g. "0.02 cups" helps nobody
+    }
+    number = kitchenNumber(value);
+  } else if (unit.big) {
+    if (value < 0.01) {
+      return null;
+    }
+    number = String(Math.round(value * 100) / 100);  // up to 2 decimals
+  } else {
+    number = value >= 10 ? String(Math.round(value)) : String(Math.round(value * 10) / 10);
+  }
+  return number + " " + (number === "1" ? unit.one : unit.many);
+}
+
+// The list of answers for an amount in one unit (and maybe an ingredient for cups ↔ grams).
+function convert(amount, fromId, ingredient) {
+  const from = UNITS[fromId];
+  if (from.kind === "temp") {
+    const other = fromId === "f" ? "c" : "f";
+    const value = fromId === "f" ? (amount - 32) * 5 / 9 : amount * 9 / 5 + 32;
+    return [Math.round(value) + " " + UNITS[other].one];
+  }
+  const answers = [];
+  const base = amount * from.size;   // in ml (volume) or g (weight)
+  Object.keys(UNITS).forEach(function (id) {
+    const unit = UNITS[id];
+    if (id !== fromId && unit.kind === from.kind) {
+      answers.push(describeAmount(base / unit.size, id));
+    }
+  });
+  // With an ingredient picked, also cross over between volume and weight.
+  if (ingredient) {
+    const gramsPerMl = GRAMS_PER_CUP[ingredient] / UNITS.cup.size;
+    const otherKind = from.kind === "volume" ? "weight" : "volume";
+    const otherBase = from.kind === "volume" ? base * gramsPerMl : base / gramsPerMl;
+    Object.keys(UNITS).forEach(function (id) {
+      if (UNITS[id].kind === otherKind) {
+        answers.push(describeAmount(otherBase / UNITS[id].size, id));
+      }
+    });
+  }
+  return answers.filter(function (text) { return text !== null; });
+}
+
+// Read the boxes and show the answers.
+function showConversions() {
+  const fromId = convertFrom.value;
+  const isTemp = UNITS[fromId].kind === "temp";
+  convertIngredientField.hidden = isTemp;
+
+  const typed = convertAmount.value.trim().replace(",", ".");
+  // Amounts like "1 1/2" or "½" use the same reader as scaling. Temperatures may also be 0 or below zero.
+  let amount = amountToNumber(typed);
+  if (amount === null && isTemp && typed !== "" && Number.isFinite(Number(typed))) {
+    amount = Number(typed);
+  }
+
+  convertResults.innerHTML = "";
+  if (amount === null) {
+    const item = document.createElement("li");
+    item.className = "convert-hint";
+    item.textContent = "Type an amount, e.g. 1.5";
+    convertResults.append(item);
+    return;
+  }
+  const ingredient = isTemp ? "" : convertIngredient.value;
+  convert(amount, fromId, ingredient).forEach(function (text) {
+    const item = document.createElement("li");
+    item.textContent = "= " + text;
+    convertResults.append(item);
+  });
+}
+
+function closeConverter() {
+  convertCard.hidden = true;
+  convertButton.setAttribute("aria-expanded", "false");
+}
+
+convertButton.addEventListener("click", function () {
+  const opening = convertCard.hidden;
+  convertCard.hidden = !opening;
+  convertButton.setAttribute("aria-expanded", opening ? "true" : "false");
+  if (opening) {
+    showConversions();
+  }
+});
+convertAmount.addEventListener("input", showConversions);
+convertFrom.addEventListener("change", showConversions);
+convertIngredient.addEventListener("change", showConversions);
 
 // When the app opens, show the count, the list and the backup reminder straight away.
 refreshHome();

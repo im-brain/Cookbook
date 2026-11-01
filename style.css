@@ -198,6 +198,7 @@ fieldset.field {
 input[type="text"],
 input[type="number"],
 input[type="search"],
+select,
 textarea {
   display: block;
   width: 100%;
@@ -223,6 +224,7 @@ textarea {
 
 /* A clear colored outline around the box you're typing in. */
 input:focus,
+select:focus,
 textarea:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
@@ -818,4 +820,58 @@ textarea:focus {
 /* A changed amount, so you can see it was scaled. */
 .scaled {
   color: var(--accent);
+}
+
+/* ---------- 17. Converter on the cooking screen (step 15) ---------- */
+
+.convert-button {
+  margin-top: 12px;
+}
+
+.convert-card {
+  margin-top: 12px;
+  font-size: 18px;   /* normal size inside, so the boxes fit side by side */
+}
+
+/* Amount and From side by side, Amount a bit narrower. */
+.convert-card .field-row > .field:first-child {
+  flex: 0 0 40%;
+}
+
+.convert-card .field {
+  margin-bottom: 12px;
+}
+
+/* Drop-down lists: the iPhone opens its own picker when tapped. */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 32px;
+  /* A small ▾ arrow on the right, drawn in the muted color. */
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+                    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* The answers: one per line, big enough to read from the counter. */
+.convert-results {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+.convert-results li {
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+.convert-results li:first-child {
+  border-top: none;
+}
+.convert-results .convert-hint {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--muted);
 }
