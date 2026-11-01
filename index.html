@@ -30,12 +30,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- ===== VERSION NUMBER =====
-         Phones keep saved copies of style.css and app.js for a while. Adding "?v=17" makes them look like
+         Phones keep saved copies of style.css and app.js for a while. Adding "?v=18" makes them look like
          new files, so the phone downloads fresh ones. Every update raises this number in THREE places:
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=17">
+    <link rel="stylesheet" href="style.css?v=18">
   </head>
 
   <body>
@@ -131,7 +131,7 @@
         </div>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 17</p>
+        <p class="version">Version 18</p>
       </section>
 
       <!-- ===================== RECIPE PAGE SCREEN ===================== -->
@@ -210,6 +210,62 @@
             <button type="button" class="scale-button" data-factor="3">3×</button>
           </div>
           <p class="hint">Only the amount at the start of each ingredient changes. Your saved recipe stays the same.</p>
+        </div>
+
+        <!-- Converter (step 15): a calculator only, nothing is saved. -->
+        <button type="button" class="button button-secondary convert-button" id="convert-button" aria-expanded="false" aria-controls="convert-card">⚖️ Convert</button>
+        <div class="card convert-card" id="convert-card" hidden>
+          <div class="field-row">
+            <div class="field">
+              <label for="convert-amount">Amount</label>
+              <!-- inputmode="decimal": the iPhone shows a number keypad with a dot. -->
+              <input type="text" id="convert-amount" inputmode="decimal" autocomplete="off" placeholder="e.g. 1.5">
+            </div>
+            <div class="field">
+              <label for="convert-from">From</label>
+              <select id="convert-from">
+                <optgroup label="Volume">
+                  <option value="cup">cups</option>
+                  <option value="tbsp">tbsp</option>
+                  <option value="tsp">tsp</option>
+                  <option value="floz">fl oz</option>
+                  <option value="ml">ml</option>
+                  <option value="l">liters</option>
+                </optgroup>
+                <optgroup label="Weight">
+                  <option value="oz">oz</option>
+                  <option value="lb">lb</option>
+                  <option value="g">g</option>
+                  <option value="kg">kg</option>
+                </optgroup>
+                <optgroup label="Oven">
+                  <option value="f">°F</option>
+                  <option value="c">°C</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+          <!-- Only for volumes and weights: lets cups turn into grams (and back). -->
+          <div class="field" id="convert-ingredient-field">
+            <label for="convert-ingredient">Ingredient (for cups ↔ grams)</label>
+            <select id="convert-ingredient">
+              <option value="">— none —</option>
+              <option value="flour">all-purpose flour</option>
+              <option value="sugar">white sugar</option>
+              <option value="brownsugar">brown sugar (packed)</option>
+              <option value="powderedsugar">powdered sugar</option>
+              <option value="butter">butter</option>
+              <option value="rice">rice (uncooked)</option>
+              <option value="oats">rolled oats</option>
+              <option value="cocoa">cocoa powder</option>
+              <option value="milk">milk / water</option>
+              <option value="honey">honey</option>
+              <option value="oil">oil</option>
+              <option value="cheese">shredded cheese</option>
+            </select>
+          </div>
+          <!-- The answers, one per line. app.js fills this in as you type. -->
+          <ul class="convert-results" id="convert-results" aria-live="polite"></ul>
         </div>
 
         <div class="notes-box" id="cook-notes-box">
@@ -336,6 +392,6 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=17"></script>
+    <script src="app.js?v=18"></script>
   </body>
 </html>

@@ -3,12 +3,12 @@
 A personal cookbook website that I use on my iPhone.
 How we work and the reasons behind each decision are in `CLAUDE.md`.
 
-## Current status (2026-10-31)
+## Current status (2026-11-01)
 
 - **Version 1 is complete and confirmed on the phone** (steps 1–12, Version 14).
-- **Now building "Cooking mode"** (steps 13–15 below), planned in a grill-me interview. Steps 13 and 14 are merged (step 13 confirmed on the phone). **A look fix is done as Version 17** (text centered next to the tick circles and in the buttons; ½×–3× buttons smaller), waiting for merge and a phone check. Next: step 15 (converter, **Version 18**). Each step gets its own plan, OK and pull request.
+- **Cooking mode is built** (steps 13–15). Steps 13–14 and the Version 17 look fix are merged. **Step 15 (converter) is done as Version 18**, waiting for merge and a phone test.
 - **Working rule:** Claude shows a plan and waits for the user's OK before changing or committing anything (see `CLAUDE.md`).
-- After cooking mode: **plan together** save from a web link + smart paste (needs a small free Cloudflare Worker; secret keys live there, never in the repo).
+- Next: **plan together** save from a web link + smart paste (needs a small free Cloudflare Worker; secret keys live there, never in the repo).
 - Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first.
 
 ## What "done" means (version 1)
@@ -120,7 +120,7 @@ Decided in a grill-me interview (2026-10-31). Details in `CLAUDE.md` → Key dec
   **Test it:** Start cooking a recipe: tick a few things off, put the phone down for a few minutes (the screen should stay on), tap Done cooking, then Start cooking again: no ticks.
 - [x] **Step 14 — Scale the recipe (Version 16).** − / + servings (when the recipe has a servings number) and ½×, 1×, 2×, 3× buttons on the cooking screen. Amounts shown as kitchen fractions (1½, ⅓) and highlighted. Only for this cooking session; the saved recipe doesn't change. Only the amount at the **start** of a line changes ("2 (14 oz) cans" → "3 (14 oz) cans"; "Juice of 1 lemon" stays). Amounts of 10 or more are rounded to whole numbers (250 g ÷ 3 → 83 g).
   **Test it:** A "serves 4" recipe at 6 servings: "2 cups stock" shows "3 cups stock"; "salt to taste" unchanged; reopen the recipe: original amounts.
-- [ ] **Step 15 — Converter (Version 18).** "⚖️ Convert" box on the cooking screen. US measures (cup 240 ml). Volumes (cups, tbsp, tsp, fl oz, ml, l), weights (oz, lb, g, kg), °F ↔ °C, and cups ↔ grams for flour, white/brown/powdered sugar, butter, rice, rolled oats, cocoa, milk/water, honey, oil, grated cheese.
+- [x] **Step 15 — Converter (Version 18).** "⚖️ Convert" box on the cooking screen. US measures (cup 240 ml). Volumes (cups, tbsp, tsp, fl oz, ml, l), weights (oz, lb, g, kg), °F ↔ °C, and cups ↔ grams for flour, white/brown/powdered sugar, butter, rice, rolled oats, cocoa, milk/water, honey, oil, grated cheese.
   **Test it:** 1 cup flour → about 120 g; 350 °F → about 175 °C; 1 lb → about 454 g.
 
 ## Later — in this order
@@ -166,3 +166,4 @@ Decided in a grill-me interview (2026-10-31). Details in `CLAUDE.md` → Key dec
 - 2026-10-31 — Step 13 confirmed on the user's phone ("Works!").
 - 2026-10-31 — Step 14 done (Version 16): a box at the top of the cooking screen with "Serves − 4 +" (only if the recipe has servings) and ½×, 1×, 2×, 3× buttons. The amount at the start of each ingredient changes and is shown in color, as kitchen fractions (1½, ¾, ⅓); 10 or more are whole numbers. Ranges ("2-3 cloves") scale both ends. Ticks are kept when you change the amounts. Starting to cook again begins at the saved amounts; the saved recipe never changes. Known limit: words don't change ("1 cups", "1 tomatoes").
 - 2026-10-31 — Step 14 merged. Look fix (Version 17), from the user's screenshot review: text is now centered next to the tick circles (also for two-line items) and inside the − / + and ½×–3× buttons. The ½×, 1×, 2×, 3× buttons are kept but smaller (user's choice), since − / + servings is the main control. The converter moves to Version 18.
+- 2026-11-01 — Step 15 done (Version 18): a "⚖️ Convert" button under the scaling box opens a calculator: Amount, From (cups, tbsp, tsp, fl oz, ml, liters, oz, lb, g, kg, °F, °C) and an optional Ingredient for cups ↔ grams (12 common ingredients). Answers show as you type, one per line (e.g. 1 cup flour = 120 g; 350 °F = 177 °C). It starts closed each time you Start cooking and saves nothing. **Cooking mode is complete.**
