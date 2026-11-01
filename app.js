@@ -68,6 +68,8 @@ document.getElementById("add-recipe-button").addEventListener("click", function 
   updateSourceField();         // hide the Source box again
   formMessage.hidden = true;   // hide any old message
   homeMessage.hidden = true;   // and the "Saved" message on the home screen
+  autofillCard.hidden = false; // "Fill in automatically" is only for new recipes
+  autofillMessage.hidden = true;
   showScreen(formScreen);
 });
 
@@ -753,6 +755,7 @@ document.getElementById("edit-button").addEventListener("click", function () {
   editingId = recipe.id;
   formHeading.textContent = "Edit recipe";
   kindField.hidden = true;     // the kind stays as it was saved
+  autofillCard.hidden = true;  // no "Fill in automatically" when editing
   form.reset();
   formMessage.hidden = true;
 
@@ -1503,6 +1506,231 @@ document.getElementById("pick-close").addEventListener("click", function () {
 pickTags.addEventListener("change", function (event) {
   pickTag = event.target.value;
   pickRecipe();
+});
+
+// ======================================================================
+// ---------- Fill in automatically from pasted text (step 16) ----------
+// ======================================================================
+// Reads a recipe copied from a website (or anywhere) and fills in the form.
+// Everything happens on the phone; nothing is sent anywhere. Nothing is saved until you tap Save.
+
+const autofillCard = document.getElementById("autofill-card");
+const autofillText = document.getElementById("autofill-text");
+const autofillMessage = document.getElementById("autofill-message");
+
+// Headings that start a part of the recipe. They must be short lines, e.g. "Ingredients" or "Instructions:".
+const INGREDIENTS_HEADING = /^ingredients?\b/i;
+const STEPS_HEADING = /^(instructions|directions|method|steps|preparation|how to make it)\b/i;
+const STOP_HEADING = /^(notes?|recipe notes|nutrition|tips|video)\b/i;  // the rest isn't part of the recipe
+
+// Info lines like "Prep Time: 15 mins", "Servings: 4", "Course: Dinner".
+const INFO_LINE = /^((prep|cook|total|active|inactive|additional|resting|chill)\s*time|servings?|serves|yield|makes|course|cuisine|keywords?|author|calories|equipment)\b/i;
+
+// Website button text that gets copied along: "1x 2x 3x", "US Customary Metric", "Print Recipe", ...
+const JUNK_LINE = /^((\d+(\.\d+)?x\s*)+|((us customary|metric)\s*[|/–-]?\s*)+|(print|pin|save|share|rate|jump to|email) (this )?recipe|print)$/i;
+
+function isHeading(line, pattern) {
+  return line.length <= 30 && pattern.test(line);
+}
+
+// Turn "1 hr 15 mins" into 75. null if there's no time in the text.
+function textToMinutes(text) {
+  const hours = text.match(/(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)\b/i);
+  const minutes = text.match(/(\d+)\s*(?:m|min|mins|minute|minutes)\b/i);
+  if (!hours && !minutes) {
+    return null;
+  }
+  return Math.round((hours ? Number(hours[1]) * 60 : 0) + (minutes ? Number(minutes[1]) : 0));
+}
+
+// Remove bullets and tick boxes at the start of a line ("• ", "▢ ", "- ").
+function stripBullet(line) {
+  return line.replace(/^[•\-*▢☐□◦·–—]+\s*/, "").trim();
+}
+
+// Remove step numbers ("1. ", "2) ", "Step 3: "). "1.5 cups" is left alone (a space must follow).
+function stripStepNumber(line) {
+  return line.replace(/^(step\s*)?\d+[.):]\s+/i, "").replace(/^step\s*\d+\s*[:.\-–]?\s*/i, "").trim();
+}
+
+// Does this line look like an ingredient ("2 cups flour", "Salt and pepper")?
+function looksLikeIngredient(line) {
+  if (/^(step\s*)?\d+[.):]\s+/i.test(line)) {
+    return false;                         // "1. Preheat the oven" is a numbered step
+  }
+  if (LEADING_AMOUNT.test(line) && line.length <= 80) {
+    return true;                          // starts with an amount (same reader as scaling)
+  }
+  return line.length <= 40 && !/[.!?]$/.test(line);  // short, and not a sentence
+}
+
+// The main reader. Returns { title, ingredients, steps, servings, timeMinutes, source, guessed }.
+function parseRecipeText(text) {
+  // 1. Split into lines; tidy spaces; drop empty lines.
+  let lines = text.split(/\r?\n/).map(function (line) {
+    return stripBullet(line.replace(/\s+/g, " ").trim());
+  }).filter(function (line) { return line !== ""; });
+
+  // 2. Some sites put a label and its value on separate lines ("Prep Time" / "15 mins"). Join them.
+  const joined = [];
+  lines.forEach(function (line) {
+    const previous = joined[joined.length - 1];
+    if (previous !== undefined && INFO_LINE.test(previous) && /^[^:]*:?$/.test(previous) &&
+        previous.length <= 20 && /^\d/.test(line) && line.length <= 20) {
+      joined[joined.length - 1] = previous.replace(/:$/, "") + ": " + line;
+    } else {
+      joined.push(line);
+    }
+  });
+  lines = joined;
+
+  // 3. Servings and time, from the info lines anywhere in the text.
+  let servings = null;
+  let total = null;
+  let prep = null;
+  let cook = null;
+  lines.forEach(function (line) {
+    const serves = line.match(/^(?:servings?|serves|yield|makes)\s*:?\s*(\d+)/i) || line.match(/^(\d+)\s*servings?\b/i);
+    if (serves && servings === null) {
+      servings = Number(serves[1]);
+    }
+    if (/^total\s*time/i.test(line) && total === null) {
+      total = textToMinutes(line);
+    } else if (/^prep\s*time/i.test(line) && prep === null) {
+      prep = textToMinutes(line);
+    } else if (/^cook\s*time/i.test(line) && cook === null) {
+      cook = textToMinutes(line);
+    }
+  });
+  let timeMinutes = total;
+  if (timeMinutes === null && (prep !== null || cook !== null)) {
+    timeMinutes = (prep || 0) + (cook || 0);
+  }
+
+  // 4. A web link anywhere in the text becomes the source.
+  const link = text.match(/https?:\/\/[^\s<>"]+/i);
+  const source = link ? link[0].replace(/[.,;:)\]]+$/, "") : "";
+
+  // 5. Walk through the lines, sorting them into parts by the headings.
+  let part = "top";            // "top" (before the headings), "ingredients", "steps" or "skip"
+  let title = "";
+  const loose = [];            // lines that aren't under a heading
+  const ingredients = [];
+  const steps = [];
+  let sawIngredients = false;
+  let sawSteps = false;
+  lines.forEach(function (line) {
+    const plain = line.replace(/[:\s]+$/, "");
+    if (isHeading(plain, INGREDIENTS_HEADING)) { part = "ingredients"; sawIngredients = true; return; }
+    if (isHeading(plain, STEPS_HEADING)) { part = "steps"; sawSteps = true; return; }
+    if (isHeading(plain, STOP_HEADING)) { part = "skip"; return; }
+    if (INFO_LINE.test(line) || JUNK_LINE.test(line) || line === source || /^step\s*\d+[:.]?$/i.test(line)) {
+      return;                  // info lines, website buttons, the bare link and lone "Step 1" labels aren't recipe text
+    }
+    if (part === "top") {
+      if (title === "") {
+        title = line;          // the first line is the title
+      } else {
+        loose.push(line);      // a description, or ingredients/steps without headings
+      }
+    } else if (part === "ingredients") {
+      ingredients.push(line);
+    } else if (part === "steps") {
+      steps.push(stripStepNumber(line));
+    }
+  });
+
+  // 6. No headings (or only one)? Guess which loose lines are ingredients and which are steps.
+  //    With both headings, the lines before them are just a description and are left out.
+  let guessed = false;
+  if (!(sawIngredients && sawSteps)) {
+    guessed = true;
+    loose.forEach(function (line) {
+      if (!sawIngredients && looksLikeIngredient(line)) {
+        ingredients.push(line);
+      } else if (!sawSteps) {
+        steps.push(stripStepNumber(line));
+      }
+    });
+  }
+
+  return {
+    title: title.slice(0, 200),
+    ingredients: ingredients,
+    steps: steps.filter(function (step) { return step !== ""; }),
+    servings: servings,
+    timeMinutes: timeMinutes,
+    source: source,
+    guessed: guessed
+  };
+}
+
+// Has anything been typed in the boxes that "Fill in" would replace?
+function formHasContent() {
+  const f = form.elements;
+  return [f.title, f.source, f.servings, f.time].some(function (box) { return box.value.trim() !== ""; }) ||
+    readList(ingredientsList).length > 0 || readList(stepsList).length > 0;
+}
+
+// Put a read recipe into the form. Notes and tags are left as they are (they're yours).
+function fillFormFromRecipe(recipe) {
+  const f = form.elements;
+  f.kind.value = "elsewhere";       // from somewhere else, so the original is kept
+  updateSourceField();
+  f.source.value = recipe.source;
+  f.title.value = recipe.title;
+  f.servings.value = recipe.servings === null ? "" : recipe.servings;
+  f.time.value = recipe.timeMinutes === null ? "" : recipe.timeMinutes;
+  fillEditList(ingredientsList, recipe.ingredients);
+  fillEditList(stepsList, recipe.steps);
+  form.querySelectorAll(".list-editor textarea").forEach(fitHeight);
+}
+
+function showAutofillMessage(text) {
+  autofillMessage.textContent = text;
+  autofillMessage.hidden = false;
+}
+
+// "Fill in" button.
+document.getElementById("autofill-go").addEventListener("click", function () {
+  const text = autofillText.value.trim();
+  if (text === "") {
+    showAutofillMessage("First paste a recipe into the box above.");
+    return;
+  }
+  if (/^https?:\/\/\S+$/i.test(text)) {
+    showAutofillMessage("Links come in the next update. For now, open the recipe in Safari, copy its text, and paste that here.");
+    return;
+  }
+  const recipe = parseRecipeText(text);
+  if (recipe.ingredients.length === 0 && recipe.steps.length === 0) {
+    showAutofillMessage("Sorry, I couldn't find a recipe in that text. Check that you copied the ingredients and steps too.");
+    return;
+  }
+  if (formHasContent() && !window.confirm("Replace what you've typed?\n\nThe title, source, servings, time, ingredients and steps will be replaced. Notes and tags stay.")) {
+    return;
+  }
+  fillFormFromRecipe(recipe);
+  let message = "✓ Filled in. Check everything below, add tags or notes, then tap Save.";
+  if (recipe.guessed) {
+    message += " Please check the ingredients and steps: I had to guess which is which.";
+  }
+  showAutofillMessage(message);
+});
+
+// "📋 Paste" button. The iPhone shows a small "Paste" bubble to confirm; tap it.
+document.getElementById("autofill-paste").addEventListener("click", async function () {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text.trim() === "") {
+      showAutofillMessage("Nothing copied yet. Copy a recipe in Safari first.");
+      return;
+    }
+    autofillText.value = text;
+    autofillMessage.hidden = true;
+  } catch (error) {
+    showAutofillMessage("Couldn't paste. Press and hold in the box, then tap Paste.");
+  }
 });
 
 // ======================================================================

@@ -875,3 +875,31 @@ select {
   font-weight: 400;
   color: var(--muted);
 }
+
+/* ---------- 18. Fill in automatically (step 16, top of the New recipe form) ---------- */
+
+.autofill-card {
+  border-left: 6px solid var(--accent);
+  margin-bottom: 24px;
+}
+
+.autofill-heading {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+/* 📋 Paste and Fill in, side by side. */
+.autofill-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.autofill-buttons .button {
+  flex: 1;
+  margin-top: 0;
+}
+
+.autofill-card .message {
+  margin: 12px 0 0;
+}
