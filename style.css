@@ -1938,3 +1938,13 @@ body[data-screen="cooking-screen"] .sync-pill {
 .trash-title { display: block; overflow-wrap: anywhere; }
 .trash-when { display: block; font-size: var(--text-sm); color: var(--ink-soft); }
 .trash-list .button { width: auto; margin: 0; padding-left: 18px; padding-right: 18px; }
+
+/* ----- Move my recipes to the cloud (Version 29) ----- */
+.move-steps { list-style: none; margin: var(--s4) 0 0; padding: 0; }
+.move-step { padding: var(--s4) 0; border-top: 1px solid var(--rule); }
+.move-step:first-child { border-top: 0; }
+.move-step p { margin: var(--s1) 0 var(--s3); }
+.move-step.done strong { color: var(--ok); }
+.move-step.waiting { opacity: 0.55; }
+.move-titles { margin: 0 0 var(--s3); padding-left: var(--s5); max-height: 12em; overflow-y: auto; color: var(--ink-soft); }
+.move-step .button:disabled { opacity: 0.5; }

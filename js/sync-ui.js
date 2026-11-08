@@ -79,7 +79,7 @@ function showPill(text, kind) {
 }
 
 function updateSyncStatus() {
-  if (!syncUser) {
+  if (!syncUser || !syncEnabled()) {
     syncPill.hidden = true;
     return;
   }
@@ -108,6 +108,7 @@ function updateAccountLine(waiting, conflicts) {
   else if (syncStatus.kind === "error") { text = "Couldn’t sync: " + syncStatus.message; }
   else if (conflicts > 0) { text = conflicts + (conflicts === 1 ? " recipe needs" : " recipes need") + " your choice (see the Cookbook screen)."; }
   else if (syncStatus.at) { text = "All synced at " + syncStatus.at + "."; }
+  else if (!syncEnabled()) { text = "Syncing starts after you finish “Move my recipes to the cloud” below."; }
   else { text = "Not synced yet."; }
   accountSyncLine.textContent = text;
 }
@@ -127,7 +128,7 @@ function timeText() {
 }
 
 function scheduleSync(delay) {
-  if (!syncUser) { return; }
+  if (!syncUser || !syncEnabled()) { return; }
   clearTimeout(syncTimer);
   syncTimer = setTimeout(runSync, delay === undefined ? 1500 : delay);
   updateSyncStatus();
@@ -140,7 +141,7 @@ function recipesChanged() {
 }
 
 async function runSync() {
-  if (!syncUser) { return; }
+  if (!syncUser || !syncEnabled()) { return; }
   if (syncRunning) { syncWanted = true; return; }
   if (document.body.dataset.screen === "recipe-form-screen") {
     scheduleSync(5000);              // don't change recipes under the form someone is typing in
@@ -197,6 +198,7 @@ function showSignedIn(user) {
   updateSyncStatus();
   renderConflicts();
   renderTrash();
+  renderMove();
 }
 
 async function signInOrUp(creating) {
@@ -231,6 +233,215 @@ document.getElementById("signout-button").addEventListener("click", async functi
   showSignedIn(null);
   showAccountMessage("Signed out. Your recipes are still on this phone.");
 });
+
+// ---------- Move my recipes to the cloud (Phase 5) ----------
+// Syncing stays OFF until step 6 ("Finish") is tapped, so nothing reaches the cloud by surprise.
+// Steps 1-3 only look. Step 4 is the only one that uploads, and only when tapped.
+
+const MOVE_KEY = "cookbook.move";            // never rename: { userId, uploaded, verified, done, doneAt }
+const moveCard = document.getElementById("move-card");
+const moveSteps = document.getElementById("move-steps");
+const moveMessage = document.getElementById("move-message");
+const moveIntro = document.getElementById("move-intro");
+
+let movePreview = null;        // the answer of step 2 (kept in memory only)
+let moveLookedAt = false;      // step 3 confirmed
+let moveBusy = false;
+let moveDrawn = "";            // what is drawn now, so we only redraw when something changed
+
+function moveState() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(MOVE_KEY)); } catch (error) { saved = null; }
+  if (!saved || typeof saved !== "object" || !syncUser || saved.userId !== syncUser.id) {
+    return { uploaded: false, verified: false, done: false };
+  }
+  return saved;
+}
+
+function saveMove(change) {
+  const next = Object.assign(moveState(), change, { userId: syncUser ? syncUser.id : null });
+  try { localStorage.setItem(MOVE_KEY, JSON.stringify(next)); } catch (error) { /* shown by the next step */ }
+}
+
+function syncEnabled() { return moveState().done === true; }
+
+function showMoveMessage(text) {
+  moveMessage.textContent = text;
+  moveMessage.hidden = !text;
+}
+
+function backupIsCurrent() {
+  const recipes = loadRecipes();
+  if (recipes === null) { return false; }
+  if (recipes.length === 0) { return true; }
+  const last = loadLastBackup();
+  return !!last && countChangesSinceBackup(recipes, last) === 0;
+}
+
+function testTaggedTitles() {
+  const recipes = loadRecipes() || [];
+  return recipes.filter(function (r) { return r.current && r.current.tags && r.current.tags.indexOf("sync-test") !== -1; })
+    .map(function (r) { return r.current.title; });
+}
+
+function stepButton(label, enabled, onTap, secondary) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "button" + (secondary ? " button-secondary" : "");
+  b.textContent = label;
+  b.disabled = !enabled || moveBusy;
+  b.addEventListener("click", onTap);
+  return b;
+}
+
+function renderMove() {
+  if (!syncUser) { moveCard.hidden = true; return; }
+  moveCard.hidden = false;
+  const state = moveState();
+  const recipes = loadRecipes();
+  const signature = JSON.stringify([state, backupIsCurrent(), !!movePreview, moveLookedAt, moveBusy, recipes ? recipes.length : -1]);
+  if (signature === moveDrawn) { return; }
+  moveDrawn = signature;
+  moveSteps.innerHTML = "";
+
+  if (state.done) {
+    moveIntro.textContent = "✓ Your recipes are in the cloud and syncing is on. The copy on this phone stays too.";
+    showMoveMessage("");
+    return;
+  }
+  moveIntro.textContent = "Six small steps. Your recipes stay on this phone the whole time; this only adds a safe copy in the cloud. Nothing is uploaded until step 4.";
+
+  const backed = backupIsCurrent();
+  const steps = [
+    { title: "Back up your recipes", done: backed,
+      text: backed ? "✓ Backed up. If anything ever goes wrong, you can import this file." : "Save a backup file to iCloud Drive first. This step stays open until the backup is up to date.",
+      button: backed ? null : stepButton("Export a backup file", true, function () { document.getElementById("export-button").click(); }) },
+    { title: "Check", done: !!movePreview,
+      text: movePreview ? "✓ Your recipes can be read, you’re signed in, and the cloud answers." : "Checks that your saved recipes are readable and that the cloud answers. Nothing is sent.",
+      button: movePreview ? null : stepButton("Run the check", backed, runMoveCheck) },
+    { title: "Preview", done: moveLookedAt,
+      text: movePreview ? movePreviewText() : "Shows what would be uploaded.",
+      extra: movePreview && !moveLookedAt ? movePreviewList() : null,
+      button: movePreview && !moveLookedAt ? stepButton("Looks right", true, function () { moveLookedAt = true; renderMove(); }) : null },
+    { title: "Upload", done: state.uploaded,
+      text: state.uploaded ? "✓ Uploaded." : "Sends a copy of your recipes to the cloud. Anything already in the cloud is combined with what’s here; nothing is overwritten or deleted.",
+      button: !state.uploaded ? stepButton("Upload my recipes", moveLookedAt, runMoveUpload) : null },
+    { title: "Verify", done: state.verified,
+      text: state.verified ? "✓ Checked: every recipe in the cloud matches this phone." : "Downloads everything again and compares it with this phone, recipe by recipe.",
+      button: state.uploaded && !state.verified ? stepButton("Verify", true, runMoveVerify) : null },
+    { title: "Finish", done: false,
+      text: "Turns syncing on. From now on changes are sent automatically. The copy on this phone is kept.",
+      button: state.verified ? stepButton("Finish and turn syncing on", true, runMoveFinish) : null }
+  ];
+  let activeFound = false;
+  steps.forEach(function (step, i) {
+    const li = document.createElement("li");
+    li.className = "move-step" + (step.done ? " done" : (!activeFound ? " active" : " waiting"));
+    if (!step.done) { activeFound = true; }
+    const head = document.createElement("strong");
+    head.textContent = (i + 1) + ". " + step.title;
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = step.text;
+    li.append(head, p);
+    if (step.extra) { li.append(step.extra); }
+    if (step.button && li.classList.contains("active")) { li.append(step.button); }
+    moveSteps.append(li);
+  });
+}
+
+function movePreviewText() {
+  const p = movePreview;
+  if (moveLookedAt) { return "✓ Looked over: " + p.toUpload + " to upload."; }
+  let text = "On this phone: " + recipesWord(p.onPhone) + (p.inTrash ? " (+ " + p.inTrash + " in Recently deleted)" : "") + ". In the cloud now: " + p.inCloud + ". Will be uploaded: " + p.toUpload + ".";
+  if (p.cloudOnly > 0) { text += " " + recipesWord(p.cloudOnly) + " found only in the cloud will be added to this phone."; }
+  const tests = testTaggedTitles();
+  if (tests.length > 0) { text += " Note: " + tests.length + " tagged “sync-test” (" + tests.join(", ") + ") would upload too. Delete them first if they’re just tests."; }
+  return text;
+}
+
+function movePreviewList() {
+  const ul = document.createElement("ul");
+  ul.className = "move-titles";
+  movePreview.titles.forEach(function (title) {
+    const li = document.createElement("li");
+    li.textContent = title;
+    ul.append(li);
+  });
+  return ul;
+}
+
+async function withMoveBusy(work) {
+  moveBusy = true;
+  showMoveMessage("");
+  renderMove();
+  try { await work(); } finally { moveBusy = false; renderMove(); }
+}
+
+function failureText(result) {
+  if (result.kind === "offline") { return "No connection. Please try again when you’re online."; }
+  return result.message || "Something went wrong.";
+}
+
+function runMoveCheck() {
+  return withMoveBusy(async function () {
+    if (loadRecipes() === null) { showMoveMessage("Your saved recipes couldn’t be read, so the move can’t start. Please tell Claude."); return; }
+    showMoveMessage("Checking…");
+    const result = await previewMove(syncEnv());
+    if (!result.ok) { showMoveMessage("The check didn’t pass: " + failureText(result)); return; }
+    movePreview = result;
+    moveLookedAt = false;
+    showMoveMessage("");
+  });
+}
+
+function runMoveUpload() {
+  if (!backupIsCurrent()) { showMoveMessage("Recipes changed since your backup. Please back up again first."); renderMove(); return Promise.resolve(); }
+  const n = movePreview ? movePreview.toUpload : 0;
+  if (!window.confirm("Upload " + recipesWord(n) + " to your private cloud now?\n\nNothing on this phone is deleted.")) { return Promise.resolve(); }
+  return withMoveBusy(async function () {
+    showMoveMessage("Uploading…");
+    const result = await syncNow(syncEnv());
+    if (!result.ok) { showMoveMessage("The upload stopped: " + failureText(result) + " Nothing was lost; tap Upload again to continue."); return; }
+    saveMove({ uploaded: true, verified: false });
+    if (result.pulled > 0) { refreshHome(); }
+    showMoveMessage("✓ Uploaded " + result.pushed + ". Next, verify.");
+  });
+}
+
+function runMoveVerify() {
+  return withMoveBusy(async function () {
+    showMoveMessage("Verifying…");
+    const result = await verifyMove(syncEnv());
+    if (result.kind) { showMoveMessage("Couldn’t verify: " + failureText(result)); return; }
+    if (!result.ok) {
+      const parts = [];
+      if (result.missing.length) { parts.push("missing in the cloud: " + result.missing.join(", ")); }
+      if (result.different.length) { parts.push("different: " + result.different.join(", ")); }
+      if (result.waiting) { parts.push(changesWord(result.waiting) + " still waiting"); }
+      if (result.conflicts) { parts.push(result.conflicts + " need your choice on the Cookbook screen"); }
+      saveMove({ uploaded: false, verified: false });
+      showMoveMessage("Not finished: " + parts.join("; ") + ". Tap Upload again, then Verify.");
+      return;
+    }
+    saveMove({ verified: true });
+    showMoveMessage("✓ All " + result.total + " match.");
+  });
+}
+
+function runMoveFinish() {
+  if (!window.confirm("Turn syncing on?\n\nFrom now on, changes are sent to the cloud automatically.")) { return Promise.resolve(); }
+  saveMove({ done: true, doneAt: new Date().toISOString() });
+  showMoveMessage("");
+  moveDrawn = "";
+  renderMove();
+  updateSyncStatus();
+  scheduleSync(300);
+  return Promise.resolve();
+}
+
+// A backup made in Settings changes step 1; look again when the person comes back to the app.
+setInterval(function () { if (!moveCard.hidden && !document.hidden) { renderMove(); } }, 1500);
 
 // ---------- "Changed on two devices" ----------
 

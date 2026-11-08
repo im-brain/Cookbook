@@ -92,12 +92,12 @@ function recipe(id, title, tags) {
     check("receiving phone has nothing to send back", r.ok && r.pushed === 0 && sync.pendingCount(B.env) === 0);
   }
 
-  // 2. Untagged recipes are never sent in Phase 4.
+  // 2. Phase 5: every recipe is sent, whatever its tags.
   {
     const cloud = makeCloud(); const A = makeDevice(cloud, "A");
     A.add(recipe("real1", "Grandma's stew", ["dinner"]));
     const r = await A.sync();
-    check("untagged recipe stays on the phone", r.ok && Object.keys(cloud.rows).length === 0 && sync.pendingCount(A.env) === 0);
+    check("untagged recipe is sent too", r.ok && Object.keys(cloud.rows).length === 1 && sync.pendingCount(A.env) === 0);
   }
 
   // 3. Offline: change is kept, nothing lost, then sent when back online. Server error likewise.
@@ -284,6 +284,34 @@ function recipe(id, title, tags) {
     const both = JSON.parse(JSON.stringify(base)); both.current.title = "T3";
     check("merge flags a part changed on both sides", sync.mergeRecipes(base, local, both).conflicts.join() === "title");
     check("merge with no common base flags differences", sync.mergeRecipes(null, local, both).conflicts.join() === "title");
+  }
+
+  // 14. The move (Phase 5): preview, upload, verify.
+  {
+    const cloud = makeCloud(); const A = makeDevice(cloud, "A"); const B = makeDevice(cloud, "B");
+    A.add(recipe("m1", "Beef stew", ["dinner"])); A.add(recipe("m2", "Apple pie", ["dessert"]));
+    B.add(recipe("m2", "Apple pie", ["dessert"])); B.add(recipe("m3", "Pancakes", ["breakfast"]));
+    await B.sync();    // the cloud already holds m2 and m3
+    const p = await sync.previewMove(A.env);
+    check("preview counts", p.ok && p.onPhone === 2 && p.inCloud === 2 && p.toUpload === 1 && p.inBoth === 1 && p.cloudOnly === 1, JSON.stringify(p));
+    check("preview lists titles A-Z", p.titles.join() === "Apple pie,Beef stew");
+    check("preview changes nothing", Object.keys(cloud.rows).length === 2 && sync.pendingCount(A.env) === 2);
+    let v = await sync.verifyMove(A.env);
+    check("verify before upload says not ok", !v.ok && v.missing.indexOf("Beef stew") !== -1);
+    await A.sync();
+    v = await sync.verifyMove(A.env);
+    check("verify after upload is ok", v.ok && v.total === 3 && v.matching === 3, JSON.stringify(v));
+    check("cloud's own recipe came to the phone", !!A.get("m3"));
+    cloud.rows.m1.current.title = "Changed elsewhere";
+    v = await sync.verifyMove(A.env);
+    check("verify spots a difference", !v.ok && v.different.join() === "Beef stew");
+    cloud.offline = true;
+    const off = await sync.verifyMove(A.env);
+    check("verify offline says so", !off.ok && off.kind === "offline");
+    cloud.offline = false;
+    A.edit("m2", function (x) { x.notes = "more salt"; });
+    v = await sync.verifyMove(A.env);
+    check("verify spots a waiting change", !v.ok && v.waiting === 1);
   }
 
   console.log(passed + " passed, " + failed + " failed");

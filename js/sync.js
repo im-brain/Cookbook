@@ -18,7 +18,6 @@
 
 const SYNC_KEY = "cookbook.sync";        // never rename
 const TRASH_KEY = "cookbook.trash";      // never rename
-const SYNC_ONLY_TAG = "sync-test";       // Phase 4 only: just recipes with this tag are synced (Phase 5 removes this)
 const TRASH_DAYS = 30;
 
 const syncIngredients = (typeof cleanIngredientList === "function")
@@ -215,13 +214,10 @@ function removeLocal(all, id) {
   all.trash = all.trash.filter(function (t) { return t.recipe.id !== id; });
 }
 
-function hasSyncTag(recipe) {
-  return !!recipe.current && Array.isArray(recipe.current.tags) && recipe.current.tags.indexOf(SYNC_ONLY_TAG) !== -1;
-}
-
-// Phase 4: only tagged recipes (and ones already tracked) are synced.
+// Phase 5: every recipe is synced (Phase 4 only sent recipes tagged "sync-test").
+// Whether syncing is switched on at all is decided in js/sync-ui.js (after "Finish the move").
 function isSynced(all, recipe) {
-  return hasSyncTag(recipe) || !!all.state.base[recipe.id];
+  return true;
 }
 
 function isDirty(all, item) {
@@ -473,9 +469,77 @@ function resolveConflict(env, id, choice) {
   return { ok: true };
 }
 
+// ---------- Moving the real recipes (Phase 5) ----------
+
+function titleOf(recipe) {
+  return (recipe && recipe.current && recipe.current.title) ? recipe.current.title : "(no title)";
+}
+
+// Look, don't touch: what is on the phone and what is already in the cloud.
+// Returns { ok: true, onPhone, inTrash, inCloud, toUpload, inBoth, cloudOnly, titles } or { ok: false, kind, message }.
+async function previewMove(env) {
+  try {
+    const all = readAll(env);
+    const rows = await env.cloud.pullChanges(null);
+    const cloudIds = {};
+    rows.forEach(function (row) { cloudIds[row.id] = true; });
+    const mine = all.recipes.concat(all.trash.map(function (t) { return t.recipe; }));
+    let inBoth = 0;
+    const localIds = {};
+    mine.forEach(function (r) { localIds[r.id] = true; if (cloudIds[r.id]) { inBoth++; } });
+    let cloudOnly = 0;
+    rows.forEach(function (row) { if (!localIds[row.id]) { cloudOnly++; } });
+    return {
+      ok: true, onPhone: all.recipes.length, inTrash: all.trash.length, inCloud: rows.length,
+      toUpload: mine.length - inBoth, inBoth: inBoth, cloudOnly: cloudOnly,
+      titles: all.recipes.map(titleOf).sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; })
+    };
+  } catch (error) {
+    return moveFailure(error);
+  }
+}
+
+// After the upload: download everything again and compare with the phone, recipe by recipe.
+// ok is true only when nothing is missing, different, waiting, or in a conflict.
+async function verifyMove(env) {
+  try {
+    const all = readAll(env);
+    const rows = await env.cloud.pullChanges(null);
+    const byId = {};
+    rows.forEach(function (row) { byId[row.id] = row; });
+    const missing = [];
+    const different = [];
+    let matching = 0;
+    function compare(recipe, inTrash) {
+      const row = byId[recipe.id];
+      if (!row) { missing.push(titleOf(recipe)); return; }
+      const sameState = inTrash ? !!row.deleted_at : !row.deleted_at;
+      if (sameState && syncFingerprint(fromRow(row, env.today())) === syncFingerprint(recipe)) { matching++; }
+      else { different.push(titleOf(recipe)); }
+    }
+    all.recipes.forEach(function (r) { compare(r, false); });
+    all.trash.forEach(function (t) { compare(t.recipe, true); });
+    const total = all.recipes.length + all.trash.length;
+    const waiting = pendingIds(all).length;
+    const conflicts = Object.keys(all.state.conflicts).length;
+    return {
+      ok: missing.length === 0 && different.length === 0 && waiting === 0 && conflicts === 0,
+      total: total, matching: matching, missing: missing, different: different, waiting: waiting, conflicts: conflicts
+    };
+  } catch (error) {
+    return moveFailure(error);
+  }
+}
+
+function moveFailure(error) {
+  if (error && error.offline) { return { ok: false, kind: "offline", message: "No connection." }; }
+  if (error && error.kind === "damaged") { return { ok: false, kind: "damaged", message: "Your saved recipes couldn't be read, so nothing was done." }; }
+  return { ok: false, kind: "error", message: (error && error.message) ? error.message : "Something went wrong." };
+}
+
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    SYNC_ONLY_TAG: SYNC_ONLY_TAG, TRASH_DAYS: TRASH_DAYS, stableText: stableText, syncFingerprint: syncFingerprint,
+    previewMove: previewMove, verifyMove: verifyMove, TRASH_DAYS: TRASH_DAYS, stableText: stableText, syncFingerprint: syncFingerprint,
     canonicalRecipe: canonicalRecipe, toRow: toRow, fromRow: fromRow, mergeRecipes: mergeRecipes,
     describePart: describePart, pendingCount: pendingCount, conflictList: conflictList, syncNow: syncNow,
     moveToTrash: moveToTrash, restoreFromTrash: restoreFromTrash, resolveConflict: resolveConflict,

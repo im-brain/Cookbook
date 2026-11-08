@@ -19,7 +19,18 @@ const ALLOWED_ORIGINS = ["https://im-brain.github.io"];
 const TIME_LIMIT_MS = 10000;
 const MAX_PAGE_SIZE = 5 * 1024 * 1024;
 
+// Keep-awake ping (Version 29). Supabase's free plan pauses a project after a week without use.
+// Cloudflare runs `scheduled` on the timetable set in the dashboard (Settings -> Trigger Events -> Cron).
+// The address and publishable key are public by design; no secret is used here.
+const KEEP_AWAKE_URL = "https://aaiidfelgcbsmbrydoal.supabase.co/rest/v1/recipes?select=id&limit=1";
+const KEEP_AWAKE_KEY = "sb_publishable_1mDjU3llsX8ZsahRuaN75w_O8h6cgDN";
+
 export default {
+  // Asks the database one tiny question (it answers "not allowed", which still counts as use).
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(fetch(KEEP_AWAKE_URL, { headers: { apikey: KEEP_AWAKE_KEY } }).catch(() => {}));
+  },
+
   async fetch(request) {
     const origin = request.headers.get("Origin") || "";
     const allowed = ALLOWED_ORIGINS.includes(origin);
