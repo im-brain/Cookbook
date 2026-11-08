@@ -1948,3 +1948,51 @@ body[data-screen="cooking-screen"] .sync-pill {
 .move-step.waiting { opacity: 0.55; }
 .move-titles { margin: 0 0 var(--s3); padding-left: var(--s5); max-height: 12em; overflow-y: auto; color: var(--ink-soft); }
 .move-step .button:disabled { opacity: 0.5; }
+
+/* ----- Photos (Version 30) ----- */
+.hint-inline { font-weight: 400; color: var(--ink-soft); }
+.form-photo,
+.view-photo {
+  display: block;
+  width: 100%;
+  max-height: 60vh;
+  object-fit: cover;
+  border-radius: var(--r-md, 12px);
+  background: var(--paper-sunk);
+  box-shadow: var(--shadow-card);
+}
+.form-photo { margin-bottom: 10px; }
+.view-photo { margin: 14px 0 4px; }
+.photo-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.photo-buttons .button {
+  flex: 1 1 auto;
+  width: auto;
+  margin-top: 0;
+  padding-inline: 16px;
+}
+
+/* A cover with a photo: the picture fills the paper panel, the title sits on a dark fade. */
+.cover.has-photo .cover-inner {
+  padding: 0;
+  justify-content: flex-end;
+  overflow: hidden;
+  background-color: var(--cover-paper);
+  background-image: var(--photo);
+  background-size: cover;
+  background-position: center;
+}
+.cover.has-photo .cover-tag,
+.cover.has-photo .icon { display: none; }
+.cover.has-photo .cover-title {
+  margin: 0;
+  width: 100%;
+  padding: 18% 7% 7%;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, .68));
+  -webkit-line-clamp: 3;
+}

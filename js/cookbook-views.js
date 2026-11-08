@@ -70,7 +70,7 @@ function makeIcon(name) {
 }
 
 // A "book cover" drawn from the recipe: coloured by its first tag, with the tag
-// in small capitals, the title, and a little kitchen icon. (Photos come in Phase 6.)
+// in small capitals, the title, and a little kitchen icon. (Version 30: a recipe with a photo shows it instead.)
 function makeCover(recipe) {
   const tags = recipe.current.tags;
   const cover = document.createElement("div");
@@ -87,6 +87,14 @@ function makeCover(recipe) {
   title.textContent = recipe.current.title;
   inner.append(tag, title, makeIcon("cook"));
   cover.append(inner);
+  // Version 30: with a photo on this phone, the picture fills the cover (until it's here, the plain cover stays).
+  if (recipe.photo && recipe.photo.id) {
+    photoUrl(recipe.photo.id).then(function (url) {
+      if (!url) { return; }
+      cover.style.setProperty("--photo", 'url("' + url + '")');
+      cover.classList.add("has-photo");
+    });
+  }
   return cover;
 }
 

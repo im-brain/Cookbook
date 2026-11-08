@@ -56,3 +56,28 @@ create policy recipes_delete on public.recipes for delete to authenticated
 -- Nobody who isn't signed in gets anything.
 revoke all on public.recipes from anon;
 grant select, insert, update, delete on public.recipes to authenticated;
+
+-- ======================================================================
+-- Photos (Phase 6, Version 30): a private storage bucket for recipe pictures.
+-- Run this part once in Supabase too (SQL Editor -> New query -> paste -> Run). Safe to run again.
+-- Pictures live at  <your user id>/<photo id>.jpg  and only you can see, add, change or remove yours.
+-- ======================================================================
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('recipe-photos', 'recipe-photos', false, 5242880, array['image/jpeg'])
+on conflict (id) do update
+  set public = false, file_size_limit = 5242880, allowed_mime_types = array['image/jpeg'];
+
+drop policy if exists recipe_photos_select on storage.objects;
+drop policy if exists recipe_photos_insert on storage.objects;
+drop policy if exists recipe_photos_update on storage.objects;
+drop policy if exists recipe_photos_delete on storage.objects;
+
+create policy recipe_photos_select on storage.objects for select to authenticated
+  using (bucket_id = 'recipe-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy recipe_photos_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'recipe-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy recipe_photos_update on storage.objects for update to authenticated
+  using (bucket_id = 'recipe-photos' and (storage.foldername(name))[1] = (select auth.uid())::text)
+  with check (bucket_id = 'recipe-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy recipe_photos_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'recipe-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);

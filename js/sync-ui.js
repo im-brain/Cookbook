@@ -56,8 +56,64 @@ function syncEnv() {
     saveState: function (state) { localStorage.setItem(SYNC_KEY, JSON.stringify(state)); },
     now: function () { return new Date().toISOString(); },
     today: todayAsText,
-    newId: makeId
+    newId: makeId,
+    photos: function () { return syncPhotos(photoEnv()); }      // Phase 6: pictures follow the recipes
   };
+}
+
+// ---------- Photos (Phase 6) ----------
+
+// Every photo any recipe, any "Recently deleted" recipe, or any open choice still uses.
+function referencedPhotoIds() {
+  const ids = {};
+  const all = readAll(syncEnv());
+  function note(recipe) { if (recipe && recipe.photo && recipe.photo.id) { ids[recipe.photo.id] = true; } }
+  all.recipes.forEach(note);
+  all.trash.forEach(function (t) { note(t.recipe); });
+  Object.keys(all.state.conflicts).forEach(function (id) { note(all.state.conflicts[id].remote); });
+  return ids;
+}
+
+function loadPhotoState() {
+  try { return JSON.parse(localStorage.getItem(PHOTO_STATE_KEY)); } catch (error) { return null; }
+}
+
+function photoEnv() {
+  return {
+    store: photoStore,
+    cloud: cloud,
+    referenced: referencedPhotoIds,
+    allSynced: function () {
+      const all = readAll(syncEnv());
+      return pendingIds(all).length === 0 && Object.keys(all.state.conflicts).length === 0;
+    },
+    loadState: loadPhotoState,
+    saveState: function (state) { localStorage.setItem(PHOTO_STATE_KEY, JSON.stringify(state)); }
+  };
+}
+
+// Settings: how many photos this phone holds and how many still wait to go up.
+async function updatePhotoLine() {
+  const line = document.getElementById("photo-line");
+  if (!line) { return; }
+  try {
+    const refs = referencedPhotoIds();
+    const keys = await photoStore.keys();
+    let bytes = 0;
+    for (const id of keys) {
+      const blob = await photoStore.get(id);
+      if (blob) { bytes += blob.size; }
+    }
+    const saved = loadPhotoState();
+    const uploaded = saved && saved.uploaded ? saved.uploaded : {};
+    const waiting = keys.filter(function (id) { return refs[id] && !uploaded[id]; }).length;
+    const megabytes = (bytes / 1048576).toFixed(1);
+    let text = keys.length === 0 ? "No photos yet." : keys.length + (keys.length === 1 ? " photo" : " photos") + " on this phone (" + megabytes + " MB).";
+    if (waiting > 0 && syncUser && syncEnabled()) { text += " " + waiting + " waiting to go to the cloud."; }
+    line.textContent = text;
+  } catch (error) {
+    line.textContent = "Photos can't be stored on this phone right now.";
+  }
 }
 
 // ---------- The status pill ----------
@@ -161,7 +217,10 @@ async function runSync() {
   if (result.ok) {
     syncStatus = { kind: "idle", message: "", at: timeText() };
     retryDelay = 30000;
-    if (result.pulled > 0 || result.pushed > 0) { refreshHome(); }
+    if (result.pulled > 0 || result.pushed > 0 || result.photos > 0) { refreshHome(); }
+    if (document.body.dataset.screen !== "recipe-form-screen") {      // (a photo picked in the open form isn't saved yet)
+      removeUnusedLocalPhotos(photoStore, referencedPhotoIds()).catch(function () { /* tidying is optional */ });
+    }
   } else {
     syncStatus = { kind: result.kind === "offline" ? "offline" : "error", message: result.message || "", at: null };
     retryTimer = setTimeout(runSync, retryDelay);
@@ -170,6 +229,7 @@ async function runSync() {
   renderConflicts();
   renderTrash();
   updateSyncStatus();
+  updatePhotoLine();
   if (syncWanted) {
     syncWanted = false;
     scheduleSync(500);
@@ -492,7 +552,7 @@ function renderConflicts() {
 }
 
 function partLabel(name) {
-  const labels = { title: "Title", ingredients: "Ingredients", steps: "Steps", servings: "Servings", timeMinutes: "Time", tags: "Tags", notes: "Notes", source: "Source", original: "Original" };
+  const labels = { title: "Title", ingredients: "Ingredients", steps: "Steps", servings: "Servings", timeMinutes: "Time", tags: "Tags", notes: "Notes", source: "Source", original: "Original", photo: "Photo" };
   return labels[name] || name;
 }
 
@@ -548,6 +608,8 @@ function deleteRecipeToTrash(id) {
 // ---------- Start-up ----------
 
 renderTrash();
+// Photos picked and then cancelled (or replaced) leave a picture behind on the phone; tidy those up once.
+try { removeUnusedLocalPhotos(photoStore, referencedPhotoIds()).catch(function () { /* optional */ }); } catch (error) { /* damaged data: leave everything */ }
 cloud.currentUser().then(function (user) {
   if (user) {
     showSignedIn(user);
