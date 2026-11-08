@@ -68,6 +68,8 @@ New sessions start with no memory of earlier conversations, so this file and `PL
 
 ## Lessons learned
 
+- **Supabase Site URL (Phase 5):** a new project's *Site URL* defaults to `localhost`, so the sign-up confirmation email's link lands on an "Safari can't connect" page. The account is still confirmed. Fix (optional): Supabase → Authentication → URL Configuration → Site URL = `https://im-brain.github.io/Cookbook/`.
+- **Two Cloudflare accounts (Phase 5):** the Cloudflare connection in Claude's cloud session belongs to the user's *other* account (Heavy Pockets), not the one holding `cookbook-helper`. Claude can't see or deploy the helper; the user pastes it in (on iPhone, select all via the code editor's press-and-hold menu → Command Palette → "Select All") and adds the cron under Settings → Trigger Events. Check it by opening the helper's address (`{"ok":false,"reason":"not-allowed"}` = working).
 - Screenshot check: a Playwright script with `devices['iPhone 13']` opening `index.html` works in the cloud session (keep the script in the scratchpad, not the repo).
 - GitHub Pages publishes from `main`, folder `/ (root)`. Every merge to `main` redeploys the site within about a minute.
 - The cloud session's network can't open `*.github.io`, so Claude can't load the live site directly. To confirm a deploy, check the "pages build and deployment" workflow run via the GitHub tools; the user does the real-phone test.
