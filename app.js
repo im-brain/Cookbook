@@ -688,6 +688,7 @@ function convertSavedIngredients() {
 function storeRecipes(recipes) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+    if (typeof recipesChanged === "function") { recipesChanged(); }   // js/sync-ui.js: send the change to the cloud soon
     return true;
   } catch (error) {
     return false; // e.g. the phone's storage for this site is full
@@ -1176,13 +1177,11 @@ document.getElementById("delete-button").addEventListener("click", function () {
   if (!recipe) {
     return;
   }
-  const ok = window.confirm("Delete “" + recipe.current.title + "”?\n\nAre you sure? It can only come back from a backup file.");
+  const ok = window.confirm("Delete “" + recipe.current.title + "”?\n\nIt will stay in “Recently deleted” in Settings for 30 days, so you can get it back.");
   if (!ok) {
     return;
   }
-  const result = changeRecipe(shownRecipeId, function (recipes, index) {
-    recipes.splice(index, 1); // take it out of the list
-  });
+  const result = deleteRecipeToTrash(shownRecipeId);
   if (!result.ok) {
     showViewMessage(result.problem);
     return;
