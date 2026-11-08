@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=30">
+    <link rel="stylesheet" href="style.css?v=31">
   </head>
 
   <body>
@@ -53,6 +53,10 @@
       <symbol id="icon-dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.5" cy="8.5" r="1.1"/><circle cx="15.5" cy="15.5" r="1.1"/><circle cx="12" cy="12" r="1.1"/></symbol>
       <symbol id="icon-cook" viewBox="0 0 24 24"><path d="M4 11h14v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M18 13h3M7 7.5c0-1 1-1.5 1-2.5M11 7.5c0-1 1-1.5 1-2.5"/></symbol>
       <symbol id="icon-backup" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5"/><path d="M4 15.5v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol>
+      <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M8 14.5h3"/></symbol>
+      <symbol id="icon-leftovers" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.4-5.5"/><path d="M4 4.5v4h4"/></symbol>
+      <symbol id="icon-fork" viewBox="0 0 24 24"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 21V3c-2.5 1.5-3.5 4.5-3.5 8H17"/></symbol>
+      <symbol id="icon-note" viewBox="0 0 24 24"><path d="M6 3h8l4.5 4.5V21H6z"/><path d="M14 3v5h4.5M9 13h6M9 17h6"/></symbol>
       <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
     </svg>
 
@@ -63,6 +67,9 @@
       <p class="tabbar-brand">My Cookbook</p>
       <button type="button" class="tab" id="tab-cookbook" aria-current="page">
         <svg class="icon"><use href="#icon-book"/></svg><span>Cookbook</span>
+      </button>
+      <button type="button" class="tab" id="tab-plan">
+        <svg class="icon"><use href="#icon-calendar"/></svg><span>This Week</span>
       </button>
       <button type="button" class="tab tab-settings" id="tab-settings">
         <svg class="icon"><use href="#icon-gear"/></svg><span>Settings</span>
@@ -200,7 +207,39 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 30</p>
+        <p class="version">Version 31</p>
+      </section>
+
+      <!-- ===================== THIS WEEK SCREEN (Version 31) ===================== -->
+      <!-- Dinners planned by date, Monday to Sunday. js/plan-ui.js fills it in; js/plan.js does the date maths. -->
+      <section id="plan-screen" hidden>
+        <div class="topbar">
+          <h1 id="plan-heading">This Week</h1>
+        </div>
+
+        <div class="plan-switch" role="group" aria-label="Which week">
+          <button type="button" id="plan-this-week" aria-pressed="true">This week</button>
+          <button type="button" id="plan-next-week" aria-pressed="false">Next week</button>
+        </div>
+
+        <!-- Tonight's dinner, always one tap away (even while looking at another week). -->
+        <div class="card tonight-card" id="tonight-card" hidden></div>
+
+        <div class="plan-weeknav">
+          <button type="button" class="icon-button" id="plan-prev" aria-label="Earlier week"><svg class="icon"><use href="#icon-back"/></svg></button>
+          <div class="plan-weeklabel">
+            <p class="plan-weeklabel-main" id="plan-week-label"></p>
+            <p class="plan-weeklabel-sub">Monday to Sunday</p>
+          </div>
+          <button type="button" class="icon-button" id="plan-next" aria-label="Later week"><svg class="icon chevron"><use href="#icon-chevron"/></svg></button>
+        </div>
+
+        <p class="message" id="plan-message" hidden></p>
+        <p class="message" id="plan-damaged" hidden>Sorry, your meal plan couldn't be read, so nothing was changed. Please tell Claude.</p>
+
+        <ol class="plan-days" id="plan-days"></ol>
+
+        <button type="button" class="button button-secondary plan-reuse" id="plan-reuse">Reuse a past week…</button>
       </section>
 
       <!-- ===================== SETTINGS SCREEN (Version 23) ===================== -->
@@ -570,13 +609,91 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="vendor/supabase.js?v=30"></script>
-    <script src="js/ingredients.js?v=30"></script>
-    <script src="js/sync.js?v=30"></script>
-    <script src="js/photos.js?v=30"></script>
-    <script src="js/auth.js?v=30"></script>
-    <script src="js/cookbook-views.js?v=30"></script>
-    <script src="app.js?v=30"></script>
-    <script src="js/sync-ui.js?v=30"></script>
+
+    <!-- ===== This Week: bottom sheets (Version 31) =====
+         Slide-up panels for planning a day, the ••• menu, and reusing a past week. Built and filled by js/plan-ui.js. -->
+    <div class="sheet-backdrop" id="plan-sheet" hidden>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-date">
+        <div class="sheet-grip"></div>
+        <h2 id="sheet-date"></h2>
+        <p class="sheet-sub" id="sheet-sub">Dinner</p>
+
+        <div class="kind-row" id="sheet-kinds" role="group" aria-label="What's for dinner">
+          <button type="button" class="kind" data-kind="recipe"><svg class="icon"><use href="#icon-book"/></svg><span>Recipe</span></button>
+          <button type="button" class="kind" data-kind="leftovers"><svg class="icon"><use href="#icon-leftovers"/></svg><span>Leftovers</span></button>
+          <button type="button" class="kind" data-kind="out"><svg class="icon"><use href="#icon-fork"/></svg><span>Eating out</span></button>
+          <button type="button" class="kind" data-kind="note"><svg class="icon"><use href="#icon-note"/></svg><span>Note</span></button>
+        </div>
+
+        <div id="sheet-recipe-part">
+          <div class="sheet-search">
+            <svg class="icon"><use href="#icon-search"/></svg>
+            <input type="search" id="sheet-search" placeholder="Find a recipe" aria-label="Find a recipe" autocomplete="off">
+          </div>
+          <ul class="sheet-recipes" id="sheet-recipes"></ul>
+          <div class="sheet-servings" id="sheet-servings-row">
+            <div><strong>Servings</strong><p class="hint" id="sheet-servings-hint"></p></div>
+            <div class="stepper">
+              <button type="button" class="round-button" id="sheet-servings-minus" aria-label="Fewer servings">−</button>
+              <span class="stepper-number" id="sheet-servings" aria-live="polite">4</span>
+              <button type="button" class="round-button" id="sheet-servings-plus" aria-label="More servings">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="sheet-text-part" hidden>
+          <label for="sheet-text" id="sheet-text-label">Note</label>
+          <input type="text" id="sheet-text" maxlength="300" autocomplete="off">
+        </div>
+
+        <p class="message" id="sheet-message" hidden></p>
+        <div class="sheet-buttons">
+          <button type="button" class="button button-secondary" id="sheet-side">Add a side</button>
+          <button type="button" class="button" id="sheet-save">Plan it</button>
+        </div>
+        <button type="button" class="sheet-cancel" id="sheet-cancel">Cancel</button>
+      </div>
+    </div>
+
+    <div class="sheet-backdrop" id="plan-menu" hidden>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+        <div class="sheet-grip"></div>
+        <h2 id="menu-title"></h2>
+        <p class="sheet-sub" id="menu-sub"></p>
+        <div class="menu-buttons">
+          <button type="button" class="button button-secondary" id="menu-open">Open recipe</button>
+          <button type="button" class="button button-secondary" id="menu-change">Change</button>
+          <button type="button" class="button button-secondary" id="menu-move-toggle">Move to another day…</button>
+          <div class="menu-move" id="menu-move" hidden>
+            <label for="menu-date">Move to</label>
+            <input type="date" id="menu-date">
+            <button type="button" class="button" id="menu-move-go">Move</button>
+          </div>
+          <button type="button" class="button button-secondary button-danger" id="menu-remove">Remove</button>
+        </div>
+        <button type="button" class="sheet-cancel" id="menu-cancel">Close</button>
+      </div>
+    </div>
+
+    <div class="sheet-backdrop" id="plan-reuse-sheet" hidden>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reuse-title">
+        <div class="sheet-grip"></div>
+        <h2 id="reuse-title">Reuse a past week</h2>
+        <p class="sheet-sub" id="reuse-sub"></p>
+        <ul class="sheet-recipes" id="reuse-list"></ul>
+        <button type="button" class="sheet-cancel" id="reuse-cancel">Cancel</button>
+      </div>
+    </div>
+
+    <script src="vendor/supabase.js?v=31"></script>
+    <script src="js/ingredients.js?v=31"></script>
+    <script src="js/plan.js?v=31"></script>
+    <script src="js/sync.js?v=31"></script>
+    <script src="js/photos.js?v=31"></script>
+    <script src="js/auth.js?v=31"></script>
+    <script src="js/cookbook-views.js?v=31"></script>
+    <script src="app.js?v=31"></script>
+    <script src="js/plan-ui.js?v=31"></script>
+    <script src="js/sync-ui.js?v=31"></script>
   </body>
 </html>

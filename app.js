@@ -34,10 +34,15 @@ const formScreen = document.getElementById("recipe-form-screen");
 const viewScreen = document.getElementById("recipe-view-screen");
 const cookingScreen = document.getElementById("cooking-screen");
 const settingsScreen = document.getElementById("settings-screen");
+const planScreen = document.getElementById("plan-screen");   // This Week (Version 31, js/plan-ui.js)
 
 // The tab bar (iPhone) / sidebar (iPad) buttons (Version 23).
 const cookbookTab = document.getElementById("tab-cookbook");
 const settingsTab = document.getElementById("tab-settings");
+const planTab = document.getElementById("tab-plan");
+
+// True while a recipe was opened from This Week, so its Back button returns there (Version 31, js/plan-ui.js).
+let backToPlan = false;
 
 // A "function" is a named set of instructions we can reuse.
 // This one shows the screen you give it and hides the rest.
@@ -47,20 +52,19 @@ function showScreen(screenToShow) {
   viewScreen.hidden = screenToShow !== viewScreen;
   cookingScreen.hidden = screenToShow !== cookingScreen;
   settingsScreen.hidden = screenToShow !== settingsScreen;
+  planScreen.hidden = screenToShow !== planScreen;
+  // Leaving the recipe / cooking / form screens for a main screen forgets "came from This Week".
+  if (screenToShow === homeScreen || screenToShow === settingsScreen || screenToShow === planScreen) { backToPlan = false; }
 
   // Tell style.css which screen is showing. It hides the tab bar on the form
   // (so a half-typed recipe isn't left by accident) and while cooking (more room).
   document.body.dataset.screen = screenToShow.id;
 
-  // Light up the right tab. Everything except Settings belongs to the Cookbook tab.
-  const inSettings = screenToShow === settingsScreen;
-  if (inSettings) {
-    settingsTab.setAttribute("aria-current", "page");
-    cookbookTab.removeAttribute("aria-current");
-  } else {
-    cookbookTab.setAttribute("aria-current", "page");
-    settingsTab.removeAttribute("aria-current");
-  }
+  // Light up the right tab. Everything except This Week and Settings belongs to the Cookbook tab.
+  const activeTab = screenToShow === settingsScreen ? settingsTab : (screenToShow === planScreen ? planTab : cookbookTab);
+  [cookbookTab, planTab, settingsTab].forEach(function (tab) {
+    if (tab === activeTab) { tab.setAttribute("aria-current", "page"); } else { tab.removeAttribute("aria-current"); }
+  });
   window.scrollTo(0, 0); // jump back to the top of the page
   if (screenToShow === homeScreen) {
     flowRestore(); // a hidden Cover Flow forgets where it was; put it back (js/cookbook-views.js)
@@ -71,6 +75,10 @@ function showScreen(screenToShow) {
 cookbookTab.addEventListener("click", function () {
   homeMessage.hidden = true;
   showScreen(homeScreen);
+});
+planTab.addEventListener("click", function () {
+  showScreen(planScreen);
+  if (typeof openPlanScreen === "function") { openPlanScreen(); }   // js/plan-ui.js
 });
 settingsTab.addEventListener("click", function () {
   backupMessage.hidden = true; // an old "✓ Backup saved" message would be confusing later
@@ -1266,6 +1274,11 @@ document.getElementById("delete-button").addEventListener("click", function () {
 
 // "‹ My Cookbook" button → back to the list.
 document.getElementById("back-button").addEventListener("click", function () {
+  if (backToPlan) {
+    showScreen(planScreen);
+    openPlanScreen(true);   // js/plan-ui.js: same week as before
+    return;
+  }
   homeMessage.hidden = true;
   showScreen(homeScreen);
 });
@@ -1619,11 +1632,14 @@ async function buildBackupFile(recipes) {
   }
   const backup = {
     app: "my-cookbook",
-    formatVersion: 3,   // 3 = photos (Version 30); 2 = structured ingredients (Version 26); older files still import
+    formatVersion: 4,   // 4 = meal plan (Version 31); 3 = photos (Version 30); 2 = structured ingredients (Version 26); older files still import
     exportedAt: todayAsText(),
     recipes: recipes
   };
   if (Object.keys(photos).length > 0) { backup.photos = photos; }
+  // Version 31: the meal plan goes along (left out while the plan is empty).
+  const plan = typeof loadPlan === "function" ? loadPlan() : null;
+  if (plan && plan.entries.length > 0) { backup.plan = plan; }
   const fileName = "cookbook-backup-" + todayAsText() + ".json";
   return new File([JSON.stringify(backup, null, 2)], fileName, { type: "application/json" });
 }
@@ -1751,8 +1767,10 @@ function importBackupText(text) {
   // Read the file. It should be a cookbook backup (or, just in case, a plain list of recipes).
   let fileRecipes;
   let filePhotos = {};
+  let filePlan = { entries: [] };
   try {
     const data = JSON.parse(text);
+    if (data && !Array.isArray(data) && data.plan && typeof loadPlan === "function") { filePlan = cleanPlan(data.plan); }
     fileRecipes = Array.isArray(data) ? data : (data && data.app === "my-cookbook" ? data.recipes : null);
     if (data && data.photos && typeof data.photos === "object" && !Array.isArray(data.photos)) { filePhotos = data.photos; }
   } catch (error) {
@@ -1790,7 +1808,11 @@ function importBackupText(text) {
     }
   });
 
-  if (added === 0 && updated === 0) {
+  // Version 31: dinners planned in the file that the phone doesn't have yet are added (nothing is deleted).
+  const phonePlan = typeof loadPlan === "function" ? loadPlan() : null;
+  const planMerge = phonePlan && filePlan.entries.length > 0 ? mergePlans(phonePlan, filePlan) : { plan: phonePlan, added: 0 };
+
+  if (added === 0 && updated === 0 && planMerge.added === 0) {
     rememberBackup(cleaned); // the file is a backup of these recipes
     updateBackupReminder();
     showBackupMessage("Everything in that backup is already on your phone. Nothing to add.");
@@ -1802,6 +1824,7 @@ function importBackupText(text) {
   if (added) question += "• " + recipesWord(added) + " will be added.\n";
   if (updated) question += "• " + recipesWord(updated) + " will be replaced by the newer copy in the file.\n";
   if (same) question += "• " + recipesWord(same) + " already on your phone " + (same === 1 ? "stays as it is" : "stay as they are") + ".\n";
+  if (planMerge.added) question += "• " + planMerge.added + (planMerge.added === 1 ? " planned meal" : " planned meals") + " will be added to This Week.\n";
   question += "Nothing on your phone will be deleted. Go ahead?";
   if (!window.confirm(question)) {
     showBackupMessage("Import cancelled. Nothing was changed.");
@@ -1825,9 +1848,11 @@ function importBackupText(text) {
     return;
   }
   rememberBackup(cleaned); // the file is a backup of these recipes
+  if (planMerge.added > 0) { savePlan(planMerge.plan); }
 
   let done = "✓ Imported: " + recipesWord(added) + " added";
   if (updated) done += ", " + updated + " replaced";
+  if (planMerge.added) done += ", " + planMerge.added + (planMerge.added === 1 ? " planned meal" : " planned meals") + " added";
   done += ".";
   if (skipped) done += " " + recipesWord(skipped) + " in the file couldn't be read and were skipped.";
   showBackupMessage(done);
