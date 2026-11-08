@@ -62,6 +62,9 @@ function showScreen(screenToShow) {
     settingsTab.removeAttribute("aria-current");
   }
   window.scrollTo(0, 0); // jump back to the top of the page
+  if (screenToShow === homeScreen) {
+    flowRestore(); // a hidden Cover Flow forgets where it was; put it back (js/cookbook-views.js)
+  }
 }
 
 // Tapping a tab. "Cookbook" always goes back to the list, even from a recipe page.
@@ -605,6 +608,7 @@ function renderRecipeList() {
   const recipes = loadRecipes();
   if (recipes === null) {
     emptyNote.hidden = true; // the count line at the top already says they couldn't be read
+    renderCookbookViews([], [], recipeList); // (js/cookbook-views.js) hides every view
     return;
   }
   emptyNote.hidden = recipes.length > 0;
@@ -613,13 +617,20 @@ function renderRecipeList() {
   searchForm.hidden = recipes.length === 0;
   const typed = searchBox.value.trim();
   const words = simplify(typed).split(/\s+/).filter(Boolean);
-  const shown = words.length === 0 ? recipes : recipes.filter(function (recipe) {
-    return matchesSearch(recipe, words);
+  // The tag chosen in the filter row (viewTag, from js/cookbook-views.js) narrows it further.
+  // It is checked against the tags actually in use first, so a tag nobody has any more is dropped.
+  const tagInUse = viewTag !== "" && recipes.some(function (r) { return r.current.tags.indexOf(viewTag) !== -1; });
+  const tagWanted = tagInUse ? viewTag : "";
+  const shown = recipes.filter(function (recipe) {
+    return (words.length === 0 || matchesSearch(recipe, words)) &&
+      (tagWanted === "" || recipe.current.tags.indexOf(tagWanted) !== -1);
   });
   searchClear.hidden = searchBox.value === "";
-  searchResult.hidden = words.length === 0 || recipes.length === 0;
+  searchResult.hidden = (words.length === 0 && tagWanted === "") || recipes.length === 0;
   if (shown.length === 0) {
-    searchResult.textContent = "Nothing matches “" + typed + "”.";
+    searchResult.textContent = words.length === 0
+      ? "Nothing here yet."
+      : "Nothing matches “" + typed + "”.";
   } else {
     searchResult.textContent = shown.length + " of " + recipesWord(recipes.length);
   }
@@ -629,11 +640,8 @@ function renderRecipeList() {
     return a.current.title.localeCompare(b.current.title, undefined, { sensitivity: "base" });
   });
 
-  sorted.forEach(function (recipe) {
-    const row = document.createElement("li");
-    row.append(makeRecipeButton(recipe));
-    recipeList.append(row);
-  });
+  // Draw them in the chosen view: Cover Flow, Grid or List (js/cookbook-views.js).
+  renderCookbookViews(sorted, recipes, recipeList);
 }
 
 // Build one tappable recipe row: title, details underneath, and "›". Tapping opens the recipe.
@@ -1514,38 +1522,10 @@ const pickCard = document.getElementById("pick-card");
 const pickHeading = document.getElementById("pick-heading");
 const pickResult = document.getElementById("pick-result");
 const pickMessage = document.getElementById("pick-message");
-const pickFilter = document.getElementById("pick-filter");
-const pickTags = document.getElementById("pick-tags");
 const pickAgain = document.getElementById("pick-again");
 
-let pickTag = "";        // "" means any recipe; otherwise only recipes with this tag
 let lastPickedId = null; // so we don't suggest the same recipe twice in a row
-
-// The filter chips: "any" plus every tag used on at least one recipe (starter tags first).
-// They're radio buttons (only one can be chosen) styled like the tag chips in the form.
-function renderPickTags(recipes) {
-  const used = knownTags().filter(function (tag) {
-    return recipes.some(function (r) { return r.current.tags.indexOf(tag) !== -1; });
-  });
-  if (used.indexOf(pickTag) === -1) {
-    pickTag = ""; // the chosen tag isn't used any more
-  }
-  pickTags.innerHTML = "";
-  [""].concat(used).forEach(function (tag) {
-    const chip = document.createElement("label");
-    chip.className = "chip";
-    const radio = document.createElement("input");
-    radio.type = "radio";
-    radio.name = "pick-tag";
-    radio.value = tag;
-    radio.checked = tag === pickTag;
-    const text = document.createElement("span");
-    text.textContent = tag === "" ? "any" : tag;
-    chip.append(radio, text);
-    pickTags.append(chip);
-  });
-  pickFilter.hidden = used.length === 0; // no tags anywhere: nothing to filter by
-}
+// The tag to pick from is the one chosen in the filter row on the home screen (viewTag).
 
 // Choose a recipe and show it.
 function pickRecipe() {
@@ -1558,21 +1538,18 @@ function pickRecipe() {
   if (recipes === null) {
     pickMessage.textContent = "Sorry, your saved recipes couldn't be read.";
     pickMessage.hidden = false;
-    pickFilter.hidden = true;
     pickAgain.hidden = true;
     return;
   }
   if (recipes.length === 0) {
     pickMessage.textContent = "Your cookbook is empty, so there's nothing to pick yet. Add a few recipes and I'll choose one for you!";
     pickMessage.hidden = false;
-    pickFilter.hidden = true;
     pickAgain.hidden = true;
     return;
   }
 
-  renderPickTags(recipes);
   const choices = recipes.filter(function (r) {
-    return pickTag === "" || r.current.tags.indexOf(pickTag) !== -1;
+    return viewTag === "" || r.current.tags.indexOf(viewTag) !== -1;
   });
 
   // Leave out the last pick, if there's anything else to choose.
@@ -1586,9 +1563,9 @@ function pickRecipe() {
   pickResult.append(makeRecipeButton(picked));
   pickAgain.hidden = choices.length < 2; // "Pick another" only if there is another
   if (choices.length === 1) {
-    pickMessage.textContent = pickTag === ""
+    pickMessage.textContent = viewTag === ""
       ? "It's your only recipe so far!"
-      : "It's your only “" + pickTag + "” recipe.";
+      : "It's your only “" + viewTag + "” recipe.";
     pickMessage.hidden = false;
   }
 }
@@ -1602,11 +1579,6 @@ document.getElementById("pick-close").addEventListener("click", function () {
   pickCard.hidden = true;
 });
 
-// Choosing a filter chip picks again from that tag straight away.
-pickTags.addEventListener("change", function (event) {
-  pickTag = event.target.value;
-  pickRecipe();
-});
 
 // ======================================================================
 // ---------- Fill in automatically from pasted text (step 16) ----------
