@@ -169,6 +169,8 @@ const flowTotal = document.getElementById("flow-total");
 let flowRecipes = [];      // the recipes in the row, in order
 let flowCurrentId = null;  // the recipe in the middle (kept when the row is rebuilt)
 let flowFrame = 0;         // pending animation frame, so we work once per frame
+let flowDragging = false;  // true while your finger is on the slider
+let flowShownId = null;    // the recipe the caption is showing (so it only redraws when this changes)
 
 // "Reduce Motion" in the iPhone's settings: no tilting or sliding, just a plain row.
 function reduceMotion() {
@@ -219,26 +221,39 @@ function flowTilt() {
       cover.style.opacity = Math.abs(d) < 0.5 ? "1" : "0.8";
       return;
     }
-    const shift = -d * width * 0.5;
-    const tilt = -near * 55;
-    const scale = 1 - Math.min(Math.abs(d), 1) * 0.2;
+    // Like the edges of a book's pages: the cover in the middle stands full size, its two
+    // neighbours tilt away beside it, and all the rest are squeezed close together behind
+    // them, so moving fast looks like riffling through pages.
+    const far = Math.abs(d);
+    const sign = d < 0 ? -1 : 1;
+    const place = sign * (Math.min(far, 1) * 0.55 + Math.max(far - 1, 0) * 0.16) * width;
+    const shift = place - d * width;         // how far to move it from where it naturally sits
+    const tilt = -near * 62;
+    const scale = 1 - Math.min(far, 1) * 0.18;
     cover.style.transform = "perspective(900px) translateX(" + shift.toFixed(1) + "px) rotateY(" + tilt.toFixed(1) + "deg) scale(" + scale.toFixed(3) + ")";
-    item.style.zIndex = String(100 - Math.round(Math.abs(d) * 10));
+    item.style.zIndex = String(Math.max(1, 1000 - Math.round(far * 10)));
     cover.style.opacity = "";
   });
 }
 
-// Show the caption, slider and arrows for whichever recipe is in the middle.
+// Show the caption, counter and arrows for whichever recipe is in the middle.
 function flowShowCurrent() {
   const index = flowCurrentIndex();
   const recipe = flowRecipes[index];
   if (!recipe) {
     return;
   }
+  flowPos.textContent = (index + 1) + " of " + flowRecipes.length;
+  flowTotal.textContent = String(flowRecipes.length);
+  flowPrev.disabled = index === 0;
+  flowNext.disabled = index === flowRecipes.length - 1;
+  if (recipe.id === flowShownId) {
+    return; // the caption is already right; don't redraw it on every frame
+  }
+  flowShownId = recipe.id;
   flowCurrentId = recipe.id;
   flowTitle.textContent = recipe.current.title;
   flowMeta.textContent = describeRecipe(recipe, false);
-  flowMeta.hidden = flowMeta.textContent === "";
   flowTags.innerHTML = "";
   recipe.current.tags.forEach(function (tag) {
     const pill = document.createElement("span");
@@ -246,14 +261,18 @@ function flowShowCurrent() {
     pill.textContent = tag;
     flowTags.append(pill);
   });
-  flowPos.textContent = (index + 1) + " of " + flowRecipes.length;
-  flowTotal.textContent = String(flowRecipes.length);
-  flowRange.value = String(index + 1);
-  flowPrev.disabled = index === 0;
-  flowNext.disabled = index === flowRecipes.length - 1;
   Array.prototype.forEach.call(flowTrack.children, function (item, i) {
     item.setAttribute("aria-current", i === index ? "true" : "false");
   });
+}
+
+// The slider follows the covers smoothly (a fraction of a recipe, not whole steps).
+function flowShowSlider() {
+  const width = flowItemWidth();
+  if (width === 0 || flowDragging) {
+    return;
+  }
+  flowRange.value = String(flowTrack.scrollLeft / width);
 }
 
 flowTrack.addEventListener("scroll", function () {
@@ -263,14 +282,45 @@ flowTrack.addEventListener("scroll", function () {
   flowFrame = requestAnimationFrame(function () {
     flowFrame = 0;
     flowTilt();
+    flowShowSlider();
     flowShowCurrent();
   });
 });
 
 flowPrev.addEventListener("click", function () { flowGoTo(flowCurrentIndex() - 1, true); });
 flowNext.addEventListener("click", function () { flowGoTo(flowCurrentIndex() + 1, true); });
+// Dragging the slider moves the covers continuously. While your finger is down, the row's
+// "snap to a recipe" is switched off (it would fight the slider); when you let go, the
+// covers glide to the nearest recipe.
+function flowDragStart() {
+  flowDragging = true;
+  flowTrack.classList.add("dragging");
+}
+function flowDragEnd() {
+  if (!flowDragging) {
+    return;
+  }
+  flowDragging = false;
+  const width = flowItemWidth();
+  const nearest = Math.round(Number(flowRange.value));
+  flowTrack.classList.remove("dragging");
+  flowGoTo(nearest, true);
+  flowRange.value = String(Math.max(0, Math.min(flowRecipes.length - 1, nearest)));
+}
+flowRange.addEventListener("pointerdown", flowDragStart);
+flowRange.addEventListener("touchstart", flowDragStart, { passive: true });
+flowRange.addEventListener("keydown", function () { flowDragging = false; });
+["pointerup", "pointercancel", "touchend", "touchcancel", "change"].forEach(function (name) {
+  flowRange.addEventListener(name, flowDragEnd);
+});
 flowRange.addEventListener("input", function () {
-  flowGoTo(Number(flowRange.value) - 1, false);
+  const width = flowItemWidth();
+  if (!flowDragging && !flowTrack.classList.contains("dragging")) {
+    // Keyboard or a tap on the bar: no drag started, so just go there.
+    flowGoTo(Math.round(Number(flowRange.value)), false);
+    return;
+  }
+  flowTrack.scrollLeft = Number(flowRange.value) * width;
 });
 // Keyboard (and iPad keyboards): arrow keys move along.
 flowTrack.addEventListener("keydown", function (event) {
@@ -300,13 +350,16 @@ function flowRestore() {
   }
   flowGoTo(index, false);
   flowTilt();
+  flowShowSlider();
   flowShowCurrent();
 }
 
 function renderFlow(recipes) {
   flowRecipes = recipes;
   flowTrack.innerHTML = "";
-  flowRange.max = String(Math.max(1, recipes.length));
+  flowRange.max = String(Math.max(0, recipes.length - 1));
+  flowRange.disabled = recipes.length < 2;
+  flowShownId = null; // the row was rebuilt, so redraw the caption
   recipes.forEach(function (recipe) {
     const item = document.createElement("button");
     item.type = "button";

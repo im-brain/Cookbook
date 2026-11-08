@@ -1609,11 +1609,15 @@ select {
   padding: 24px calc(50% - var(--flow-w) / 2) 32px;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
+  padding-bottom: 8px;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
 }
 .flow-track::-webkit-scrollbar { display: none; }
+/* While the slider is being dragged the row must not snap, or it fights the slider. */
+.flow-track.dragging { scroll-snap-type: none; }
 .flow-item {
+  pointer-events: none;   /* only the cover itself can be tapped, so squeezed-up pages don't block each other */
   flex: none;
   width: var(--flow-w);
   padding: 0;
@@ -1624,7 +1628,7 @@ select {
   scroll-snap-stop: always;
   position: relative;   /* so the z-index set by the script works */
 }
-.flow-item .cover { will-change: transform; }
+.flow-item .cover { will-change: transform; pointer-events: auto; }
 .flow-item:focus-visible .cover {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
@@ -1643,7 +1647,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 200;
+  z-index: 2000;   /* above every cover (covers use up to 1000) */
   cursor: pointer;
 }
 .flow-arrow:disabled { opacity: .35; }
@@ -1651,10 +1655,19 @@ select {
 .flow-next { right: 12px; }
 .flow-arrow .icon { width: 22px; height: 22px; }
 
+/* The caption has a fixed height, so nothing below or above it ever shifts when the recipe changes. */
 .flow-caption {
   text-align: center;
+  height: 150px;
+  overflow: hidden;
+  margin-top: 4px;
 }
 .flow-title {
+  height: 2.4em;   /* always room for two lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   margin: 0;
   font-family: var(--font-serif);
   font-size: var(--text-xl);
@@ -1662,6 +1675,7 @@ select {
   line-height: 1.2;
 }
 .flow-meta {
+  min-height: 1.5em;
   margin: 6px 0 0;
   color: var(--ink-soft);
 }
@@ -1671,7 +1685,8 @@ select {
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 10px;
-  min-height: 30px;
+  height: 30px;
+  overflow: hidden;
 }
 .flow-tag {
   padding: 4px 12px;
@@ -1684,10 +1699,17 @@ select {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 0;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
   font-size: var(--text-sm);
 }
+/* No box around the slider after you touch it (the general "typing box" outline is for text boxes);
+   a keyboard user still gets a ring. */
+.flow-slider input:focus { outline: none; }
+.flow-slider input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 8px; }
+.flow-slider span { flex: none; min-width: 4.5em; }
+.flow-slider span:last-child { text-align: right; min-width: 2em; }
 .flow-slider input {
   flex: 1;
   min-width: 0;
@@ -1712,8 +1734,8 @@ select {
   .filter-row, .view-controls { margin-top: 8px; }
   .flow { margin-top: 4px; }
   .flow-title { font-size: var(--text-lg); }
+  .flow-caption { height: 96px; }
   .flow-tags { display: none; }
-  .flow-slider { margin-top: 0; }
 }
 /* iPad and other wide screens. */
 @media (min-width: 768px) {

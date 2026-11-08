@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=24">
+    <link rel="stylesheet" href="style.css?v=25">
   </head>
 
   <body>
@@ -166,15 +166,15 @@
               <svg class="icon"><use href="#icon-chevron"/></svg>
             </button>
           </div>
+          <div class="flow-slider">
+            <span id="flow-pos"></span>
+            <input type="range" id="flow-range" min="0" max="0" step="any" value="0" aria-label="Move through recipes">
+            <span id="flow-total"></span>
+          </div>
           <div class="flow-caption" id="flow-caption" aria-live="polite">
             <p class="flow-title" id="flow-title"></p>
             <p class="flow-meta" id="flow-meta"></p>
             <div class="flow-tags" id="flow-tags"></div>
-          </div>
-          <div class="flow-slider">
-            <span id="flow-pos"></span>
-            <input type="range" id="flow-range" min="1" max="1" value="1" aria-label="Move through recipes">
-            <span id="flow-total"></span>
           </div>
         </div>
 
@@ -188,7 +188,7 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 24</p>
+        <p class="version">Version 25</p>
       </section>
 
       <!-- ===================== SETTINGS SCREEN (Version 23) ===================== -->
@@ -491,7 +491,7 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="js/cookbook-views.js?v=24"></script>
-    <script src="app.js?v=24"></script>
+    <script src="js/cookbook-views.js?v=25"></script>
+    <script src="app.js?v=25"></script>
   </body>
 </html>
