@@ -12,8 +12,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
     <!-- The color Safari uses for its top bar, so it blends with the page. -->
-    <meta name="theme-color" content="#fbf7f2" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#1d1916" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f6f0e4" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1b1713" media="(prefers-color-scheme: dark)">
 
     <!-- The name shown on the browser tab and in bookmarks. -->
     <title>My Cookbook</title>
@@ -30,24 +30,59 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
 
     <!-- ===== VERSION NUMBER =====
-         Phones keep saved copies of style.css and app.js for a while. Adding "?v=22" makes them look like
+         Phones keep saved copies of style.css and app.js for a while. Adding "?v=23" makes them look like
          new files, so the phone downloads fresh ones. Every update raises this number in THREE places:
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=22">
+    <link rel="stylesheet" href="style.css?v=23">
   </head>
 
   <body>
     <!-- The <body> is everything you see on the page. -->
+
+    <!-- ===== Icons (Version 23) =====
+         Small line drawings, defined once here and reused with <svg><use href="#icon-..."/></svg>.
+         Nothing in this block shows on its own. -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <symbol id="icon-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M8 7h8"/></symbol>
+      <symbol id="icon-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.6M12 18.9v2.6M4.6 4.6l1.9 1.9M17.5 17.5l1.9 1.9M2.5 12h2.6M18.9 12h2.6M4.6 19.4l1.9-1.9M17.5 6.5l1.9-1.9"/></symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="icon-back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+      <symbol id="icon-dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.5" cy="8.5" r="1.1"/><circle cx="15.5" cy="15.5" r="1.1"/><circle cx="12" cy="12" r="1.1"/></symbol>
+      <symbol id="icon-cook" viewBox="0 0 24 24"><path d="M4 11h14v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M18 13h3M7 7.5c0-1 1-1.5 1-2.5M11 7.5c0-1 1-1.5 1-2.5"/></symbol>
+      <symbol id="icon-backup" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5"/><path d="M4 15.5v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol>
+      <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    </svg>
+
+    <!-- ===== Navigation (Version 23) =====
+         On iPhone: a tab bar at the bottom. On iPad (wide screens): a notebook-style sidebar on the left.
+         It's the same element; style.css decides how it looks. This Week and Shopping tabs come later. -->
+    <nav class="tabbar" id="tabbar" aria-label="Sections">
+      <p class="tabbar-brand">My Cookbook</p>
+      <button type="button" class="tab" id="tab-cookbook" aria-current="page">
+        <svg class="icon"><use href="#icon-book"/></svg><span>Cookbook</span>
+      </button>
+      <button type="button" class="tab tab-settings" id="tab-settings">
+        <svg class="icon"><use href="#icon-gear"/></svg><span>Settings</span>
+      </button>
+    </nav>
 
     <!-- <main> is the main column of the page. style.css gives it space around the edges. -->
     <main>
       <!-- ===================== HOME SCREEN ===================== -->
       <!-- A <section> is one "screen" of the app. app.js shows one screen at a time. -->
       <section id="home-screen">
-        <!-- <h1> is the main heading: the biggest title on the page. -->
-        <h1>My Cookbook</h1>
+        <!-- The top of the screen: the title and the round "+" button that adds a recipe. -->
+        <div class="topbar">
+          <!-- <h1> is the main heading: the biggest title on the page. -->
+          <h1>My Cookbook</h1>
+          <!-- type="button" means "just a button" (it doesn't send a form). app.js decides what it does. -->
+          <button type="button" class="icon-button primary" id="add-recipe-button" aria-label="Add a recipe">
+            <svg class="icon"><use href="#icon-plus"/></svg>
+          </button>
+        </div>
 
         <!-- class="subtitle" tells style.css to show this in a softer color. -->
         <!-- id="recipe-count": app.js replaces this text with how many recipes are saved. -->
@@ -71,12 +106,16 @@
         <!-- Shown only when opened from the Home Screen icon. -->
         <p class="installed" id="installed-note" hidden>✓ Opened from your Home Screen. Your recipes will be kept here.</p>
 
-        <!-- type="button" means "just a button" (it doesn't send a form). app.js decides what it does. -->
-        <button type="button" class="button" id="add-recipe-button">+ Add a recipe</button>
+        <!-- Shown when recipes changed since the last backup. Tapping it opens Settings, where Backup is. -->
+        <button type="button" class="backup-nudge" id="backup-nudge" hidden>
+          <svg class="icon"><use href="#icon-backup"/></svg>
+          <span><span id="backup-nudge-text"></span> <strong>Back up in Settings</strong></span>
+          <svg class="icon chevron"><use href="#icon-chevron"/></svg>
+        </button>
 
         <!-- ----- "What should I cook?" ----- -->
         <!-- Tapping this picks a random recipe and opens the box below. -->
-        <button type="button" class="button button-secondary" id="pick-button">🎲 What should I cook?</button>
+        <button type="button" class="button button-secondary" id="pick-button"><svg class="icon"><use href="#icon-dice"/></svg>What should I cook?</button>
         <div class="card pick-card" id="pick-card" hidden>
           <!-- The picked recipe (app.js puts a tappable row here), or a friendly message. -->
           <p class="pick-heading" id="pick-heading">How about…</p>
@@ -98,6 +137,7 @@
              Being inside a <form role="search"> makes the iPhone keyboard show a "Search" key.
              Hidden while there are no recipes (app.js decides). -->
         <form class="search" id="search-form" role="search" hidden>
+          <svg class="icon search-icon"><use href="#icon-search"/></svg>
           <input type="search" id="search-box" placeholder="Search title, ingredient or tag"
                  aria-label="Search recipes" autocomplete="off" autocorrect="off" enterkeyhint="search">
           <!-- The × button empties the box. Only shown while something is typed. -->
@@ -109,9 +149,20 @@
         <ul class="recipe-list" id="recipe-list"></ul>
 
         <!-- Shown only when there are no recipes yet. -->
-        <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap <strong>+ Add a recipe</strong> to start.</p>
+        <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
-        <!-- ----- Backup ----- -->
+        <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
+        <p class="version">Version 23</p>
+      </section>
+
+      <!-- ===================== SETTINGS SCREEN (Version 23) ===================== -->
+      <!-- Opened with the Settings tab. Holds things you don't need every day, starting with Backup. -->
+      <section id="settings-screen" hidden>
+        <div class="topbar">
+          <h1>Settings</h1>
+        </div>
+
+        <!-- ----- Backup (moved here from the home screen in Version 23) ----- -->
         <!-- Export saves all recipes into one file (you put it in iCloud Drive).
              Import reads such a file back in. app.js does the work. -->
         <div class="card backup" id="backup-card">
@@ -130,14 +181,12 @@
           <input type="file" id="import-file" hidden>
         </div>
 
-        <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 22</p>
       </section>
 
       <!-- ===================== RECIPE PAGE SCREEN ===================== -->
       <!-- Shows one recipe. app.js fills in every part when you tap a recipe in the list. -->
       <section id="recipe-view-screen" hidden>
-        <button type="button" class="back-button" id="back-button">‹ My Cookbook</button>
+        <button type="button" class="back-button" id="back-button"><svg class="icon"><use href="#icon-back"/></svg>Cookbook</button>
 
         <!-- A message after a change, e.g. "✓ Changes saved". -->
         <p class="message" id="view-message" hidden></p>
@@ -153,11 +202,11 @@
         <div class="tags" id="view-tags"></div>
 
         <!-- Opens the cooking screen (hidden while you look at the original). -->
-        <button type="button" class="button start-cooking" id="start-cooking-button">🍳 Start cooking</button>
+        <button type="button" class="button start-cooking" id="start-cooking-button"><svg class="icon"><use href="#icon-cook"/></svg>Start cooking</button>
 
         <!-- Notes come first, so you see them before you start cooking. -->
         <div class="notes-box" id="view-notes-box">
-          <h2>Notes</h2>
+          <h2>My notes</h2>
           <p id="view-notes"></p>
         </div>
 
@@ -174,7 +223,7 @@
         <!-- Buttons at the bottom of the recipe page. app.js shows the ones that fit. -->
         <div class="recipe-actions">
           <!-- While looking at "my version": -->
-          <button type="button" class="button" id="edit-button">Edit recipe</button>
+          <button type="button" class="button button-secondary" id="edit-button">Edit recipe</button>
           <button type="button" class="button button-secondary" id="view-original-button">View original</button>
           <!-- While looking at the original: -->
           <button type="button" class="button" id="back-to-mine-button">Back to my version</button>
@@ -189,7 +238,7 @@
       <!-- Opened by "Start cooking". Big text; tap an ingredient or step to tick it off.
            The ticks are forgotten when you tap "Done cooking". -->
       <section id="cooking-screen" class="cooking" hidden>
-        <button type="button" class="back-button" id="done-cooking-top">‹ Done cooking</button>
+        <button type="button" class="back-button" id="done-cooking-top"><svg class="icon"><use href="#icon-back"/></svg>Done cooking</button>
 
         <h1 id="cook-title"></h1>
         <p class="hint">Tap an item to tick it off. The screen stays on while you cook.</p>
@@ -269,7 +318,7 @@
         </div>
 
         <div class="notes-box" id="cook-notes-box">
-          <h2>Notes</h2>
+          <h2>My notes</h2>
           <p id="cook-notes"></p>
         </div>
 
@@ -406,6 +455,6 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=22"></script>
+    <script src="app.js?v=23"></script>
   </body>
 </html>

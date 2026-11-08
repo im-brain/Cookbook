@@ -33,6 +33,11 @@ const homeScreen = document.getElementById("home-screen");
 const formScreen = document.getElementById("recipe-form-screen");
 const viewScreen = document.getElementById("recipe-view-screen");
 const cookingScreen = document.getElementById("cooking-screen");
+const settingsScreen = document.getElementById("settings-screen");
+
+// The tab bar (iPhone) / sidebar (iPad) buttons (Version 23).
+const cookbookTab = document.getElementById("tab-cookbook");
+const settingsTab = document.getElementById("tab-settings");
 
 // A "function" is a named set of instructions we can reuse.
 // This one shows the screen you give it and hides the rest.
@@ -41,8 +46,33 @@ function showScreen(screenToShow) {
   formScreen.hidden = screenToShow !== formScreen;
   viewScreen.hidden = screenToShow !== viewScreen;
   cookingScreen.hidden = screenToShow !== cookingScreen;
+  settingsScreen.hidden = screenToShow !== settingsScreen;
+
+  // Tell style.css which screen is showing. It hides the tab bar on the form
+  // (so a half-typed recipe isn't left by accident) and while cooking (more room).
+  document.body.dataset.screen = screenToShow.id;
+
+  // Light up the right tab. Everything except Settings belongs to the Cookbook tab.
+  const inSettings = screenToShow === settingsScreen;
+  if (inSettings) {
+    settingsTab.setAttribute("aria-current", "page");
+    cookbookTab.removeAttribute("aria-current");
+  } else {
+    cookbookTab.setAttribute("aria-current", "page");
+    settingsTab.removeAttribute("aria-current");
+  }
   window.scrollTo(0, 0); // jump back to the top of the page
 }
+
+// Tapping a tab. "Cookbook" always goes back to the list, even from a recipe page.
+cookbookTab.addEventListener("click", function () {
+  homeMessage.hidden = true;
+  showScreen(homeScreen);
+});
+settingsTab.addEventListener("click", function () {
+  backupMessage.hidden = true; // an old "✓ Backup saved" message would be confusing later
+  showScreen(settingsScreen);
+});
 
 // ---------- The recipe form ----------
 
@@ -639,18 +669,25 @@ function makeRecipeButton(recipe) {
 // ======================================================================
 
 // Fill a list (<ul> or <ol>) with one item per line of text.
+// Steps also get their number in "data-number", which style.css shows in a circle (Version 23).
 function fillList(listElement, items) {
   listElement.innerHTML = "";
   let afterHeading = false;
+  let number = 0;
   items.forEach(function (text) {
     const item = document.createElement("li");
     item.textContent = text;
     if (isSectionHeading(text)) {
       item.className = "section-heading";   // bold, no bullet or number
       afterHeading = true;
-    } else if (afterHeading) {
-      item.value = 1;                        // numbered lists start again at 1 after a heading
-      afterHeading = false;
+      number = 0;                            // numbers start again at 1 after a heading
+    } else {
+      if (afterHeading) {
+        item.value = 1;
+        afterHeading = false;
+      }
+      number = number + 1;
+      item.dataset.number = number;
     }
     listElement.append(item);
   });
@@ -1228,28 +1265,39 @@ function recipesWord(number) {
 }
 
 // Show the warning ("N recipes changed since your last backup") or the quiet "all backed up" line.
+// The same warning also shows on the home screen as a button that opens Settings (Version 23),
+// because Backup itself now lives in Settings.
+const backupNudge = document.getElementById("backup-nudge");
+const backupNudgeText = document.getElementById("backup-nudge-text");
+
+function showBackupWarning(text) {
+  backupReminder.textContent = text;
+  backupReminder.hidden = false;
+  backupNudgeText.textContent = text;
+  backupNudge.hidden = false;
+}
+
 function updateBackupReminder() {
   const recipes = loadRecipes();
   const lastBackup = loadLastBackup();
   backupReminder.hidden = true;
   backupStatus.hidden = true;
+  backupNudge.hidden = true;
   if (recipes === null) {
     return; // the top of the screen already says the recipes couldn't be read
   }
 
   if (lastBackup === null) {
     if (recipes.length > 0) {
-      backupReminder.textContent = "You haven't made a backup yet. " +
-        recipesWord(recipes.length) + (recipes.length === 1 ? " isn't" : " aren't") + " backed up.";
-      backupReminder.hidden = false;
+      showBackupWarning("You haven't made a backup yet. " +
+        recipesWord(recipes.length) + (recipes.length === 1 ? " isn't" : " aren't") + " backed up.");
     }
     return;
   }
 
   const changes = countChangesSinceBackup(recipes, lastBackup);
   if (changes > 0) {
-    backupReminder.textContent = recipesWord(changes) + " changed since your last backup (" + lastBackup.date + ").";
-    backupReminder.hidden = false;
+    showBackupWarning(recipesWord(changes) + " changed since your last backup (" + lastBackup.date + ").");
   } else {
     backupStatus.textContent = "✓ All recipes backed up (last backup " + lastBackup.date + ").";
     backupStatus.hidden = false;
@@ -2060,5 +2108,12 @@ convertAmount.addEventListener("input", showConversions);
 convertFrom.addEventListener("change", showConversions);
 convertIngredient.addEventListener("change", showConversions);
 
+// "Back up in Settings" on the home screen → open Settings.
+backupNudge.addEventListener("click", function () {
+  backupMessage.hidden = true;
+  showScreen(settingsScreen);
+});
+
 // When the app opens, show the count, the list and the backup reminder straight away.
 refreshHome();
+showScreen(homeScreen); // also lights up the Cookbook tab
