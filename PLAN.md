@@ -5,7 +5,7 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 
 ## Current status (2026-11-08)
 
-- **Phase 6 (Version 30, Photos) is done and confirmed on the phone** (photo SQL run in Supabase). Phase 5 (Version 29) is also done: the real recipes are in the cloud, syncing is on, the keep-awake schedule is added. **Next: Phase 7 — This Week / Next Week (Version 31)**, in a new session.
+- **Phase 6 (Version 30, Photos) is done and confirmed on the phone** (photo SQL run in Supabase). Phase 5 (Version 29) is also done: the real recipes are in the cloud, syncing is on, the keep-awake schedule is added. **Phase 7 (This Week / Next Week) is split in two (user's OK 2026-11-08): Part A (Version 31, the planner on the phone, in backups) is built and waiting for the phone check; Part B (Version 32, syncing the plan between devices, needs one new SQL snippet in Supabase) is next; the Shopping list (Phase 8) becomes Version 33.**
 
 - **Version 1**, **Cooking mode** and **Import a recipe** are done (up to Version 22, all confirmed on the phone).
 - **Redesign approved** (2026-11-08): new look, Cover Flow, structured ingredients, private Supabase sync, photos, This Week and a shopping list, in 8 phases (see **Redesign** below and `CLAUDE.md` → Key decisions).
@@ -149,8 +149,10 @@ The full proposal (mockups, data model, Supabase limits, migration steps) is the
 - [x] **Phase 5 — Move the real recipes (Version 29, merged and confirmed on the phone).** The six-step move in Settings (backup → check → preview → upload only on tap → verify → finish; local copy kept). Keep-awake ping from the Cloudflare helper a few times a day.
 - [x] **Phase 6 — Photos (Version 30).** One optional photo per recipe, shrunk on the phone (longest side 1600 px, JPEG), kept on the phone in IndexedDB and in a private Supabase Storage bucket `recipe-photos`, shown on the recipe page and on covers, included in backups (format 3). **Needs the new photo SQL at the end of `supabase/schema.sql` run once in Supabase.** *(Merged and confirmed on the phone.)*
   **Test it:** see the phone checklist in the pull request.
-- [ ] **Phase 7 — This Week / Next Week (Version 31).** Planner by date with sides, servings, leftovers, eating out, notes, past weeks and reuse.
-- [ ] **Phase 8 — Shopping list (Version 32).** Per week, scaled and combined, aisles, pantry, extras, synced ticks, changes marked. A range uses its **upper** amount.
+- [ ] **Phase 7 — This Week / Next Week (two pull requests).** Planner by date with sides, servings, leftovers, eating out, notes, past weeks and reuse.
+  - [x] **Part A (Version 31, built; waiting for the phone check):** a **This Week** tab; This week / Next week switch and ‹ › for other weeks; a Tonight card with Start cooking (amounts scaled to the planned servings); each day has a main (recipe, leftovers, eating out or a note) plus side dishes (recipes), servings with − / +; ••• menu: open recipe, change, move to another day (swaps if busy), remove; "Reuse a past week…" copies a week into the one on screen (busy days are left alone). Saved on the phone (`cookbook.plan`) and in backups (format 4; older files still import). Node checks in `tests/plan.test.js` (60).
+  - [ ] **Part B (Version 32):** sync the plan between devices (`plan_entries` table, needs the new SQL run in Supabase).
+- [ ] **Phase 8 — Shopping list (Version 33).** Per week, scaled and combined, aisles, pantry, extras, synced ticks, changes marked. A range uses its **upper** amount.
 
 Also decided: a deleted recipe goes to **"Recently deleted" for 30 days** (from the sync phases on).
 
@@ -219,3 +221,4 @@ Also decided: a deleted recipe goes to **"Recently deleted" for 30 days** (from 
 - 2026-11-08 — Phase 5 (Version 29) merged and confirmed on the user's phone: recipes moved to the cloud, SQL run, helper updated, cron `0 */8 * * *` added. One oddity: the sign-up confirmation email linked to `localhost` (Supabase's default Site URL); harmless. Notes only (no version change). Phase 6 is next, in a new session.
 - 2026-11-08 — Phase 6 done (Version 30): one optional photo per recipe. The form has Take photo / Choose from library / Remove; the photo is shrunk on the phone, shown under the tags on the recipe page and as the cover in Cover Flow and Grid (title on a dark fade; the plain cover stays until the picture is on the phone). Pictures are kept in IndexedDB and sent to a private Supabase bucket after the recipe syncs; other phones download them. Backups are format 3 and carry the photos as text; format 1 and 2 files still import. Settings shows how many photos the phone holds. Needs the photo SQL run in Supabase (end of `supabase/schema.sql`). Node checks: `tests/photos.test.js` (20).
 - 2026-11-08 — Phase 6 (Version 30) merged and confirmed on the user's phone; the photo SQL was run in Supabase. Notes only (no version change). Phase 7 is next, in a new session.
+- 2026-11-08 — Phase 7 Part A built (Version 31): the **This Week** tab (see Phase 7 above). Plan kept on the phone only for now (key `cookbook.plan`), included in backups (format 4). New files `js/plan.js` (dates and plan changes, also runs in Node), `js/plan-ui.js` (the screen and bottom sheets), `tests/plan.test.js`. Part B (sync) and Shopping (now Version 33) come after.
