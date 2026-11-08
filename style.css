@@ -1773,3 +1773,82 @@ select {
 #view-check-hint {
   margin-top: 8px;
 }
+
+/* ---------- Ingredient editor: "understood" strip and ••• panel (Version 27) ---------- */
+/* Ingredient rows can wrap, so the strip and the panel sit on a line under the typing box. */
+#ingredients-list li {
+  flex-wrap: wrap;
+}
+#ingredients-list .understood,
+#ingredients-list .ingredient-panel {
+  flex: 0 0 calc(100% - 32px);
+  margin: -2px 0 4px 32px;
+}
+.understood {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+#ingredients-list .understood .check-flag {
+  margin-left: 0;
+}
+/* The ••• button sits next to the × button. */
+.more-row {
+  flex: 0 0 44px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 16px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+.more-row[aria-expanded="true"],
+.more-row:active {
+  color: var(--accent);
+}
+/* The panel for adjusting the parts. */
+.ingredient-panel {
+  padding: var(--s3);
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md, 12px);
+}
+.panel-field {
+  display: block;
+  margin-bottom: 10px;
+}
+.panel-field > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 600;
+}
+.panel-field input {
+  width: 100%;
+  min-height: var(--tap);
+}
+.panel-pair {
+  display: flex;
+  gap: 10px;
+}
+.panel-pair .panel-field {
+  flex: 1;
+  min-width: 0;
+}
+.panel-optional {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+}
+.panel-optional input {
+  width: 24px;
+  height: 24px;
+}
+.ingredient-panel .panel-done {
+  margin-top: 4px;
+}

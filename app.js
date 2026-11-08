@@ -295,7 +295,26 @@ function addRow(list, afterRow) {
   removeButton.textContent = "×";
   removeButton.setAttribute("aria-label", "Remove this " + item);
 
-  row.append(box, removeButton);
+  row.append(box);
+  if (name === "ingredients") {
+    // Ingredient rows also get a ••• button, a strip showing how the line was understood,
+    // and a panel (hidden until ••• is tapped) for adjusting the parts.
+    const moreButton = document.createElement("button");
+    moreButton.type = "button";
+    moreButton.className = "more-row";
+    moreButton.textContent = "•••";
+    moreButton.hidden = true;
+    moreButton.setAttribute("aria-expanded", "false");
+    moreButton.setAttribute("aria-label", "Adjust the parts of this ingredient");
+    row.append(moreButton, removeButton);
+
+    const strip = document.createElement("p");
+    strip.className = "understood";
+    strip.hidden = true;
+    row.append(strip, buildIngredientPanel());
+  } else {
+    row.append(removeButton);
+  }
 
   // Put the row in the list: after "afterRow" if given, otherwise at the end.
   if (afterRow) {
@@ -357,7 +376,10 @@ document.querySelectorAll(".add-row").forEach(function (button) {
 
   // Keyboard's Next/Return key → start the next row instead of a new line.
   list.addEventListener("keydown", function (event) {
-    if (event.key === "Enter" && !event.isComposing && event.target.tagName === "TEXTAREA") {
+    if (event.key === "Enter" && event.target.tagName === "INPUT") {
+      event.preventDefault();   // Enter in the ••• panel must not submit the whole form
+      event.target.blur();
+    } else if (event.key === "Enter" && !event.isComposing && event.target.tagName === "TEXTAREA") {
       event.preventDefault();
       const currentRow = event.target.closest("li");
       const newBox = addRow(list, currentRow);
@@ -370,6 +392,21 @@ document.querySelectorAll(".add-row").forEach(function (button) {
     if (event.target.tagName === "TEXTAREA") {
       fitHeight(event.target);
       markSectionRow(event.target);
+      if (list === ingredientsList) {
+        refreshIngredientRow(event.target.closest("li"));
+      }
+    } else if (event.target.closest(".ingredient-panel")) {
+      applyIngredientPanel(event.target.closest("li"));
+    }
+  });
+
+  // ••• button → open or close the parts panel; Done closes it.
+  list.addEventListener("click", function (event) {
+    const row = event.target.closest("li");
+    if (event.target.classList.contains("more-row")) {
+      toggleIngredientPanel(row);
+    } else if (event.target.classList.contains("panel-done")) {
+      toggleIngredientPanel(row, false);
     }
   });
 
@@ -383,12 +420,196 @@ document.querySelectorAll(".add-row").forEach(function (button) {
       } else {
         const box = row.querySelector("textarea");
         box.value = "";
+        box.ingredient = null;
         fitHeight(box);
         markSectionRow(box);
+        if (list === ingredientsList) {
+          refreshIngredientRow(row);
+        }
       }
     }
   });
 });
+
+// ---------- Ingredient rows: "understood" strip and ••• panel (Version 27) ----------
+// Each ingredient box can carry `box.ingredient`, the record for its line. It is only trusted
+// while its words (`text`) still match the box. Type something else and the line is read again.
+
+function ingredientOfBox(box) {
+  const text = box.value.trim();
+  if (text === "") {
+    return null;
+  }
+  if (!box.ingredient || box.ingredient.text !== text) {
+    box.ingredient = parseIngredient(text);
+  }
+  return box.ingredient;
+}
+
+// What the form saves for ingredients: a record per non-empty box.
+function readIngredients() {
+  return Array.from(ingredientsList.querySelectorAll("textarea"))
+    .map(ingredientOfBox)
+    .filter(function (record) { return record !== null; });
+}
+
+function amountBoxText(value) {
+  return typeof value === "number" ? amountText(value) : "";
+}
+
+// Show how a line was understood: "2 · cup · flour · sifted" (+ a Check tag if unsure).
+function refreshIngredientRow(row) {
+  const box = row.querySelector("textarea");
+  const strip = row.querySelector(".understood");
+  const more = row.querySelector(".more-row");
+  const record = ingredientOfBox(box);
+  if (record === null || record.heading) {
+    strip.hidden = true;
+    more.hidden = true;
+    toggleIngredientPanel(row, false);
+    return;
+  }
+  more.hidden = false;
+  strip.hidden = false;
+  strip.textContent = "";
+  if (record.check === "as-written") {
+    strip.append("No amount, so it is used as written");
+  } else {
+    const bits = [];
+    if (record.amount) {
+      bits.push(amountText(record.amount.from) +
+        (record.amount.to !== record.amount.from ? "-" + amountText(record.amount.to) : ""));
+    }
+    if (record.unit) { bits.push(record.unit); }
+    if (record.size) { bits.push("(" + record.size + ")"); }
+    if (record.item) { bits.push(record.item); }
+    if (record.prep) { bits.push(record.prep); }
+    if (record.optional) { bits.push("optional"); }
+    strip.append(bits.join(" · "));
+  }
+  if (record.check === "please-check") {
+    const flag = document.createElement("span");
+    flag.className = "check-flag";
+    flag.textContent = "Check";
+    strip.append(" ", flag);
+  }
+  if (!row.querySelector(".ingredient-panel").hidden) {
+    fillIngredientPanel(row);
+  }
+}
+
+const PANEL_FIELDS = [
+  { key: "from", label: "Amount", hint: "e.g. 2 or 1½", half: true },
+  { key: "to", label: "Up to (a range)", hint: "optional", half: true },
+  { key: "unit", label: "Unit", hint: "e.g. cup, tbsp, g" },
+  { key: "item", label: "Ingredient", hint: "e.g. flour" },
+  { key: "size", label: "Package size", hint: "e.g. 14 oz" },
+  { key: "prep", label: "Prep", hint: "e.g. chopped" }
+];
+
+function buildIngredientPanel() {
+  const panel = document.createElement("div");
+  panel.className = "ingredient-panel";
+  panel.hidden = true;
+  let pair = null;
+  PANEL_FIELDS.forEach(function (field) {
+    const label = document.createElement("label");
+    label.className = "panel-field";
+    const name = document.createElement("span");
+    name.textContent = field.label;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.dataset.part = field.key;
+    input.placeholder = field.hint;
+    if (field.key === "from" || field.key === "to") {
+      input.inputMode = "decimal";
+    }
+    input.autocomplete = "off";
+    label.append(name, input);
+    if (field.half) {
+      if (!pair) {
+        pair = document.createElement("div");
+        pair.className = "panel-pair";
+        panel.append(pair);
+      }
+      pair.append(label);
+    } else {
+      panel.append(label);
+    }
+  });
+  const optionalLabel = document.createElement("label");
+  optionalLabel.className = "panel-optional";
+  const optionalBox = document.createElement("input");
+  optionalBox.type = "checkbox";
+  optionalBox.dataset.part = "optional";
+  optionalLabel.append(optionalBox, " Optional");
+  const done = document.createElement("button");
+  done.type = "button";
+  done.className = "button button-secondary panel-done";
+  done.textContent = "Done";
+  panel.append(optionalLabel, done);
+  return panel;
+}
+
+function fillIngredientPanel(row) {
+  const record = ingredientOfBox(row.querySelector("textarea"));
+  const panel = row.querySelector(".ingredient-panel");
+  if (!record || record.heading) {
+    return;
+  }
+  const values = {
+    from: record.amount ? amountBoxText(record.amount.from) : "",
+    to: record.amount && record.amount.to !== record.amount.from ? amountBoxText(record.amount.to) : "",
+    unit: record.unit, item: record.item, size: record.size, prep: record.prep
+  };
+  panel.querySelectorAll("input[data-part]").forEach(function (input) {
+    if (input.dataset.part === "optional") {
+      input.checked = record.optional === true;
+    } else if (document.activeElement !== input) {
+      input.value = values[input.dataset.part];
+    }
+  });
+}
+
+function toggleIngredientPanel(row, open) {
+  const panel = row.querySelector(".ingredient-panel");
+  const more = row.querySelector(".more-row");
+  if (!panel) {
+    return;
+  }
+  const show = open === undefined ? panel.hidden : open;
+  if (show) {
+    // Only one panel is open at a time.
+    ingredientsList.querySelectorAll("li").forEach(function (other) {
+      if (other !== row) { toggleIngredientPanel(other, false); }
+    });
+    fillIngredientPanel(row);
+  }
+  panel.hidden = !show;
+  more.setAttribute("aria-expanded", String(show));
+}
+
+// A panel box changed → rebuild the record and the words of the line from the parts.
+function applyIngredientPanel(row) {
+  const panel = row.querySelector(".ingredient-panel");
+  const box = row.querySelector("textarea");
+  const get = function (key) { return panel.querySelector('[data-part="' + key + '"]').value; };
+  const number = function (text) { return text.trim() === "" ? null : amountToNumber(text.trim()); };
+  const record = ingredientFromParts({
+    from: number(get("from")),
+    to: number(get("to")),
+    unit: get("unit"),
+    item: get("item"),
+    size: get("size"),
+    prep: get("prep"),
+    optional: panel.querySelector('[data-part="optional"]').checked
+  });
+  box.value = record ? record.text : "";
+  box.ingredient = record;
+  fitHeight(box);
+  markSectionRow(box);
+  refreshIngredientRow(row);
+}
 
 // Read what's typed in a list, skipping empty boxes. Step 6 uses this when saving.
 function readList(list) {
@@ -499,7 +720,7 @@ function recipeFromForm() {
   // "current" is the version you see and edit.
   const current = {
     title: form.elements.title.value.trim(),
-    ingredients: parseIngredients(readList(ingredientsList)),
+    ingredients: readIngredients(),   // each box's record (kept if adjusted with •••)
     steps: readList(stepsList),
     servings: Number.isNaN(servings) ? null : servings,  // null = left empty
     timeMinutes: Number.isNaN(minutes) ? null : minutes,
@@ -872,6 +1093,11 @@ function fillEditList(list, items) {
     const box = addRow(list);
     box.value = ingredientText(entry);   // ingredient records show their original wording
     markSectionRow(box);
+    if (list === ingredientsList) {
+      // Keep the saved record (so a fix made with ••• survives); plain text gets read.
+      box.ingredient = typeof entry === "object" ? cleanIngredient(entry) : null;
+      refreshIngredientRow(box.closest("li"));
+    }
   });
 }
 
