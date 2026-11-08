@@ -6,11 +6,11 @@
 // web pages); what keeps recipes private is the sign-in plus the privacy rules in supabase/schema.sql.
 // The secret "service" key must NEVER be put in this file.
 //
-// Phase 4 points at the TEST project (made-up recipes only). Phase 5 switches to the real one.
+// Phase 5: this points at the REAL project. (Phase 4 used a separate test project with made-up recipes.)
 // ======================================================================
 
-const SUPABASE_URL = "https://lpswqdxvpmzbgwoqhuji.supabase.co";
-const SUPABASE_KEY = "sb_publishable_oPUDMHGrc1DS81_GwXge5Q_VIMiX_1u";
+const SUPABASE_URL = "https://aaiidfelgcbsmbrydoal.supabase.co";
+const SUPABASE_KEY = "sb_publishable_1mDjU3llsX8ZsahRuaN75w_O8h6cgDN";
 
 let supabaseClient = null;
 
@@ -21,7 +21,7 @@ function getClient() {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: false,              // sign-in is by email + password, never by a link
-        storageKey: "cookbook.auth"
+        storageKey: "cookbook.auth2"      // new name: the Phase 4 test sign-in belongs to the old project
       }
     });
   }

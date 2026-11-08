@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=28">
+    <link rel="stylesheet" href="style.css?v=29">
   </head>
 
   <body>
@@ -200,7 +200,7 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 28</p>
+        <p class="version">Version 29</p>
       </section>
 
       <!-- ===================== SETTINGS SCREEN (Version 23) ===================== -->
@@ -232,7 +232,7 @@
         <!-- ----- Account and sync (Version 28, test phase) ----- -->
         <div class="card account" id="account-card">
           <h2>Account</h2>
-          <p class="hint">Test phase: this connects to a practice database. Only recipes with the tag <strong>sync-test</strong> are sent; all your other recipes stay on this phone.</p>
+          <p class="hint">Your private cloud copy. Your recipes always stay on this phone too. Sign in or create an account, then use <strong>Move my recipes to the cloud</strong> below.</p>
           <p class="message" id="account-message" hidden></p>
 
           <!-- Signed out: email and password. -->
@@ -257,6 +257,15 @@
             <button type="button" class="button" id="sync-now-button">Sync now</button>
             <button type="button" class="button button-secondary" id="signout-button">Sign out</button>
           </div>
+        </div>
+
+        <!-- ----- Move my recipes to the cloud (Version 29, Phase 5) ----- -->
+        <!-- Six steps. Nothing is uploaded until step 4 is tapped. js/sync-ui.js builds the steps. -->
+        <div class="card move" id="move-card" hidden>
+          <h2>Move my recipes to the cloud</h2>
+          <p class="hint" id="move-intro">Six small steps. Your recipes stay on this phone the whole time; this only adds a safe copy in the cloud.</p>
+          <p class="message" id="move-message" hidden></p>
+          <ol class="move-steps" id="move-steps"></ol>
         </div>
 
         <!-- ----- Recently deleted (Version 28) ----- -->
@@ -541,12 +550,12 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="vendor/supabase.js?v=28"></script>
-    <script src="js/ingredients.js?v=28"></script>
-    <script src="js/sync.js?v=28"></script>
-    <script src="js/auth.js?v=28"></script>
-    <script src="js/cookbook-views.js?v=28"></script>
-    <script src="app.js?v=28"></script>
-    <script src="js/sync-ui.js?v=28"></script>
+    <script src="vendor/supabase.js?v=29"></script>
+    <script src="js/ingredients.js?v=29"></script>
+    <script src="js/sync.js?v=29"></script>
+    <script src="js/auth.js?v=29"></script>
+    <script src="js/cookbook-views.js?v=29"></script>
+    <script src="app.js?v=29"></script>
+    <script src="js/sync-ui.js?v=29"></script>
   </body>
 </html>
