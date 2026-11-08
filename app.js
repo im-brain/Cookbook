@@ -308,11 +308,7 @@ function addRow(list, afterRow) {
 }
 
 // A line ending with ":" ("Brined Lamb:", "For the sauce:") is a section heading, not an
-// ingredient or step. Nothing special is stored: it's just how the line is shown.
-function isSectionHeading(line) {
-  const text = line.trim();
-  return text.length > 1 && text.length <= 60 && text.endsWith(":");
-}
+// ingredient or step. `isSectionHeading(line)` lives in js/ingredients.js.
 
 // In the form: show a row as a section heading (no bullet or number) when its text ends with ":".
 function markSectionRow(box) {
@@ -424,9 +420,46 @@ function loadRecipes() {
       return []; // nothing saved yet
     }
     const recipes = JSON.parse(text);
-    return Array.isArray(recipes) ? recipes : null;
+    if (!Array.isArray(recipes)) {
+      return null;
+    }
+    upgradeRecipes(recipes);   // old plain ingredient lines become ingredients (in memory)
+    return recipes;
   } catch (error) {
     return null;
+  }
+}
+
+// Version 26: ingredients are small records that keep the original wording (js/ingredients.js).
+// Turn any old plain lines into records. Returns true if something was converted.
+function upgradeRecipes(recipes) {
+  let changed = false;
+  recipes.forEach(function (recipe) {
+    if (recipe && upgradeIngredients(recipe.current)) { changed = true; }
+    if (recipe && upgradeIngredients(recipe.original)) { changed = true; }
+  });
+  return changed;
+}
+
+// Once, when the app opens: save the converted recipes. Before the first conversion, the
+// untouched old data is copied to a second drawer (never read by the app), as a safety copy.
+const BEFORE_STRUCTURED_KEY = "cookbook.recipesBeforeStructured";
+function convertSavedIngredients() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === null) {
+      return;
+    }
+    const recipes = JSON.parse(raw);
+    if (!Array.isArray(recipes) || !upgradeRecipes(recipes)) {
+      return;                  // damaged (never write) or nothing to convert
+    }
+    if (localStorage.getItem(BEFORE_STRUCTURED_KEY) === null) {
+      localStorage.setItem(BEFORE_STRUCTURED_KEY, raw);   // if this fails, we stop here
+    }
+    storeRecipes(recipes);
+  } catch (error) {
+    // leave the saved recipes exactly as they were
   }
 }
 
@@ -466,7 +499,7 @@ function recipeFromForm() {
   // "current" is the version you see and edit.
   const current = {
     title: form.elements.title.value.trim(),
-    ingredients: readList(ingredientsList),
+    ingredients: parseIngredients(readList(ingredientsList)),
     steps: readList(stepsList),
     servings: Number.isNaN(servings) ? null : servings,  // null = left empty
     timeMinutes: Number.isNaN(minutes) ? null : minutes,
@@ -578,7 +611,7 @@ function simplify(text) {
 // Does this recipe match all the typed words? (Only "my version" is searched, not the original.)
 function matchesSearch(recipe, words) {
   const c = recipe.current;
-  const haystack = simplify([c.title].concat(c.ingredients, c.tags).join("\n"));
+  const haystack = simplify([c.title].concat(ingredientTexts(c.ingredients), c.tags).join("\n"));
   return words.every(function (word) { return haystack.indexOf(word) !== -1; });
 }
 
@@ -682,9 +715,18 @@ function fillList(listElement, items) {
   listElement.innerHTML = "";
   let afterHeading = false;
   let number = 0;
-  items.forEach(function (text) {
+  let sawCheck = false;
+  items.forEach(function (entry) {
+    const text = ingredientText(entry);     // an ingredient record or a plain step line
     const item = document.createElement("li");
     item.textContent = text;
+    if (typeof entry === "object" && entry.check === "please-check") {
+      const flag = document.createElement("span");   // "Check": the reader wasn't sure of this line
+      flag.className = "check-flag";
+      flag.textContent = "Check";
+      item.append(" ", flag);
+      sawCheck = true;
+    }
     if (isSectionHeading(text)) {
       item.className = "section-heading";   // bold, no bullet or number
       afterHeading = true;
@@ -699,6 +741,7 @@ function fillList(listElement, items) {
     }
     listElement.append(item);
   });
+  return sawCheck;   // true if any line got a "Check" tag
 }
 
 // Which recipe the recipe page is showing, and whether it's showing the original.
@@ -761,7 +804,8 @@ function showRecipe(id, original) {
   document.getElementById("view-notes-box").hidden = !recipe.notes;
 
   // Ingredients and steps (each section hidden if empty).
-  fillList(document.getElementById("view-ingredients"), current.ingredients);
+  document.getElementById("view-check-hint").hidden =
+    !fillList(document.getElementById("view-ingredients"), current.ingredients);
   document.getElementById("view-ingredients-section").hidden = current.ingredients.length === 0;
   fillList(document.getElementById("view-steps"), current.steps);
   document.getElementById("view-steps-section").hidden = current.steps.length === 0;
@@ -824,9 +868,9 @@ function fillEditList(list, items) {
     addRow(list);
     return;
   }
-  items.forEach(function (text) {
+  items.forEach(function (entry) {
     const box = addRow(list);
-    box.value = text;
+    box.value = ingredientText(entry);   // ingredient records show their original wording
     markSectionRow(box);
   });
 }
@@ -1036,7 +1080,7 @@ document.getElementById("start-cooking-button").addEventListener("click", functi
   document.getElementById("cook-title").textContent = c.title;
   document.getElementById("cook-notes").textContent = recipe.notes;
   document.getElementById("cook-notes-box").hidden = !recipe.notes;
-  fillCookList(document.getElementById("cook-ingredients"), c.ingredients, false);
+  fillCookList(document.getElementById("cook-ingredients"), ingredientTexts(c.ingredients), false);
   document.getElementById("cook-ingredients-section").hidden = c.ingredients.length === 0;
   fillCookList(document.getElementById("cook-steps"), c.steps, true);
   document.getElementById("cook-steps-section").hidden = c.steps.length === 0;
@@ -1062,78 +1106,8 @@ let cookBaseServings = null;  // servings as saved (or null)
 let cookServings = null;      // servings shown right now
 let cookFactor = 1;           // 1 = as saved, 2 = double, 0.5 = half, ...
 
-const FRACTION_CHARACTERS = { "½": 1 / 2, "¼": 1 / 4, "¾": 3 / 4, "⅓": 1 / 3, "⅔": 2 / 3, "⅛": 1 / 8 };
-
-// One amount: "1 1/2", "1½", "1/2", "1.5", "2" or "½".
-const AMOUNT = "(?:\\d+\\s+\\d+\\/\\d+|\\d+\\s*[½¼¾⅓⅔⅛]|\\d+\\/\\d+|\\d+(?:\\.\\d+)?|[½¼¾⅓⅔⅛])";
-// An amount at the very start of a line, maybe a range ("2-3", "2 to 3").
-const LEADING_AMOUNT = new RegExp(
-  "^(\\s*)(" + AMOUNT + ")(?:(\\s*(?:-|–|—|to)\\s*)(" + AMOUNT + "))?"
-);
-
-// Turn amount text like "1 1/2" or "1½" into a number (1.5). null if it makes no sense.
-function amountToNumber(text) {
-  let rest = text.trim();
-  let total = 0;
-  const fraction = rest.match(/(\d+)\/(\d+)$/);
-  if (fraction) {
-    total += Number(fraction[1]) / Number(fraction[2]);
-    rest = rest.slice(0, fraction.index);
-  }
-  const character = rest.match(/[½¼¾⅓⅔⅛]$/);
-  if (character) {
-    total += FRACTION_CHARACTERS[character[0]];
-    rest = rest.slice(0, character.index);
-  }
-  rest = rest.trim();
-  if (rest !== "") {
-    total += Number(rest);
-  }
-  return Number.isFinite(total) && total > 0 ? total : null;
-}
-
-// Look for an amount at the start of an ingredient line.
-// Returns { before, low, separator, high, rest } (high/separator only for ranges), or null.
-function readAmount(line) {
-  const match = line.match(LEADING_AMOUNT);
-  if (!match) {
-    return null;
-  }
-  const low = amountToNumber(match[2]);
-  const high = match[4] ? amountToNumber(match[4]) : null;
-  if (low === null || (match[4] && high === null)) {
-    return null;
-  }
-  return {
-    before: match[1],
-    low: low,
-    separator: match[3] || "",
-    high: high,
-    rest: line.slice(match[0].length)
-  };
-}
-
-// Write a number the way a cook would: 1.5 → "1½", 0.33 → "⅓", 375.2 → "375".
-// 10 or more: whole numbers. Smaller: whole part + the nearest ⅛, ¼, ⅓, ½, ⅔ or ¾.
-function kitchenNumber(value) {
-  if (value >= 10) {
-    return String(Math.round(value));
-  }
-  let whole = Math.floor(value);
-  const part = value - whole;
-  const choices = [[0, ""], [1 / 8, "⅛"], [1 / 4, "¼"], [1 / 3, "⅓"], [1 / 2, "½"], [2 / 3, "⅔"], [3 / 4, "¾"], [1, ""]];
-  let best = choices[0];
-  choices.forEach(function (choice) {
-    if (Math.abs(part - choice[0]) < Math.abs(part - best[0])) {
-      best = choice;
-    }
-  });
-  if (best[0] === 1) {
-    whole += 1;
-  }
-  const text = (whole > 0 ? String(whole) : "") + best[1];
-  return text === "" ? "⅛" : text; // a tiny amount never shows as nothing
-}
+// The amount helpers (AMOUNT, LEADING_AMOUNT, amountToNumber, readAmount, kitchenNumber)
+// and scaleIngredient() live in js/ingredients.js.
 
 // Change the amounts on the cooking screen. The ingredient boxes are updated in place,
 // so anything already ticked off stays ticked.
@@ -1141,20 +1115,16 @@ function setCookFactor(factor) {
   cookFactor = factor;
   const texts = document.querySelectorAll("#cook-ingredients .cook-text");
   texts.forEach(function (span) {
-    const line = cookIngredients[Number(span.dataset.index)];
+    const ingredient = cookIngredients[Number(span.dataset.index)];
     span.innerHTML = ""; // empty it (no recipe text goes in through innerHTML)
-    const amount = factor === 1 ? null : readAmount(line);
+    const amount = factor === 1 ? null : scaleIngredient(ingredient, factor);
     if (amount === null) {
-      span.textContent = line;   // as saved: 1×, or no amount at the start
+      span.textContent = ingredientText(ingredient);   // as saved: 1×, or no amount to scale
       return;
-    }
-    let scaled = kitchenNumber(amount.low * factor);
-    if (amount.high !== null) {
-      scaled += amount.separator + kitchenNumber(amount.high * factor);
     }
     const strong = document.createElement("strong");
     strong.className = "scaled";
-    strong.textContent = scaled;
+    strong.textContent = amount.scaled;
     span.append(amount.before, strong, amount.rest);
   });
 
@@ -1335,7 +1305,7 @@ document.getElementById("export-button").addEventListener("click", function () {
   // The file's contents: a label saying what it is, the date, and every recipe.
   const backup = {
     app: "my-cookbook",
-    formatVersion: 1,
+    formatVersion: 2,   // 2 = structured ingredients (Version 26); format 1 files still import
     exportedAt: todayAsText(),
     recipes: recipes
   };
@@ -1398,7 +1368,7 @@ function cleanImportedRecipe(recipe) {
   function cleanPart(part) {
     return {
       title: String(part.title || ""),
-      ingredients: textList(part.ingredients),
+      ingredients: cleanIngredientList(part.ingredients),   // old text lines (format 1) are read too
       steps: textList(part.steps),
       servings: typeof part.servings === "number" ? part.servings : null,
       timeMinutes: typeof part.timeMinutes === "number" ? part.timeMinutes : null,
@@ -2086,6 +2056,8 @@ backupNudge.addEventListener("click", function () {
   showScreen(settingsScreen);
 });
 
-// When the app opens, show the count, the list and the backup reminder straight away.
+// When the app opens: convert old ingredient lines once (with a safety copy), then show the
+// count, the list and the backup reminder straight away.
+convertSavedIngredients();
 refreshHome();
 showScreen(homeScreen); // also lights up the Cookbook tab
