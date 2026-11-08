@@ -59,6 +59,7 @@ function friendlyMessage(error) {
 }
 
 const PAGE_SIZE = 500;
+const PHOTO_BUCKET = "recipe-photos";       // private; the rules are in supabase/schema.sql
 
 const cloud = {
   // ----- sign-in -----
@@ -160,6 +161,40 @@ const cloud = {
   async purgeRow(id) {
     const client = getClient();
     const result = await client.from("recipes").delete().eq("id", id).not("deleted_at", "is", null);
+    if (result.error) { throw cloudError(result.error); }
+  },
+
+  // ----- photos (Phase 6): one picture per file, named <your id>/<photo id>.jpg -----
+  async photoPath(photoId) {
+    const user = await cloud.currentUser();
+    if (!user) { throw cloudError("not signed in"); }
+    return user.id + "/" + photoId + ".jpg";
+  },
+
+  async uploadPhoto(photoId, blob) {
+    const client = getClient();
+    const path = await cloud.photoPath(photoId);
+    const result = await client.storage.from(PHOTO_BUCKET).upload(path, blob, { contentType: "image/jpeg", upsert: true });
+    if (result.error) { throw cloudError(result.error); }
+  },
+
+  // The picture, or null if the cloud doesn't have it.
+  async downloadPhoto(photoId) {
+    const client = getClient();
+    const path = await cloud.photoPath(photoId);
+    const result = await client.storage.from(PHOTO_BUCKET).download(path);
+    if (result.error) {
+      const text = String((result.error && result.error.message) || "") + " " + String((result.error && (result.error.statusCode || result.error.status)) || "");
+      if (/not found|404|does not exist/i.test(text)) { return null; }
+      throw cloudError(result.error);
+    }
+    return result.data;
+  },
+
+  async removePhoto(photoId) {
+    const client = getClient();
+    const path = await cloud.photoPath(photoId);
+    const result = await client.storage.from(PHOTO_BUCKET).remove([path]);
     if (result.error) { throw cloudError(result.error); }
   }
 };

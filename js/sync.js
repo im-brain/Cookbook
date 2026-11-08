@@ -58,6 +58,14 @@ function copyOf(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+// Phase 6: the little note about a recipe's photo, { id, w, h }, or null. Always the same field order,
+// so fingerprints match. (A recipe without a photo has no "photo" field at all.)
+function cleanPhotoNote(note) {
+  if (!note || typeof note.id !== "string" || !/^[A-Za-z0-9_-]{6,80}$/.test(note.id)) { return null; }
+  function size(value) { return typeof value === "number" && value > 0 && value < 20000 ? Math.round(value) : 0; }
+  return { id: note.id, w: size(note.w), h: size(note.h) };
+}
+
 // Rebuild a recipe in the app's usual field order (same shape as recipeFromForm), from cloud or saved data.
 function canonicalRecipe(data, fallbackDate) {
   function textList(value) {
@@ -74,7 +82,7 @@ function canonicalRecipe(data, fallbackDate) {
       tags: textList(p.tags)
     };
   }
-  return {
+  const recipe = {
     id: String(data.id),
     kind: data.kind === "elsewhere" ? "elsewhere" : "mine",
     source: typeof data.source === "string" ? data.source : "",
@@ -84,6 +92,9 @@ function canonicalRecipe(data, fallbackDate) {
     createdAt: typeof data.createdAt === "string" && data.createdAt ? data.createdAt : fallbackDate,
     updatedAt: typeof data.updatedAt === "string" && data.updatedAt ? data.updatedAt : fallbackDate
   };
+  const photo = cleanPhotoNote(data.photo);
+  if (photo) { recipe.photo = photo; }          // last, and only when there is one
+  return recipe;
 }
 
 // A recipe on the phone <-> a row in the cloud table (supabase/schema.sql).
@@ -95,6 +106,7 @@ function toRow(recipe, version, deletedAt) {
     notes: recipe.notes,
     current: recipe.current,
     original: recipe.original,
+    photo: recipe.photo || null,
     created_at: recipe.createdAt,
     updated_at: recipe.updatedAt,
     version: version,
@@ -105,7 +117,7 @@ function toRow(recipe, version, deletedAt) {
 function fromRow(row, fallbackDate) {
   return canonicalRecipe({
     id: row.id, kind: row.kind, source: row.source, notes: row.notes,
-    current: row.current, original: row.original,
+    current: row.current, original: row.original, photo: row.photo,
     createdAt: row.created_at, updatedAt: row.updated_at
   }, fallbackDate);
 }
@@ -121,7 +133,8 @@ const MERGE_PARTS = [
   { name: "tags", inCurrent: true },
   { name: "notes" },
   { name: "source" },
-  { name: "original" }
+  { name: "original" },
+  { name: "photo" }
 ];
 
 function getPart(recipe, part) {
@@ -129,6 +142,7 @@ function getPart(recipe, part) {
 }
 
 function setPart(recipe, part, value) {
+  if (part.name === "photo" && !value) { delete recipe.photo; return; }
   if (part.inCurrent) { recipe.current[part.name] = copyOf(value); }
   else { recipe[part.name] = copyOf(value); }
 }
@@ -159,6 +173,7 @@ function describePart(recipe, name) {
   if (name === "steps") { return (value || []).length + " steps"; }
   if (name === "tags") { return (value || []).length ? value.join(", ") : "no tags"; }
   if (name === "original") { return value ? "the saved original" : "no original"; }
+  if (name === "photo") { return value ? "a photo" : "no photo"; }
   if (value === null || value === "") { return "(empty)"; }
   const text = String(value);
   return text.length > 80 ? text.slice(0, 77) + "…" : text;
@@ -405,7 +420,12 @@ async function syncNow(env) {
       }
     }
     await purgeOldTrash(env);
-    return { ok: true, pulled: pulled, pushed: pushed };
+    let photos = 0;
+    if (env.photos) {                              // Phase 6: pictures follow the recipes
+      const counts = await env.photos();
+      photos = counts ? counts.downloaded : 0;
+    }
+    return { ok: true, pulled: pulled, pushed: pushed, photos: photos };
   } catch (error) {
     if (error && error.offline) { return { ok: false, kind: "offline" }; }
     if (error && error.kind === "damaged") {
@@ -540,7 +560,7 @@ function moveFailure(error) {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     previewMove: previewMove, verifyMove: verifyMove, TRASH_DAYS: TRASH_DAYS, stableText: stableText, syncFingerprint: syncFingerprint,
-    canonicalRecipe: canonicalRecipe, toRow: toRow, fromRow: fromRow, mergeRecipes: mergeRecipes,
+    canonicalRecipe: canonicalRecipe, cleanPhotoNote: cleanPhotoNote, toRow: toRow, fromRow: fromRow, mergeRecipes: mergeRecipes,
     describePart: describePart, pendingCount: pendingCount, conflictList: conflictList, syncNow: syncNow,
     moveToTrash: moveToTrash, restoreFromTrash: restoreFromTrash, resolveConflict: resolveConflict,
     freshState: freshState, readAll: readAll

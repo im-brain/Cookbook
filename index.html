@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=29">
+    <link rel="stylesheet" href="style.css?v=30">
   </head>
 
   <body>
@@ -200,7 +200,7 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 29</p>
+        <p class="version">Version 30</p>
       </section>
 
       <!-- ===================== SETTINGS SCREEN (Version 23) ===================== -->
@@ -222,7 +222,10 @@
           <p class="message" id="backup-message" hidden></p>
 
           <button type="button" class="button" id="export-button">Export a backup file</button>
-          <p class="hint backup-hint">Then choose <strong>Save to Files</strong> → <strong>iCloud Drive</strong>.</p>
+          <!-- Appears when the backup (with photos) took a moment to prepare and the phone wants a fresh tap to share it. -->
+          <button type="button" class="button" id="share-ready-button" hidden>Share the backup file</button>
+          <p class="hint backup-hint">Then choose <strong>Save to Files</strong> → <strong>iCloud Drive</strong>. Photos are included in the file.</p>
+          <p class="hint" id="photo-line"></p>
 
           <button type="button" class="button button-secondary" id="import-button">Import a backup file</button>
           <!-- The real "pick a file" box is hidden; the Import button above opens it. -->
@@ -294,6 +297,8 @@
         <p class="details" id="view-source"></p>
         <!-- Tag pills, e.g. dinner, vegetarian -->
         <div class="tags" id="view-tags"></div>
+        <!-- The recipe's photo (Version 30), if it has one. -->
+        <img class="view-photo" id="view-photo" alt="" hidden>
 
         <!-- Opens the cooking screen (hidden while you look at the original). -->
         <button type="button" class="button start-cooking" id="start-cooking-button"><svg class="icon"><use href="#icon-cook"/></svg>Start cooking</button>
@@ -483,6 +488,21 @@
             <input type="text" id="title" name="title" required placeholder="e.g. Tomato soup">
           </div>
 
+          <!-- ----- Photo (Version 30) ----- -->
+          <div class="field" id="photo-field">
+            <span class="field-label">Photo <span class="hint-inline">(optional)</span></span>
+            <img class="form-photo" id="form-photo" alt="" hidden>
+            <p class="hint" id="photo-hint" hidden></p>
+            <div class="photo-buttons">
+              <button type="button" class="button button-secondary" id="photo-take">Take photo</button>
+              <button type="button" class="button button-secondary" id="photo-choose">Choose from library</button>
+              <button type="button" class="button button-secondary button-danger" id="photo-remove" hidden>Remove</button>
+            </div>
+            <!-- The real "pick a picture" boxes are hidden; the buttons above open them. No name, so the form ignores them. -->
+            <input type="file" id="photo-input-camera" accept="image/*" capture="environment" hidden>
+            <input type="file" id="photo-input-library" accept="image/*" hidden>
+          </div>
+
           <!-- ----- Ingredients ----- -->
           <!-- One box per ingredient. app.js adds the boxes into the empty list below. -->
           <div class="field">
@@ -550,12 +570,13 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="vendor/supabase.js?v=29"></script>
-    <script src="js/ingredients.js?v=29"></script>
-    <script src="js/sync.js?v=29"></script>
-    <script src="js/auth.js?v=29"></script>
-    <script src="js/cookbook-views.js?v=29"></script>
-    <script src="app.js?v=29"></script>
-    <script src="js/sync-ui.js?v=29"></script>
+    <script src="vendor/supabase.js?v=30"></script>
+    <script src="js/ingredients.js?v=30"></script>
+    <script src="js/sync.js?v=30"></script>
+    <script src="js/photos.js?v=30"></script>
+    <script src="js/auth.js?v=30"></script>
+    <script src="js/cookbook-views.js?v=30"></script>
+    <script src="app.js?v=30"></script>
+    <script src="js/sync-ui.js?v=30"></script>
   </body>
 </html>

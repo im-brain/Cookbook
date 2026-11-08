@@ -75,6 +75,7 @@ cookbookTab.addEventListener("click", function () {
 settingsTab.addEventListener("click", function () {
   backupMessage.hidden = true; // an old "✓ Backup saved" message would be confusing later
   showScreen(settingsScreen);
+  if (typeof updatePhotoLine === "function") { updatePhotoLine(); }   // js/sync-ui.js
 });
 
 // ---------- The recipe form ----------
@@ -88,6 +89,62 @@ const tagChips = document.getElementById("tag-chips");
 
 // Which recipe the form is editing. null means "a new recipe".
 let editingId = null;
+
+// ---------- The photo box on the form (Version 30) ----------
+// formPhoto is the note { id, w, h } of the photo the form would save, or null for none.
+// A newly picked picture is shrunk and stored on the phone right away; the recipe only keeps it on Save.
+let formPhoto = null;
+const formPhotoImage = document.getElementById("form-photo");
+const photoHint = document.getElementById("photo-hint");
+const photoRemoveButton = document.getElementById("photo-remove");
+
+function showPhotoHint(text) {
+  photoHint.textContent = text;
+  photoHint.hidden = !text;
+}
+
+function setFormPhoto(note) {
+  formPhoto = note ? { id: note.id, w: note.w, h: note.h } : null;
+  formPhotoImage.hidden = true;
+  formPhotoImage.removeAttribute("src");
+  photoRemoveButton.hidden = formPhoto === null;
+  document.getElementById("photo-take").textContent = formPhoto ? "Take a new photo" : "Take photo";
+  showPhotoHint("");
+  if (formPhoto) {
+    const wanted = formPhoto.id;
+    photoUrl(wanted).then(function (url) {
+      if (formPhoto && formPhoto.id === wanted) {
+        if (url) { formPhotoImage.src = url; formPhotoImage.hidden = false; }
+        else { showPhotoHint("This photo is still coming from the cloud. It will show here once it has arrived."); }
+      }
+    });
+  }
+}
+
+function pickedPhoto(input) {
+  const file = input.files && input.files[0];
+  input.value = "";                      // so picking the same picture twice still works
+  if (!file) { return; }
+  showPhotoHint("Getting your photo ready…");
+  shrinkPhoto(file).then(function (shrunk) {
+    const id = makeId().replace(/[^A-Za-z0-9_-]/g, "");
+    return photoStore.put(id, shrunk.blob).then(function () {
+      setFormPhoto({ id: id, w: shrunk.w, h: shrunk.h });
+    });
+  }).catch(function () {
+    showPhotoHint("Sorry, that photo couldn't be used. Try another one.");
+  });
+}
+
+document.getElementById("photo-take").addEventListener("click", function () {
+  document.getElementById("photo-input-camera").click();
+});
+document.getElementById("photo-choose").addEventListener("click", function () {
+  document.getElementById("photo-input-library").click();
+});
+document.getElementById("photo-input-camera").addEventListener("change", function (event) { pickedPhoto(event.target); });
+document.getElementById("photo-input-library").addEventListener("change", function (event) { pickedPhoto(event.target); });
+photoRemoveButton.addEventListener("click", function () { setFormPhoto(null); });
 
 // "Add a recipe" button → open an empty form.
 document.getElementById("add-recipe-button").addEventListener("click", function () {
@@ -103,6 +160,7 @@ document.getElementById("add-recipe-button").addEventListener("click", function 
   homeMessage.hidden = true;   // and the "Saved" message on the home screen
   autofillCard.hidden = false; // "Fill in automatically" is only for new recipes
   autofillMessage.hidden = true;
+  setFormPhoto(null);
   showScreen(formScreen);
 });
 
@@ -145,6 +203,8 @@ form.addEventListener("submit", function (event) {
     form.elements.title.focus();
     return;
   }
+
+  if (formPhoto) { recipe.photo = formPhoto; }    // last field, only when there is a photo
 
   // Editing? Save the changes into the existing recipe instead (see saveEditedRecipe below).
   if (editingId) {
@@ -1021,6 +1081,17 @@ function showRecipe(id, original) {
   });
   tags.hidden = current.tags.length === 0;
 
+  // The photo belongs to my version, so it's hidden while looking at the original.
+  const viewPhoto = document.getElementById("view-photo");
+  viewPhoto.hidden = true;
+  viewPhoto.removeAttribute("src");
+  if (recipe.photo && !showingOriginal) {
+    const wanted = recipe.photo.id;
+    photoUrl(wanted).then(function (url) {
+      if (url && shownRecipeId === id && !showingOriginal) { viewPhoto.src = url; viewPhoto.hidden = false; }
+    });
+  }
+
   // Notes (only if there are any).
   document.getElementById("view-notes").textContent = recipe.notes;
   document.getElementById("view-notes-box").hidden = !recipe.notes;
@@ -1126,6 +1197,7 @@ document.getElementById("edit-button").addEventListener("click", function () {
   form.elements.time.value = c.timeMinutes === null ? "" : c.timeMinutes;
   renderTagChips(c.tags);      // all known tags, with this recipe's ticked
   form.elements.notes.value = recipe.notes;
+  setFormPhoto(recipe.photo || null);
 
   showScreen(formScreen);
   // Boxes can only measure their height once they're on screen, so size them now.
@@ -1140,6 +1212,7 @@ function saveEditedRecipe(id, fromForm) {
     recipe.current = fromForm.current;
     recipe.notes = fromForm.notes;
     recipe.updatedAt = todayAsText();
+    if (fromForm.photo) { recipe.photo = fromForm.photo; } else { delete recipe.photo; }
   });
 }
 
@@ -1516,6 +1589,7 @@ function showBackupMessage(text) {
 document.getElementById("export-button").addEventListener("click", function () {
   homeMessage.hidden = true;
   backupMessage.hidden = true;
+  shareReadyButton.hidden = true;
 
   const recipes = loadRecipes();
   if (recipes === null) {
@@ -1527,39 +1601,75 @@ document.getElementById("export-button").addEventListener("click", function () {
     return;
   }
 
-  // The file's contents: a label saying what it is, the date, and every recipe.
+  buildBackupFile(recipes).then(function (file) {
+    finishExport(file, recipes);
+  }).catch(function () {
+    showBackupMessage("Sorry, the backup file couldn't be made. Please tell Claude.");
+  });
+});
+
+// The file's contents: a label saying what it is, the date, every recipe, and (Version 30) each photo as text.
+async function buildBackupFile(recipes) {
+  const photos = {};
+  for (const recipe of recipes) {
+    if (recipe.photo && recipe.photo.id && !photos[recipe.photo.id]) {
+      const blob = await photoStore.get(recipe.photo.id).catch(function () { return null; });
+      if (blob) { photos[recipe.photo.id] = await blobToBase64(blob); }
+    }
+  }
   const backup = {
     app: "my-cookbook",
-    formatVersion: 2,   // 2 = structured ingredients (Version 26); format 1 files still import
+    formatVersion: 3,   // 3 = photos (Version 30); 2 = structured ingredients (Version 26); older files still import
     exportedAt: todayAsText(),
     recipes: recipes
   };
+  if (Object.keys(photos).length > 0) { backup.photos = photos; }
   const fileName = "cookbook-backup-" + todayAsText() + ".json";
-  const file = new File([JSON.stringify(backup, null, 2)], fileName, { type: "application/json" });
+  return new File([JSON.stringify(backup, null, 2)], fileName, { type: "application/json" });
+}
 
-  // On iPhone, open the Share menu with the file, so you can tap "Save to Files".
+const shareReadyButton = document.getElementById("share-ready-button");
+let preparedBackup = null;     // { file, recipes } while waiting for a fresh tap
+
+// On iPhone, open the Share menu with the file, so you can tap "Save to Files".
+function shareBackup(file, recipes) {
+  navigator.share({ files: [file] })
+    .then(function () {
+      // You finished sharing (e.g. saved it to Files): count this as a backup.
+      preparedBackup = null;
+      shareReadyButton.hidden = true;
+      rememberBackup(recipes);
+      updateBackupReminder();
+      showBackupMessage("✓ Backup of " + recipesWord(recipes.length) + " made. Check it's in iCloud Drive (Files app).");
+    })
+    .catch(function (error) {
+      if (error.name === "AbortError") {
+        showBackupMessage("Backup cancelled. Nothing was saved.");
+      } else if (error.name === "NotAllowedError") {
+        // The phone wants a fresh tap (making a file with photos takes a moment).
+        preparedBackup = { file: file, recipes: recipes };
+        shareReadyButton.hidden = false;
+        showBackupMessage("The backup file is ready. Tap “Share the backup file”.");
+      } else {
+        showBackupMessage("Sorry, the backup file couldn't be shared. Please tell Claude.");
+      }
+    });
+}
+
+shareReadyButton.addEventListener("click", function () {
+  if (preparedBackup) { shareBackup(preparedBackup.file, preparedBackup.recipes); }
+});
+
+function finishExport(file, recipes) {
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    navigator.share({ files: [file] })
-      .then(function () {
-        // You finished sharing (e.g. saved it to Files): count this as a backup.
-        rememberBackup(recipes);
-        updateBackupReminder();
-        showBackupMessage("✓ Backup of " + recipesWord(recipes.length) + " made. Check it's in iCloud Drive (Files app).");
-      })
-      .catch(function (error) {
-        if (error.name === "AbortError") {
-          showBackupMessage("Backup cancelled. Nothing was saved.");
-        } else {
-          showBackupMessage("Sorry, the backup file couldn't be shared. Please tell Claude.");
-        }
-      });
+    shareBackup(file, recipes);
     return;
   }
 
   // Other browsers (e.g. a computer): download the file instead.
   const link = document.createElement("a");
   link.href = URL.createObjectURL(file);
-  link.download = fileName;
+  link.download = file.name;
   document.body.append(link);
   link.click();
   link.remove();
@@ -1567,7 +1677,7 @@ document.getElementById("export-button").addEventListener("click", function () {
   rememberBackup(recipes);
   updateBackupReminder();
   showBackupMessage("✓ Backup file of " + recipesWord(recipes.length) + " downloaded.");
-});
+}
 
 // ----- Import -----
 
@@ -1600,7 +1710,7 @@ function cleanImportedRecipe(recipe) {
       tags: textList(part.tags)
     };
   }
-  return {
+  const cleaned = {
     id: recipe.id,
     kind: recipe.kind === "elsewhere" ? "elsewhere" : "mine",
     source: typeof recipe.source === "string" ? recipe.source : "",
@@ -1610,6 +1720,9 @@ function cleanImportedRecipe(recipe) {
     createdAt: typeof recipe.createdAt === "string" ? recipe.createdAt : todayAsText(),
     updatedAt: typeof recipe.updatedAt === "string" ? recipe.updatedAt : todayAsText()
   };
+  const photo = cleanPhotoNote(recipe.photo);
+  if (photo) { cleaned.photo = photo; }     // last, only when there is one (same as the sync code)
+  return cleaned;
 }
 
 // When a file is picked, read it and merge its recipes in.
@@ -1637,9 +1750,11 @@ function importBackupText(text) {
 
   // Read the file. It should be a cookbook backup (or, just in case, a plain list of recipes).
   let fileRecipes;
+  let filePhotos = {};
   try {
     const data = JSON.parse(text);
     fileRecipes = Array.isArray(data) ? data : (data && data.app === "my-cookbook" ? data.recipes : null);
+    if (data && data.photos && typeof data.photos === "object" && !Array.isArray(data.photos)) { filePhotos = data.photos; }
   } catch (error) {
     fileRecipes = null;
   }
@@ -1692,6 +1807,18 @@ function importBackupText(text) {
     showBackupMessage("Import cancelled. Nothing was changed.");
     return;
   }
+
+  // Photos first: put the file's pictures on the phone (only for recipes that end up using them).
+  const photoJobs = [];
+  merged.forEach(function (recipe) {
+    const id = recipe.photo && recipe.photo.id;
+    if (id && typeof filePhotos[id] === "string" && filePhotos[id]) {
+      photoJobs.push(photoStore.get(id).then(function (have) {
+        if (!have) { return photoStore.put(id, base64ToBlob(filePhotos[id])); }
+      }).catch(function () { /* the recipe still imports; its photo can come from the cloud */ }));
+    }
+  });
+  Promise.all(photoJobs).then(function () { refreshHome(); });
 
   if (!storeRecipes(merged)) {
     showBackupMessage("Sorry, the recipes couldn't be saved. The phone's storage for the cookbook may be full. Nothing was changed.");
