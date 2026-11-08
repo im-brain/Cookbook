@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=27">
+    <link rel="stylesheet" href="style.css?v=28">
   </head>
 
   <body>
@@ -71,6 +71,10 @@
 
     <!-- <main> is the main column of the page. style.css gives it space around the edges. -->
     <main>
+      <!-- Sync status (Version 28). Shown only when signed in; hidden on the recipe form and the cooking screen.
+           js/sync-ui.js writes the words: Saving… / Saved / Offline · N changes kept here / Couldn't sync · Retry. -->
+      <button type="button" class="sync-pill" id="sync-pill" hidden></button>
+
       <!-- ===================== HOME SCREEN ===================== -->
       <!-- A <section> is one "screen" of the app. app.js shows one screen at a time. -->
       <section id="home-screen">
@@ -112,6 +116,14 @@
           <span><span id="backup-nudge-text"></span> <strong>Back up in Settings</strong></span>
           <svg class="icon chevron"><use href="#icon-chevron"/></svg>
         </button>
+
+        <!-- Shown when the same recipe was changed in the same place on two devices. You choose which to keep.
+             js/sync-ui.js builds the contents. -->
+        <div class="card conflict-card" id="conflict-card" hidden>
+          <h2>Changed on two devices</h2>
+          <p class="hint">Nothing has been overwritten. Choose what to do with each recipe.</p>
+          <div id="conflict-list"></div>
+        </div>
 
         <!-- ----- "What should I cook?" ----- -->
         <!-- The "What should I cook?" box. The 🎲 button further down opens it. -->
@@ -188,7 +200,7 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 27</p>
+        <p class="version">Version 28</p>
       </section>
 
       <!-- ===================== SETTINGS SCREEN (Version 23) ===================== -->
@@ -215,6 +227,43 @@
           <button type="button" class="button button-secondary" id="import-button">Import a backup file</button>
           <!-- The real "pick a file" box is hidden; the Import button above opens it. -->
           <input type="file" id="import-file" hidden>
+        </div>
+
+        <!-- ----- Account and sync (Version 28, test phase) ----- -->
+        <div class="card account" id="account-card">
+          <h2>Account</h2>
+          <p class="hint">Test phase: this connects to a practice database. Only recipes with the tag <strong>sync-test</strong> are sent; all your other recipes stay on this phone.</p>
+          <p class="message" id="account-message" hidden></p>
+
+          <!-- Signed out: email and password. -->
+          <form id="signin-form" novalidate>
+            <div class="field">
+              <label for="account-email">Email</label>
+              <input type="email" id="account-email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="email">
+            </div>
+            <div class="field">
+              <label for="account-password">Password</label>
+              <input type="password" id="account-password" autocomplete="current-password" autocapitalize="none" autocorrect="off">
+              <p class="hint">At least 8 characters when you create an account.</p>
+            </div>
+            <button type="submit" class="button" id="signin-button">Sign in</button>
+            <button type="button" class="button button-secondary" id="signup-button">Create account</button>
+          </form>
+
+          <!-- Signed in. -->
+          <div id="signed-in-box" hidden>
+            <p>Signed in as <strong id="account-name"></strong></p>
+            <p class="subtitle" id="account-sync-line"></p>
+            <button type="button" class="button" id="sync-now-button">Sync now</button>
+            <button type="button" class="button button-secondary" id="signout-button">Sign out</button>
+          </div>
+        </div>
+
+        <!-- ----- Recently deleted (Version 28) ----- -->
+        <div class="card" id="trash-card" hidden>
+          <h2>Recently deleted</h2>
+          <p class="hint">Deleted recipes stay here for 30 days, then they are gone for good.</p>
+          <ul class="trash-list" id="trash-list"></ul>
         </div>
 
       </section>
@@ -492,8 +541,12 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="js/ingredients.js?v=27"></script>
-    <script src="js/cookbook-views.js?v=27"></script>
-    <script src="app.js?v=27"></script>
+    <script src="vendor/supabase.js?v=28"></script>
+    <script src="js/ingredients.js?v=28"></script>
+    <script src="js/sync.js?v=28"></script>
+    <script src="js/auth.js?v=28"></script>
+    <script src="js/cookbook-views.js?v=28"></script>
+    <script src="app.js?v=28"></script>
+    <script src="js/sync-ui.js?v=28"></script>
   </body>
 </html>
