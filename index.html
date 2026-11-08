@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=25">
+    <link rel="stylesheet" href="style.css?v=26">
   </head>
 
   <body>
@@ -188,7 +188,7 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 25</p>
+        <p class="version">Version 26</p>
       </section>
 
       <!-- ===================== SETTINGS SCREEN (Version 23) ===================== -->
@@ -249,6 +249,7 @@
         <div class="recipe-section" id="view-ingredients-section">
           <h2>Ingredients</h2>
           <ul id="view-ingredients"></ul>
+          <p class="hint" id="view-check-hint" hidden>Lines tagged “Check”: I wasn’t sure how to read these. They still work, but their amounts may not scale properly.</p>
         </div>
 
         <div class="recipe-section" id="view-steps-section">
@@ -491,7 +492,8 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="js/cookbook-views.js?v=25"></script>
-    <script src="app.js?v=25"></script>
+    <script src="js/ingredients.js?v=26"></script>
+    <script src="js/cookbook-views.js?v=26"></script>
+    <script src="app.js?v=26"></script>
   </body>
 </html>
