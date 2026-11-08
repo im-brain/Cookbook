@@ -224,4 +224,38 @@ check("amountToNumber", function () {
   assert.strictEqual(I.amountToNumber("0"), null);
 });
 
+// Building a line from its parts (the ••• editor)
+check("ingredientFromParts writes the line and reads back the same", function () {
+  const cases = [
+    [{ from: 2, to: 2, unit: "cup", item: "flour", prep: "sifted" }, "2 cups flour, sifted"],
+    [{ from: 1.5, to: 1.5, unit: "tbsp", item: "olive oil" }, "1½ tbsp olive oil"],
+    [{ from: 2, to: 3, unit: "clove", item: "garlic", optional: true }, "2-3 cloves garlic (optional)"],
+    [{ from: 1, to: 1, unit: "can", size: "14 oz", item: "tomatoes" }, "1 can (14 oz) tomatoes"],
+    [{ from: 3, to: 3, item: "eggs" }, "3 eggs"],
+    [{ from: null, item: "salt", prep: "to taste" }, "salt, to taste"]
+  ];
+  cases.forEach(function (c) {
+    const made = I.ingredientFromParts(c[0]);
+    assert.strictEqual(made.text, c[1]);
+    const again = I.parseIngredient(made.text);
+    if (made.amount) {
+      assert.deepStrictEqual(again.amount, made.amount, c[1]);
+      assert.strictEqual(again.unit, made.unit, c[1]);
+      assert.strictEqual(again.item, made.item, c[1]);
+      assert.strictEqual(again.size, made.size, c[1]);
+      assert.strictEqual(again.prep, made.prep, c[1]);
+      assert.strictEqual(again.optional, made.optional, c[1]);
+    }
+  });
+});
+check("ingredientFromParts: checks and odd input", function () {
+  assert.strictEqual(I.ingredientFromParts({}), null);
+  assert.strictEqual(I.ingredientFromParts({ from: 2, to: 2, unit: "cup" }).check, "please-check");
+  assert.strictEqual(I.ingredientFromParts({ item: "salt" }).check, "as-written");
+  assert.strictEqual(I.ingredientFromParts({ from: 3, to: 2, item: "x" }).check, "please-check");
+  assert.strictEqual(I.ingredientFromParts({ from: 2, unit: "Cups", item: "flour" }).unit, "cup");
+  assert.strictEqual(I.ingredientFromParts({ from: 2.4, item: "eggs" }).text, "2.4 eggs");
+  assert.strictEqual(I.ingredientFromParts({ unit: "cup", item: "milk" }).text, "milk");
+});
+
 console.log(passed + " checks passed" + (process.exitCode ? ", some FAILED" : ""));

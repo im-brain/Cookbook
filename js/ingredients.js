@@ -271,6 +271,72 @@ function parseIngredient(line) {
   };
 }
 
+// ---------- Building a line from its parts (the ••• editor, Version 27) ----------
+
+const UNIT_PLURALS = {
+  cup: "cups", quart: "quarts", pint: "pints", gallon: "gallons", pinch: "pinches", dash: "dashes",
+  clove: "cloves", can: "cans", jar: "jars", package: "packages", bag: "bags", box: "boxes",
+  bottle: "bottles", bunch: "bunches", slice: "slices", stick: "sticks", head: "heads",
+  sprig: "sprigs", handful: "handfuls"
+};
+
+// 1.5 → "1½", 2.4 → "2.4" (a typed amount that isn't a kitchen fraction is kept as typed).
+function amountText(value) {
+  const kitchen = kitchenNumber(value);
+  const back = amountToNumber(kitchen);
+  if (back !== null && Math.abs(back - value) < 0.01) {
+    return kitchen;
+  }
+  return String(Math.round(value * 100) / 100);
+}
+
+// Parts → an ingredient object whose `text` is written from the parts.
+// parts: { from, to, unit, item, size, prep, optional } (from/to are numbers or null).
+// Returns null when there is nothing at all.
+function ingredientFromParts(parts) {
+  const from = typeof parts.from === "number" && parts.from > 0 ? parts.from : null;
+  let to = from !== null && typeof parts.to === "number" && parts.to > 0 ? parts.to : from;
+  let unit = String(parts.unit || "").trim();
+  const known = UNIT_NAMES[unit.toLowerCase()];
+  if (known && unit !== "T" && unit !== "t") {
+    unit = known;
+  }
+  const item = String(parts.item || "").trim();
+  const size = String(parts.size || "").trim();
+  const prep = String(parts.prep || "").trim();
+  const optional = parts.optional === true;
+
+  const bits = [];
+  if (from !== null) {
+    bits.push(amountText(from) + (to !== from ? "-" + amountText(to) : ""));
+    if (unit !== "") {
+      bits.push((to > 1 || from > 1) && UNIT_PLURALS[unit] ? UNIT_PLURALS[unit] : unit);
+    }
+  } else if (unit !== "") {
+    unit = "";   // a unit without an amount means nothing
+  }
+  if (size !== "") { bits.push("(" + size + ")"); }
+  if (item !== "") { bits.push(item); }
+  let text = bits.join(" ");
+  if (prep !== "") { text += (text !== "" ? ", " : "") + prep; }
+  if (optional) { text += (text !== "" ? " " : "") + "(optional)"; }
+  if (text === "") {
+    return null;
+  }
+
+  let check = "ok";
+  if (from === null) {
+    check = "as-written";
+  } else if (item === "" || to < from) {
+    check = "please-check";
+  }
+  return {
+    text: text,
+    amount: from === null ? null : { from: from, to: to },
+    unit: unit, item: item, size: size, prep: prep, optional: optional, check: check
+  };
+}
+
 // A list of typed lines → a list of ingredients (empty lines skipped).
 function parseIngredients(lines) {
   return lines
@@ -368,6 +434,7 @@ if (typeof module !== "undefined" && module.exports) {
     isSectionHeading: isSectionHeading, parseIngredient: parseIngredient, parseIngredients: parseIngredients,
     ingredientText: ingredientText, ingredientTexts: ingredientTexts, cleanIngredient: cleanIngredient,
     cleanIngredientList: cleanIngredientList, upgradeIngredients: upgradeIngredients,
-    scaleIngredient: scaleIngredient, LEADING_AMOUNT: LEADING_AMOUNT
+    scaleIngredient: scaleIngredient, LEADING_AMOUNT: LEADING_AMOUNT,
+    ingredientFromParts: ingredientFromParts, amountText: amountText
   };
 }
