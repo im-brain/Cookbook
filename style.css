@@ -34,6 +34,12 @@
   --tab-sage: #a9ba95;
   --tab-blue: #a2b7cb;
 
+  /* Cover colours: one per tag (Version 24). 0-5 are the starter tags, 6-9 are your own tags. */
+  --tagc-0: #e6c675; --tagc-1: #9fc5b6; --tagc-2: #d99a7c; --tagc-3: #bfb2d6; --tagc-4: #a2b7cb;
+  --tagc-5: #a9ba95; --tagc-6: #d6a5b3; --tagc-7: #c9b28a; --tagc-8: #8fb7c4; --tagc-9: #b9a37f;
+  --cover-plain: #ddd2bf;    /* a recipe with no tag */
+  --cover-paper: #f8f1e6;    /* the paper panel on a cover */
+
   /* The lined "My notes" paper */
   --note-paper: #fbf1d3;
   --note-line: #ead9ad;
@@ -71,6 +77,9 @@
     --ok: #9cc58f; --ok-soft: #26321f; --warn: #e6bf6a; --warn-soft: #3a2f17;
     --danger: #f08b7d;
     --tab-sage: #74876a; --tab-blue: #6c8299;
+    --tagc-0: #a68a3c; --tagc-1: #5f8a7b; --tagc-2: #a8644a; --tagc-3: #7d6f9a; --tagc-4: #6c8299;
+    --tagc-5: #74876a; --tagc-6: #9a6272; --tagc-7: #8a7550; --tagc-8: #55808d; --tagc-9: #7d6a4a;
+    --cover-plain: #4a4033; --cover-paper: #2c261f;
     --note-paper: #2a2418; --note-line: #3d3424; --note-margin: #6e4235;
     --shadow-card: 0 1px 0 rgba(0, 0, 0, .4), 0 8px 20px -12px rgba(0, 0, 0, .8);
     --texture-opacity: .06;
@@ -837,10 +846,6 @@ textarea:focus {
 
 /* ---------- 14. "What should I cook?" (home screen) ---------- */
 
-#pick-button {
-  margin-top: 16px;
-}
-
 .pick-card {
   margin-top: 12px;
 }
@@ -1426,4 +1431,303 @@ select {
 /* "Reading…" while the helper works. */
 #autofill-go:disabled {
   opacity: 0.6;
+}
+
+
+/* ---------- 20. Cookbook views (Version 24): tag filter, switch, Cover Flow, Grid ---------- */
+
+/* The tag filter: one row of pills you swipe sideways. */
+.filter-row {
+  display: flex;
+  gap: 8px;
+  margin: 12px calc(-1 * max(16px, env(safe-area-inset-right))) 0;
+  padding: 2px max(16px, env(safe-area-inset-right));
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+.filter-chip[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+.filter-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* The Cover Flow / Grid / List switch with the dice button beside it. */
+.view-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0 0;
+}
+.segmented {
+  flex: 1;
+  display: flex;
+  padding: 4px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  background: var(--paper-sunk);
+}
+.segmented button {
+  flex: 1;
+  min-height: 40px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--paper-raised);
+  color: var(--ink);
+  box-shadow: var(--shadow-card);
+}
+.view-controls .icon-button {
+  flex: none;
+}
+.pick-card { margin-top: 12px; }
+
+/* A cover: coloured card, paper panel, tag in small capitals, title, kitchen icon. */
+.cover {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  padding: 8%;
+  border-radius: 14px;
+  background: var(--cover);
+  box-shadow: var(--shadow-card);
+  container-type: inline-size;
+}
+.cover-inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10% 8% 8%;
+  border: 1px solid var(--rule-strong);
+  border-radius: 6px;
+  background: var(--cover-paper);
+  color: var(--ink);
+  text-align: center;
+}
+.cover-tag {
+  min-height: 1em;
+  font-size: max(11px, 6cqw);
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.cover-title {
+  font-family: var(--font-serif);
+  font-size: max(15px, 10cqw);
+  font-weight: 600;
+  line-height: 1.2;
+  margin-block: auto;   /* centre the title between the tag and the icon */
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cover .icon {
+  width: 14cqw;
+  height: 14cqw;
+  color: var(--ink-faint);
+}
+
+/* ----- Grid ----- */
+.grid-view {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px 16px;
+}
+.grid-item {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.grid-title {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.grid-meta {
+  display: block;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  margin-top: 2px;
+}
+
+/* ----- Cover Flow ----- */
+.flow {
+  margin-top: 16px;
+}
+.flow-stage {
+  position: relative;
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-right)));
+}
+.flow-track {
+  --flow-w: min(56vw, 250px);
+  display: flex;
+  overflow-x: auto;
+  padding: 24px calc(50% - var(--flow-w) / 2) 32px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.flow-track::-webkit-scrollbar { display: none; }
+.flow-item {
+  flex: none;
+  width: var(--flow-w);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  position: relative;   /* so the z-index set by the script works */
+}
+.flow-item .cover { will-change: transform; }
+.flow-item:focus-visible .cover {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.flow-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: var(--paper-raised);
+  color: var(--ink);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  cursor: pointer;
+}
+.flow-arrow:disabled { opacity: .35; }
+.flow-prev { left: 12px; }
+.flow-next { right: 12px; }
+.flow-arrow .icon { width: 22px; height: 22px; }
+
+.flow-caption {
+  text-align: center;
+}
+.flow-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.flow-meta {
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+}
+.flow-tags {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  min-height: 30px;
+}
+.flow-tag {
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--paper-sunk);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.flow-slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+}
+.flow-slider input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+  min-height: var(--tap);
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+/* Sideways phone (short screens): smaller covers so the caption still fits. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .flow-track { --flow-w: min(20vw, 150px); padding-top: 8px; padding-bottom: 16px; }
+  .grid-view { grid-template-columns: repeat(4, 1fr); }
+  /* Less above the covers, so they show without scrolling. */
+  #home-screen .topbar { margin-bottom: 0; }
+  #recipe-count, #installed-note { display: none; }
+  #home-screen .topbar h1 { font-size: 22px; }
+  #home-screen .topbar { min-height: 0; }
+  .backup-nudge { padding-top: 6px; padding-bottom: 6px; min-height: 0; margin-bottom: 0; }
+  #home-screen .search { margin-top: 8px; }
+  .filter-row, .view-controls { margin-top: 8px; }
+  .flow { margin-top: 4px; }
+  .flow-title { font-size: var(--text-lg); }
+  .flow-tags { display: none; }
+  .flow-slider { margin-top: 0; }
+}
+/* iPad and other wide screens. */
+@media (min-width: 768px) {
+  .grid-view { grid-template-columns: repeat(3, 1fr); }
+  .filter-row, .flow-stage { margin-left: -32px; margin-right: -32px; padding-left: 32px; padding-right: 32px; }
+  .flow-stage { padding: 0; }
+}
+
+@media (min-width: 768px) and (min-height: 501px) {
+  .flow-track { --flow-w: 240px; }
+}
+
+/* Reduce Motion: no sliding when you tap an arrow (the tilt is switched off in the script). */
+@media (prefers-reduced-motion: reduce) {
+  .flow-track { scroll-behavior: auto; }
+  .flow-item .cover { will-change: auto; }
 }

@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=23">
+    <link rel="stylesheet" href="style.css?v=24">
   </head>
 
   <body>
@@ -114,19 +114,12 @@
         </button>
 
         <!-- ----- "What should I cook?" ----- -->
-        <!-- Tapping this picks a random recipe and opens the box below. -->
-        <button type="button" class="button button-secondary" id="pick-button"><svg class="icon"><use href="#icon-dice"/></svg>What should I cook?</button>
+        <!-- The "What should I cook?" box. The 🎲 button further down opens it. -->
         <div class="card pick-card" id="pick-card" hidden>
           <!-- The picked recipe (app.js puts a tappable row here), or a friendly message. -->
           <p class="pick-heading" id="pick-heading">How about…</p>
           <div class="pick-result" id="pick-result"></div>
           <p class="pick-message" id="pick-message" hidden></p>
-
-          <!-- Optional filter: "Any" or one tag. Only tags used on your recipes are offered. -->
-          <div id="pick-filter">
-            <p class="field-label">Pick from</p>
-            <div class="chips" id="pick-tags"></div>
-          </div>
 
           <button type="button" class="button" id="pick-again">Pick another</button>
           <button type="button" class="button button-secondary" id="pick-close">Close</button>
@@ -146,13 +139,56 @@
         <!-- e.g. "2 of 5 recipes" or "Nothing matches "chicken"". -->
         <p class="search-result" id="search-result" hidden></p>
 
-        <ul class="recipe-list" id="recipe-list"></ul>
+        <!-- Tag filter (Version 24): "All" plus every tag used on a recipe. app.js builds the buttons.
+             It filters all three views, and the 🎲 button picks from the chosen tag. -->
+        <div class="filter-row" id="tag-filter" role="group" aria-label="Filter by tag" hidden></div>
+
+        <!-- View switch: Cover Flow, Grid or List, and the 🎲 "What should I cook?" button. -->
+        <div class="view-controls" id="view-controls" hidden>
+          <div class="segmented" role="group" aria-label="How to show recipes">
+            <button type="button" data-view="flow" aria-pressed="true">Cover Flow</button>
+            <button type="button" data-view="grid" aria-pressed="false">Grid</button>
+            <button type="button" data-view="list" aria-pressed="false">List</button>
+          </div>
+          <button type="button" class="icon-button" id="pick-button" aria-label="What should I cook?">
+            <svg class="icon"><use href="#icon-dice"/></svg>
+          </button>
+        </div>
+
+        <!-- Cover Flow: a row of covers you swipe through (js/cookbook-views.js fills it in). -->
+        <div class="flow" id="flow-view" hidden>
+          <div class="flow-stage">
+            <div class="flow-track" id="flow-track"></div>
+            <button type="button" class="flow-arrow flow-prev" id="flow-prev" aria-label="Previous recipe">
+              <svg class="icon"><use href="#icon-back"/></svg>
+            </button>
+            <button type="button" class="flow-arrow flow-next" id="flow-next" aria-label="Next recipe">
+              <svg class="icon"><use href="#icon-chevron"/></svg>
+            </button>
+          </div>
+          <div class="flow-caption" id="flow-caption" aria-live="polite">
+            <p class="flow-title" id="flow-title"></p>
+            <p class="flow-meta" id="flow-meta"></p>
+            <div class="flow-tags" id="flow-tags"></div>
+          </div>
+          <div class="flow-slider">
+            <span id="flow-pos"></span>
+            <input type="range" id="flow-range" min="1" max="1" value="1" aria-label="Move through recipes">
+            <span id="flow-total"></span>
+          </div>
+        </div>
+
+        <!-- Grid: two columns of covers. -->
+        <ul class="grid-view" id="grid-view" hidden></ul>
+
+        <!-- List: the plain list. -->
+        <ul class="recipe-list" id="recipe-list" hidden></ul>
 
         <!-- Shown only when there are no recipes yet. -->
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 23</p>
+        <p class="version">Version 24</p>
       </section>
 
       <!-- ===================== SETTINGS SCREEN (Version 23) ===================== -->
@@ -455,6 +491,7 @@
     </main>
 
     <!-- Load the behavior last, after everything above exists on the page. -->
-    <script src="app.js?v=23"></script>
+    <script src="js/cookbook-views.js?v=24"></script>
+    <script src="app.js?v=24"></script>
   </body>
 </html>
