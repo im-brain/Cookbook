@@ -27,6 +27,7 @@ New sessions start with no memory of earlier conversations, so this file and `PL
 ## Key decisions (and why)
 
 - **Plan before doing (2026-10-31, user's request):** the user liked getting a plan before any work, so every change starts with a plan and waits for an OK (see "How we work", step 2).
+- **One step per session (2026-11-08, user's choice):** each redesign phase (or fix) is done in its own new session, to save tokens. A session reads `CLAUDE.md` and `PLAN.md` first, does only the next unticked step (plan → OK → build → check → pull request), updates the notes, and stops. It reads only the parts of the proposal page it needs for that step (Artifact tool `read` with a `path`, e.g. `shots/04-recipe-light.jpg` or `demo/proto.css`).
 - **Plain HTML, CSS and JavaScript.** No framework, no build tools. Simplest to learn; edit a file, see the change.
 - **Recipes are stored on the phone (localStorage).** No account, database or cost. Online sync is a "maybe someday". *(Changes in redesign Phases 4–5: private Supabase sync; the phone keeps a full local copy.)*
 - **Public repository + GitHub Pages.** Free Pages doesn't work for private repos. Only code is public; recipes never go in the repo.

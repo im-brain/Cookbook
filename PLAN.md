@@ -9,7 +9,7 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 - **Redesign approved** (2026-11-08): new look, Cover Flow, structured ingredients, private Supabase sync, photos, This Week and a shopping list, in 8 phases (see **Redesign** below and `CLAUDE.md` → Key decisions).
 - **Phase 1 (new look, tab bar, Settings) is done as Version 23**, waiting for merge and a phone check. Next: **Phase 2, Cookbook views (Cover Flow, grid, list)**.
 - The AI upgrade (also for screenshots) and "Suggest from my fridge" come after the redesign.
-- **Working rule:** Claude shows a plan and waits for the user's OK before changing or committing anything (see `CLAUDE.md`).
+- **Working rules:** Claude shows a plan and waits for the user's OK before changing or committing anything, and does **one step per session** (the user starts a new session for each step). See `CLAUDE.md`.
 - Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first (Settings → Backup since Version 23).
 
 ## What "done" means (version 1)
@@ -201,3 +201,4 @@ Also decided: a deleted recipe goes to **"Recently deleted" for 30 days** (from 
 - 2026-11-01 — Step 17 confirmed on the user's phone ("Works great"). Fix (Version 22): in cook mode the step numbers (and ✓) sat about 2px too high in their circles on the iPhone; the circle now centers its contents itself.
 - 2026-11-08 — Redesign proposal (Phase 0) written as a Claude artifact with mockups, a working prototype and a Supabase free-plan check; approved in full by the user, including the phase order and the two small choices (upper amount of a range on shopping lists; 30-day "Recently deleted"). Navigation choice "A": tab bar with Cookbook and Settings now, more tabs later.
 - 2026-11-08 — Phase 1 done (Version 23): the new look on every screen (paper/ink/terracotta, Dark Mode, serif headings, lined "My notes" paper, circled step numbers, line icons), a tab bar on iPhone and a sidebar on iPad, a new **Settings** screen holding Backup, and a "Back up in Settings" reminder on the home screen. Checked on a simulated iPhone 13 (portrait, sideways, light/dark) and iPad Pro 11: 38 feature checks pass (save, edit, delete, original/reset, search, random, cooking, scaling incl. "2 (14 oz) cans", converter, paste, link import, backup round trip), no sideways scrolling, no page errors.
+- 2026-11-08 — Working rule added (user's choice): one step per session, to save tokens. (Notes only, so the site stays at Version 23.)
