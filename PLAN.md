@@ -3,13 +3,14 @@
 A personal cookbook website that I use on my iPhone.
 How we work and the reasons behind each decision are in `CLAUDE.md`.
 
-## Current status (2026-11-01)
+## Current status (2026-11-08)
 
-- **Version 1** (steps 1–12) and **Cooking mode** (steps 13–15, Version 18) are done.
-- **"Import a recipe"** (steps 16–17): step 16 (smart paste) and the section-headings fix (Version 20) work on the phone. Step 17 (from a link, Version 21) **works on the phone**. **A fix centering the step numbers in cook mode is done as Version 22**, waiting for merge and a phone check. The link helper runs on the user's free Cloudflare account at `https://cookbook-helper.heydenberkbrian.workers.dev/`.
-- Next: use the cookbook for real. After that, the **AI upgrade** (also for reading recipes from **screenshots**), then "Suggest from my fridge" (see Later).
+- **Version 1**, **Cooking mode** and **Import a recipe** are done (up to Version 22, all confirmed on the phone).
+- **Redesign approved** (2026-11-08): new look, Cover Flow, structured ingredients, private Supabase sync, photos, This Week and a shopping list, in 8 phases (see **Redesign** below and `CLAUDE.md` → Key decisions).
+- **Phase 1 (new look, tab bar, Settings) is done as Version 23**, waiting for merge and a phone check. Next: **Phase 2, Cookbook views (Cover Flow, grid, list)**.
+- The AI upgrade (also for screenshots) and "Suggest from my fridge" come after the redesign.
 - **Working rule:** Claude shows a plan and waits for the user's OK before changing or committing anything (see `CLAUDE.md`).
-- Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first.
+- Recipes the user saves are real. Before anything risky, ask the user to **Export a backup** first (Settings → Backup since Version 23).
 
 ## What "done" means (version 1)
 
@@ -132,7 +133,23 @@ Decided in a grill-me interview (2026-11-01). Details in `CLAUDE.md` → Key dec
 - [x] **Step 17 — From a link (Version 21).** Paste a recipe's web link instead; a free Cloudflare Worker helper reads the page (most recipe sites include a hidden, tidy copy of the recipe) and sends back only the recipe. Website categories: ones matching your tags are ticked, new ones show as unticked chips. The description is ignored. Warns if you already saved a recipe from that link. If a site refuses the helper, it suggests copying the text instead (step 16). The user creates the free Cloudflare account; the helper's code is kept in `worker/` (no secrets) and only answers the cookbook's site.
   **Test it:** Paste a link from a big recipe site → Fill in → everything filled in; paste the same link again after saving → the "already saved" warning.
 
-## Later — in this order
+## Redesign — phases 1–8 (approved 2026-11-08)
+
+The full proposal (mockups, data model, Supabase limits, migration steps) is the Claude artifact "Cookbook Redesign Proposal": https://claude.ai/artifact/2JW78LGWDESSd18gs8c5oF. Each phase is one or two pull requests with its own version number, screenshots and phone check. Recipes are only touched in Phases 3 and 5, both after a fresh backup. Still plain HTML, CSS and JavaScript, no build step.
+
+- [x] **Phase 1 — New look and navigation (Version 23).** Paper, ink and terracotta colours with Dark Mode, serif headings, faint paper grain, line icons. A tab bar on iPhone / notebook sidebar on iPad with **Cookbook** and **Settings** (This Week and Shopping are added in their phases). Backup moved to Settings; a yellow "Back up in Settings" reminder stays on the home screen. Every existing screen restyled; nothing removed; no data changes.
+  **Test it:** see the phone checklist in the pull request (version, tabs, backup reminder, a recipe, cooking, add/edit, Dark Mode, iPhone sideways).
+- [ ] **Phase 2 — Cookbook views (Version 24).** Cover Flow, grid and list; typographic covers in tag colours; search, filter and selection kept; dice for a random pick; Reduce Motion; better landscape. `app.js` starts to split into a `js/` folder.
+- [ ] **Phase 3 — Structured ingredients (Version 25).** Ingredient reader and editor, original wording kept, "please check" flags; scaling uses the amount field; paste and link import use it; backup format 2 (still reads format 1). Needs a fresh backup first.
+- [ ] **Phase 4 — Account and sync, test project only (Version 26).** Sign-in (email + password), outbox sync, status pill, conflict choices, against a **test** Supabase project with made-up recipes. Needs: the user creates a free Supabase account with two projects, and the test project's address is allowed in this cloud environment's network settings.
+- [ ] **Phase 5 — Move the real recipes (Version 27).** The six-step move in Settings (backup → check → preview → upload only on tap → verify → finish; local copy kept). Keep-awake ping from the Cloudflare helper a few times a day.
+- [ ] **Phase 6 — Photos (Version 28).** One optional photo per recipe, shrunk on the phone, private storage, cached, in backups.
+- [ ] **Phase 7 — This Week / Next Week (Version 29).** Planner by date with sides, servings, leftovers, eating out, notes, past weeks and reuse.
+- [ ] **Phase 8 — Shopping list (Version 30).** Per week, scaled and combined, aisles, pantry, extras, synced ticks, changes marked. A range uses its **upper** amount.
+
+Also decided: a deleted recipe goes to **"Recently deleted" for 30 days** (from the sync phases on).
+
+## Later — in this order (after the redesign)
 
 1. **Save from a web link + smart paste.** *(Now steps 16–17 above.)* Paste a recipe URL (or a whole recipe's text) and the form fills itself in. Needs a small free helper (Cloudflare Worker) because browsers block one site from reading another.
    - **Then an AI upgrade** for sites and messy text that plain import can't handle, **and for reading a recipe from a screenshot** (user's choice, 2026-11-01). AI service and budget decided when we get there; the key stays hidden in the helper. The screenshot is only read, never saved (no photos). Until then: open the screenshot in Photos → Live Text button → Copy All → 📋 Paste in the cookbook.
@@ -182,3 +199,5 @@ Decided in a grill-me interview (2026-11-01). Details in `CLAUDE.md` → Key dec
 - 2026-11-01 — Section headings (Version 20) merged. Decided: reading recipes from screenshots will be part of the AI upgrade, after step 17 (Live Text + Copy All + Paste works meanwhile).
 - 2026-11-01 — Step 17 done (Version 21): paste a recipe's web link and tap Fill in. A small helper on Cloudflare (`worker/recipe-helper.js`, user's free account) reads the recipe block most recipe sites include for Google and sends back only the recipe. Sections become headings, website categories become tag suggestions (matching ticked, new unticked), a link already saved shows "You already have …" with Open it / Fill in anyway, and blocked sites / pages without a recipe say to copy the text instead. **"Import a recipe" is complete.**
 - 2026-11-01 — Step 17 confirmed on the user's phone ("Works great"). Fix (Version 22): in cook mode the step numbers (and ✓) sat about 2px too high in their circles on the iPhone; the circle now centers its contents itself.
+- 2026-11-08 — Redesign proposal (Phase 0) written as a Claude artifact with mockups, a working prototype and a Supabase free-plan check; approved in full by the user, including the phase order and the two small choices (upper amount of a range on shopping lists; 30-day "Recently deleted"). Navigation choice "A": tab bar with Cookbook and Settings now, more tabs later.
+- 2026-11-08 — Phase 1 done (Version 23): the new look on every screen (paper/ink/terracotta, Dark Mode, serif headings, lined "My notes" paper, circled step numbers, line icons), a tab bar on iPhone and a sidebar on iPad, a new **Settings** screen holding Backup, and a "Back up in Settings" reminder on the home screen. Checked on a simulated iPhone 13 (portrait, sideways, light/dark) and iPad Pro 11: 38 feature checks pass (save, edit, delete, original/reset, search, random, cooking, scaling incl. "2 (14 oz) cans", converter, paste, link import, backup round trip), no sideways scrolling, no page errors.

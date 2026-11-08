@@ -1,29 +1,79 @@
 /* style.css: how the cookbook LOOKS (colors, sizes, spacing).
-   index.html says WHAT is on the page; this file says how it looks. */
+   index.html says WHAT is on the page; this file says how it looks.
+   Version 23 ("new look"): warm paper, brown ink, terracotta buttons, serif headings,
+   a tab bar on iPhone and a notebook-style sidebar on iPad. */
 
-/* ---------- 1. Colors ----------
-   We name our colors once here ("variables") and reuse the names below.
-   To change a color everywhere, change it in one place. */
+/* ---------- 1. Design settings ("tokens") ----------
+   Every color, size and space is named once here and reused below.
+   To change something everywhere, change it in one place. */
 :root {
-  --background: #fbf7f2;   /* warm off-white, like recipe paper */
-  --text: #2b2420;         /* very dark brown, softer than pure black */
-  --muted: #6f625a;        /* lighter brown for less important text */
-  --accent: #c0502d;       /* tomato red for buttons */
-  --accent-text: #ffffff;  /* text on top of the accent color */
-  --card: #ffffff;         /* background of boxes ("cards") */
-  --border: #e6ddd3;       /* thin lines around boxes */
+  color-scheme: light;
+
+  /* Paper and ink */
+  --paper: #f6f0e4;          /* the page: warm recipe-card paper */
+  --paper-raised: #fbf8f1;   /* boxes ("cards") that sit on the paper */
+  --paper-sunk: #ede4d2;     /* pressed-in areas: sidebar, tag pills */
+  --ink: #2b241e;            /* main text: very dark brown */
+  --ink-soft: #66584b;       /* less important text */
+  --ink-faint: #85776a;      /* hints, placeholders */
+  --rule: #ddd0bc;           /* thin lines and box edges */
+  --rule-strong: #c4b49b;
+
+  /* Buttons and states */
+  --accent: #a3482c;         /* terracotta: main buttons, links, highlighted amounts */
+  --accent-ink: #ffffff;     /* text on top of the accent color */
+  --accent-soft: #f2dfd3;
+  --focus: #2f6db5;          /* ring around whatever the keyboard is on */
+  --ok: #3f6b37;
+  --ok-soft: #e1ead6;
+  --warn: #8a5d0c;
+  --warn-soft: #f6e8c6;
+  --danger: #a3352a;
+
+  /* Notebook tab marks (muted colors, like coloured page tabs) */
+  --tab-sage: #a9ba95;
+  --tab-blue: #a2b7cb;
+
+  /* The lined "My notes" paper */
+  --note-paper: #fbf1d3;
+  --note-line: #ead9ad;
+  --note-margin: #e2a594;
+
+  /* Type. "ui-serif" is Apple's New York font on iPhone and iPad (nothing to download). */
+  --font-serif: ui-serif, "New York", "Source Serif 4", Charter, "Iowan Old Style", Georgia, serif;
+  --font-sans: -apple-system, system-ui, "Inter", "Segoe UI", sans-serif;
+  --text-xs: 13px;
+  --text-sm: 15px;
+  --text-md: 17px;           /* normal text */
+  --text-lg: 20px;
+  --text-xl: 26px;
+  --text-2xl: 32px;
+
+  /* Space and shape */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-pill: 999px;
+  --shadow-card: 0 1px 0 rgba(60, 40, 20, .06), 0 6px 18px -10px rgba(60, 40, 20, .35);
+  --tap: 48px;               /* Apple recommends taps of at least 44px; we use 48 */
+  --texture-opacity: .05;    /* how strong the paper grain is */
+  --tabbar-height: 64px;
+  --sidebar-width: 232px;
 }
 
 /* If the iPhone is in Dark Mode, swap to darker colors automatically. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #1d1916;
-    --text: #f3ece6;
-    --muted: #b3a69c;
-    --accent: #e0714d;
-    --accent-text: #1d1916;
-    --card: #28221e;
-    --border: #3a322c;
+    color-scheme: dark;
+    --paper: #1b1713; --paper-raised: #25201a; --paper-sunk: #14110e;
+    --ink: #f0e7d9; --ink-soft: #c2b4a1; --ink-faint: #9d8f7e;
+    --rule: #3b3329; --rule-strong: #54493c;
+    --accent: #e48d6b; --accent-ink: #1b1713; --accent-soft: #43281d;
+    --focus: #8bb8ec;
+    --ok: #9cc58f; --ok-soft: #26321f; --warn: #e6bf6a; --warn-soft: #3a2f17;
+    --danger: #f08b7d;
+    --tab-sage: #74876a; --tab-blue: #6c8299;
+    --note-paper: #2a2418; --note-line: #3d3424; --note-margin: #6e4235;
+    --shadow-card: 0 1px 0 rgba(0, 0, 0, .4), 0 8px 20px -12px rgba(0, 0, 0, .8);
+    --texture-opacity: .06;
   }
 }
 
@@ -34,52 +84,83 @@
   box-sizing: border-box;
 }
 
+/* Make sure anything marked "hidden" really is hidden. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
-  background: var(--background);
-  color: var(--text);
-
-  /* Use the iPhone's own font (San Francisco). */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
-  /* Comfortable reading size and spacing between lines. */
-  font-size: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
   line-height: 1.5;
-
   /* Stop iPhone from enlarging text by itself when the phone is turned sideways. */
   -webkit-text-size-adjust: 100%;
 }
 
+/* A very faint paper grain over the whole page. It's a tiny drawing of "noise",
+   built into this file, so there's no picture to download. It never catches taps. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--texture-opacity);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .3  0 0 0 0 .2  0 0 0 0 .1  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
 /* The main column. Keeps text from stretching too wide on bigger screens,
    and leaves space around the edges. The "env(safe-area-...)" parts keep
-   content clear of the iPhone's notch and rounded corners. */
+   content clear of the iPhone's notch, rounded corners and Home bar. */
 main {
-  max-width: 640px;
+  position: relative;
+  z-index: 1;   /* above the paper grain */
+  max-width: 680px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
   padding-left: max(16px, env(safe-area-inset-left));
   padding-right: max(16px, env(safe-area-inset-right));
-  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  /* Room at the bottom so the tab bar never covers the last thing on the page. */
+  padding-bottom: calc(var(--tabbar-height) + 32px + env(safe-area-inset-bottom));
+}
+
+/* The form and the cooking screen have no tab bar, so they need less room at the bottom. */
+body[data-screen="recipe-form-screen"] main,
+body[data-screen="cooking-screen"] main {
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
 }
 
 /* ---------- 3. Text ---------- */
 
+/* Headings use the serif font, like a printed cookbook. */
+h1,
+h2 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 h1 {
-  font-size: 32px;
-  line-height: 1.2;
+  font-size: var(--text-2xl);
+  line-height: 1.15;
   margin: 8px 0 4px;
+  overflow-wrap: anywhere;   /* a very long title wraps instead of running off the screen */
+}
+
+h2 {
+  font-size: var(--text-lg);
+  line-height: 1.3;
+  margin: 0 0 8px;
 }
 
 /* A smaller line of text under the title. */
 .subtitle {
-  color: var(--muted);
-  margin: 0 0 24px;
-}
-
-h2 {
-  font-size: 22px;
-  line-height: 1.3;
-  margin: 0 0 8px;
+  color: var(--ink-soft);
+  margin: 0 0 20px;
 }
 
 /* Lists (like the numbered install steps): a little space between items. */
@@ -87,14 +168,234 @@ li {
   margin-bottom: 8px;
 }
 
-/* ---------- 4. Boxes ("cards") ---------- */
+a {
+  color: var(--accent);
+}
+
+/* A clear ring around whatever is selected with a keyboard. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- 4. Icons ----------
+   Small line drawings (defined at the top of index.html). They take the text color. */
+.icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- 5. Top of each screen, and the round icon buttons ---------- */
+
+/* Title on the left, round buttons on the right. */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: var(--tap);
+  margin: 4px 0 4px;
+}
+.topbar h1 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+/* A round 48px button with just an icon, e.g. the "+" that adds a recipe. */
+.icon-button {
+  width: var(--tap);
+  height: var(--tap);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  background: var(--paper-raised);
+  color: var(--ink);
+  cursor: pointer;
+}
+.icon-button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--shadow-card);
+}
+.icon-button .icon {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+}
+.icon-button:active {
+  opacity: 0.8;
+}
+
+/* ---------- 6. Tab bar (iPhone) and sidebar (iPad) ---------- */
+
+/* iPhone: a bar fixed to the bottom of the screen, one tab per column. */
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  padding: 6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  background: var(--paper-raised);
+  border-top: 1px solid var(--rule);
+}
+/* Slightly see-through with a blur, like Apple's own tab bars (when the iPhone supports it). */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .tabbar {
+    background: color-mix(in srgb, var(--paper-raised) 88%, transparent);
+    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    backdrop-filter: saturate(1.4) blur(14px);
+  }
+}
+
+/* The "My Cookbook" name only shows in the iPad sidebar. */
+.tabbar-brand {
+  display: none;
+}
+
+.tab {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--ink-faint);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab .icon {
+  width: 26px;
+  height: 26px;
+}
+/* The tab you're on is in the accent color. */
+.tab[aria-current="page"] {
+  color: var(--accent);
+}
+
+/* No tab bar on the form (so a half-typed recipe isn't left by accident) or while cooking. */
+body[data-screen="recipe-form-screen"] .tabbar,
+body[data-screen="cooking-screen"] .tabbar {
+  display: none;
+}
+
+/* iPad and other wide screens (also an iPhone turned sideways): a sidebar on the left,
+   like the coloured tabs of a notebook. */
+@media (min-width: 768px) {
+  .tabbar {
+    top: 0;
+    right: auto;
+    width: calc(var(--sidebar-width) + env(safe-area-inset-left));
+    display: flex;
+    flex-direction: column;
+    gap: var(--s2);
+    padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    background: var(--paper-sunk);
+    border-top: 0;
+    border-right: 1px solid var(--rule);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    overflow-y: auto;
+  }
+  .tabbar-brand {
+    display: block;
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 var(--s4) var(--s2);
+  }
+  .tab {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--s3);
+    width: 100%;
+    padding: 0 var(--s3);
+    font-size: var(--text-md);
+    color: var(--ink-soft);
+  }
+  .tab .icon {
+    width: 22px;
+    height: 22px;
+  }
+  /* A coloured tab mark in front of each section. */
+  .tab::before {
+    content: "";
+    width: 6px;
+    align-self: stretch;
+    margin: 12px 0;
+    border-radius: 3px;
+    background: var(--tab-color, var(--rule));
+  }
+  #tab-cookbook {
+    --tab-color: var(--tab-sage);
+  }
+  /* Settings sits at the bottom of the sidebar, without a tab mark. */
+  .tab-settings {
+    margin-top: auto;
+    border: 1px solid var(--rule);
+    background: var(--paper-raised);
+  }
+  .tab-settings::before {
+    display: none;
+  }
+  .tab[aria-current="page"] {
+    background: var(--paper-raised);
+    color: var(--ink);
+    box-shadow: var(--shadow-card);
+  }
+  .tab-settings[aria-current="page"] {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Move the page over to make room for the sidebar. */
+  main {
+    margin-left: calc(var(--sidebar-width) + env(safe-area-inset-left));
+    margin-right: 0;
+    max-width: none;
+    padding-left: 32px;
+    padding-right: max(32px, env(safe-area-inset-right));
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
+  }
+  main > section {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  /* The form and the cooking screen use the whole width (no sidebar there). */
+  body[data-screen="recipe-form-screen"] main,
+  body[data-screen="cooking-screen"] main {
+    margin-left: 0;
+    padding-left: max(32px, env(safe-area-inset-left));
+  }
+}
+
+/* ---------- 7. Boxes ("cards") and messages ---------- */
 
 .card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  padding: var(--s4);
+  margin-bottom: var(--s4);
+  box-shadow: var(--shadow-card);
 }
 
 /* Remove the extra gap above the first thing inside a card. */
@@ -104,35 +405,47 @@ li {
 
 /* An important message box: a colored stripe down the left side. */
 .notice {
-  border-left: 6px solid var(--accent);
+  border-left: 5px solid var(--accent);
+}
+.notice ol {
+  padding-left: 22px;
+  margin-bottom: 0;
 }
 
 /* The small "Opened from your Home Screen" confirmation. */
 .installed {
-  color: var(--muted);
-  font-size: 16px;
+  color: var(--ok);
+  font-size: var(--text-sm);
   margin: 0 0 16px;
 }
 
-/* Make sure anything marked "hidden" really is hidden. */
-[hidden] {
-  display: none !important;
+/* A message box, e.g. "✓ Saved Tomato soup". */
+.message {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-left: 5px solid var(--accent);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  margin: 0 0 16px;
 }
 
-/* ---------- 5. Buttons ---------- */
+/* ---------- 8. Buttons ---------- */
 
-/* Apple recommends tap targets at least 44 pixels tall. We use 48 to be safe. */
+/* The main button: terracotta, rounded ends, the full width of the column. */
 .button {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
   width: 100%;
-  min-height: 48px;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 12px;
+  min-height: var(--tap);
+  padding: 10px 20px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-pill);
   background: var(--accent);
-  color: var(--accent-text);
-  font: inherit;          /* use the same font and size as the page */
-  font-weight: 600;
+  color: var(--accent-ink);
+  font: inherit;          /* use the same font as the page */
+  font-weight: 650;
   text-align: center;
   cursor: pointer;
 }
@@ -142,11 +455,11 @@ li {
   opacity: 0.8;
 }
 
-/* A quieter button (outline only), used for things like Cancel. */
+/* A quieter button (paper with a thin edge), used for things like Cancel. */
 .button-secondary {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: var(--paper-raised);
+  border-color: var(--rule);
+  color: var(--ink);
   margin-top: 12px;
 }
 
@@ -156,7 +469,7 @@ li {
   cursor: default;
 }
 
-/* ---------- 6. Forms (the boxes you type in) ---------- */
+/* ---------- 9. Forms (the boxes you type in) ---------- */
 
 /* A bit of space between the form's heading and the first question. */
 #recipe-form-screen h1 {
@@ -165,7 +478,7 @@ li {
 
 /* One question on the form: its label, an optional hint, and the box. */
 .field {
-  margin: 0 0 20px;
+  margin: 0 0 22px;
 }
 
 /* <fieldset> normally draws a box around itself. We don't want that. */
@@ -181,20 +494,19 @@ fieldset.field {
 .field > .field-label,
 .field > legend {
   display: block;
-  font-weight: 600;
+  font-weight: 650;
   margin-bottom: 6px;
   padding: 0;
 }
 
-/* Small helper text under a label, e.g. "One ingredient per line." */
+/* Small helper text under a label, e.g. "One step at a time, in order." */
 .hint {
-  color: var(--muted);
-  font-size: 16px;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
   margin: -2px 0 8px;
 }
 
-/* All typing boxes. "font: inherit" keeps text at 18px.
-   (Under 16px, iPhone zooms in when you tap the box, which is annoying.) */
+/* All typing boxes. The font is 17px: under 16px, iPhone zooms in when you tap a box. */
 input[type="text"],
 input[type="number"],
 input[type="search"],
@@ -202,13 +514,14 @@ select,
 textarea {
   display: block;
   width: 100%;
-  min-height: 48px;
-  padding: 10px 12px;
+  min-height: var(--tap);
+  padding: 10px 14px;
   font: inherit;
-  color: var(--text);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  font-size: max(16px, 1em);   /* after "font: inherit", which would reset it */
+  color: var(--ink);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
 }
 
 /* Let big boxes be made taller, but not wider. */
@@ -218,8 +531,8 @@ textarea {
 
 /* Placeholder text (the grey example inside an empty box). */
 ::placeholder {
-  color: var(--muted);
-  opacity: 0.7;
+  color: var(--ink-faint);
+  opacity: 1;
 }
 
 /* A clear colored outline around the box you're typing in. */
@@ -238,6 +551,7 @@ textarea:focus {
 }
 .field-row > .field {
   flex: 1;
+  min-width: 0;
 }
 
 /* ----- Big tappable choices ("My own recipe" / "From somewhere else") ----- */
@@ -245,18 +559,18 @@ textarea:focus {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 48px;
+  min-height: var(--tap);
   padding: 10px 14px;
   margin-bottom: 8px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
 }
 .choice input {
   width: 22px;
   height: 22px;
   margin: 0;
-  accent-color: var(--accent);   /* color the round dot in our tomato red */
+  accent-color: var(--accent);   /* color the round dot terracotta */
 }
 /* Highlight the choice that's picked. ":has(...)" means "a choice that has a checked input inside". */
 .choice:has(input:checked) {
@@ -277,33 +591,27 @@ textarea:focus {
   pointer-events: none;
 }
 .chip span {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   min-height: 44px;
-  padding: 9px 16px;
-  border: 1px solid var(--border);
-  border-radius: 999px;   /* very round ends = pill shape */
-  background: var(--card);
+  padding: 0 16px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);   /* very round ends = pill shape */
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
-/* A ticked chip is filled with the accent color. */
+/* A ticked chip is filled with dark ink. */
 .chip input:checked + span {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
 }
 /* Show a ring when the chip is selected with a keyboard. */
 .chip input:focus-visible + span {
-  outline: 2px solid var(--accent);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
-}
-
-/* A message box shown after tapping Save. */
-.message {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-left: 6px solid var(--accent);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin: 0 0 16px;
 }
 
 /* ----- Lists you add to one item at a time (ingredients, steps) ----- */
@@ -325,27 +633,28 @@ textarea:focus {
   flex: 0 0 24px;
   text-align: center;
   line-height: 48px;
-  color: var(--muted);
+  color: var(--ink-faint);
 }
 /* ...and the row's number for steps (1., 2., 3. ...). */
 .list-editor.numbered li::before {
   content: attr(data-number) ".";   /* app.js numbers the rows (numberRows) */
-  font-weight: 600;
+  font-weight: 650;
+  color: var(--accent);
 }
 /* The typing box takes up the rest of the row. */
 .list-editor textarea {
   flex: 1;
-  min-height: 48px;
+  min-height: var(--tap);
   overflow: hidden;   /* app.js grows the box as you type, so no scrollbar */
   resize: none;       /* no drag handle needed: the box grows by itself */
 }
-/* The round remove (×) button at the end of a row. */
+/* The remove (×) button at the end of a row. */
 .remove-row {
   flex: 0 0 44px;
   height: 48px;
   border: none;
   background: transparent;
-  color: var(--muted);
+  color: var(--ink-faint);
   font-size: 26px;
   line-height: 1;
   cursor: pointer;
@@ -358,44 +667,139 @@ textarea:focus {
   margin-top: 0;
 }
 
-/* ---------- 7. Version number ---------- */
-/* The small "Version 7" line at the bottom of the home screen. */
+/* ---------- 10. Version number ---------- */
+/* The small "Version 23" line at the bottom of the home screen. */
 .version {
-  color: var(--muted);
+  color: var(--ink-faint);
   font-size: 14px;
   text-align: center;
   margin: 32px 0 0;
 }
 
-/* ---------- 8. The recipe list (home screen) ---------- */
+/* ---------- 11. The home screen ---------- */
+
+/* "N recipes changed since your last backup. Back up in Settings ›" */
+.backup-nudge {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  min-height: var(--tap);
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-left: 5px solid var(--warn);
+  border-radius: var(--r-md);
+  background: var(--warn-soft);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.backup-nudge > span {
+  flex: 1;
+}
+.backup-nudge strong {
+  color: var(--warn);
+  white-space: nowrap;
+}
+.backup-nudge .icon {
+  color: var(--warn);
+}
+.backup-nudge .chevron {
+  width: 18px;
+  height: 18px;
+  color: var(--ink-faint);
+}
+
+/* ---------- 12. Search (home screen) ---------- */
+
+/* The box, a magnifying glass on the left and the × button on the right.
+   "position: relative" lets the icon and × sit inside the box's ends. */
+.search {
+  position: relative;
+  margin: 16px 0 0;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  top: 14px;
+  width: 20px;
+  height: 20px;
+  color: var(--ink-faint);
+  pointer-events: none;   /* taps go through to the box */
+}
+
+.search input {
+  -webkit-appearance: none;   /* use our own look, not Safari's built-in search style */
+  appearance: none;
+  border-radius: var(--r-pill);
+  padding-left: 44px;         /* leave room for the magnifying glass */
+  padding-right: 52px;        /* leave room for the × button */
+}
+
+/* Hide Safari's own small clear button; we have a bigger one. */
+.search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  display: none;
+}
+
+.search-clear {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* "2 of 5 recipes" under the box. */
+.search-result {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  margin: 8px 0 0;
+}
+
+/* ---------- 13. The recipe list (home screen) ---------- */
 
 .recipe-list {
   list-style: none;
-  margin: 20px 0 0;
+  margin: 16px 0 0;
   padding: 0;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
   overflow: hidden;   /* keep the rows inside the rounded corners */
 }
 /* Hide the box completely when there are no recipes. */
 .recipe-list:empty {
   display: none;
 }
+.recipe-list li {
+  margin: 0;
+}
 /* A thin line between rows (not above the first one). */
 .recipe-list li + li {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--rule);
 }
 /* Each row is one big button: title on top, details below, "›" on the right. */
 .recipe-row {
   display: block;
   position: relative;
   width: 100%;
-  min-height: 56px;
+  min-height: 60px;
   padding: 12px 40px 12px 16px;
   border: none;
   background: transparent;
-  color: var(--text);
+  color: var(--ink);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -407,45 +811,104 @@ textarea:focus {
   top: 50%;
   transform: translateY(-50%);
   font-size: 26px;
-  color: var(--muted);
+  color: var(--ink-faint);
 }
 .recipe-row:active {
-  background: var(--border);
+  background: var(--paper-sunk);
 }
 .recipe-row-title {
   display: block;
+  font-family: var(--font-serif);
+  font-size: 19px;
   font-weight: 600;
+  line-height: 1.3;
 }
 .recipe-row-details {
   display: block;
-  color: var(--muted);
-  font-size: 15px;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
   margin-top: 2px;
 }
 .empty-note {
-  color: var(--muted);
+  color: var(--ink-soft);
   text-align: center;
-  margin: 20px 0 0;
+  margin: 24px 0 0;
 }
 
-/* ---------- 9. One recipe's page ---------- */
+/* ---------- 14. "What should I cook?" (home screen) ---------- */
 
-/* "‹ My Cookbook": looks like a link, but is big enough to tap. */
+#pick-button {
+  margin-top: 16px;
+}
+
+.pick-card {
+  margin-top: 12px;
+}
+
+.pick-heading {
+  color: var(--ink-soft);
+  margin: 0 0 8px;
+}
+
+/* The picked recipe: one tappable row in its own box, like the list below. */
+.pick-result {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.pick-result:empty {
+  display: none;
+}
+
+.pick-message {
+  margin: 0 0 16px;
+}
+
+.pick-card .field-label {
+  font-weight: 650;
+  margin: 0 0 6px;
+}
+
+.pick-card .chips {
+  margin-bottom: 16px;
+}
+
+/* ---------- 15. One recipe's page ---------- */
+
+/* "‹ Cookbook" and "‹ Done cooking": a rounded button with an arrow. */
 .back-button {
-  min-height: 48px;
-  padding: 0;
-  margin: -8px 0 4px;
-  border: none;
-  background: transparent;
-  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 0 18px 0 12px;
+  margin: 0 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  background: var(--paper-raised);
+  color: var(--ink);
   font: inherit;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
 }
-/* Small grey lines under the title (e.g. "Serves 4 · 30 min"). */
+.back-button .icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+
+#view-title {
+  font-size: 30px;
+  margin-top: 4px;
+}
+
+/* Small lines under the title (e.g. "Serves 4 · 30 min"). */
 .details {
-  color: var(--muted);
-  margin: 0 0 6px;
+  color: var(--ink-soft);
+  margin: 0 0 4px;
 }
 .details a {
   color: var(--accent);
@@ -459,67 +922,128 @@ textarea:focus {
   margin: 10px 0 0;
 }
 .tag {
-  padding: 4px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--card);
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--paper-sunk);
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: 650;
 }
-/* The notes box: a card with a colored stripe, shown before the ingredients. */
+
+/* The notes box: lined notebook paper with a red margin line, shown before the ingredients.
+   Every line of text is exactly one ruled line tall (--note-line-height), so text sits on the lines. */
 .notes-box {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-left: 6px solid var(--accent);
-  border-radius: 10px;
-  padding: 12px 14px;
+  --note-line-height: 30px;
+  position: relative;
   margin: 20px 0 0;
+  padding: 6px 16px 8px 30px;
+  border: 1px solid var(--note-line);
+  border-radius: 12px;
+  /* Two layers: the ruled lines (only behind the text) on top of the yellow paper (the whole box). */
+  background:
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--note-line-height) - 1px), var(--note-line) calc(var(--note-line-height) - 1px), var(--note-line) var(--note-line-height)) content-box,
+    var(--note-paper);
+  line-height: var(--note-line-height);
+}
+/* The red margin line. */
+.notes-box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 18px;
+  width: 1.5px;
+  background: var(--note-margin);
 }
 .notes-box h2 {
-  font-size: 18px;
-  margin: 0 0 4px;
+  font-size: var(--text-md);
+  line-height: var(--note-line-height);
+  margin: 0;
 }
 .notes-box p {
   margin: 0;
   white-space: pre-line;   /* keep line breaks you typed in the notes */
 }
+
 /* Ingredients and Steps sections. */
 .recipe-section {
-  margin: 24px 0 0;
+  margin: 28px 0 0;
+}
+.recipe-section > h2 {
+  font-size: 22px;
 }
 .recipe-section ul,
 .recipe-section ol {
-  padding-left: 24px;
+  list-style: none;
+  padding: 0;
   margin: 0;
 }
-.recipe-section li {
-  margin-bottom: 10px;
-  padding-left: 4px;
+/* Ingredients: one per row, with a thin line under each. */
+.recipe-section ul li {
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+}
+/* Steps: the number in a circle on the left (app.js puts it in data-number). */
+.recipe-section ol li {
+  position: relative;
+  margin: 0 0 14px;
+  padding-left: 42px;
+  min-height: 28px;
+}
+.recipe-section ol li::before {
+  content: attr(data-number);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  /* Centers the number in the circle (see the Version 22 lesson). */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ---------- 10. Backup (bottom of the home screen) ---------- */
-
-.backup {
-  margin-top: 32px;
+/* Section headings ("For the soup:"), on the recipe page: small capitals, no bullet or number. */
+.recipe-section li.section-heading {
+  border-bottom: 0;
+  padding: 0;
+  margin: 22px 0 4px;
+  font-variant: all-small-caps;
+  letter-spacing: 0.08em;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.recipe-section li.section-heading::before {
+  display: none;
+}
+.recipe-section li.section-heading:first-child {
+  margin-top: 0;
 }
 
-/* The quiet "✓ All recipes backed up" line. */
-.backup-status {
-  font-size: 16px;
-  margin: 0 0 16px;
+/* "Start cooking" on the recipe page: the main button, right under the tags. */
+.start-cooking {
+  margin-top: 18px;
 }
 
-/* The "Then choose Save to Files…" tip under the Export button. */
-.backup-hint {
-  margin: 8px 0 0;
-}
-
-/* ---------- 11. Edit, delete, original (recipe page) ---------- */
+/* ---------- 16. Edit, delete, original (recipe page) ---------- */
 
 /* The buttons at the bottom of a recipe page. */
 .recipe-actions {
   margin-top: 32px;
   padding-top: 16px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--rule);
 }
 
 .recipe-actions .hint {
@@ -528,16 +1052,50 @@ textarea:focus {
 
 /* Delete gets red text, so it's not tapped by accident instead of something else. */
 .button-danger {
-  color: var(--accent);
+  color: var(--danger);
   margin-top: 24px;
 }
 
-/* The "You're looking at the original" banner: a stronger outline so it's hard to miss. */
-.original-banner {
-  border-color: var(--accent);
+/* "Edit recipe" is a quiet button (Start cooking is the main one); it's the first, so no gap above. */
+#edit-button {
+  margin-top: 0;
 }
 
-/* ---------- 12. Adding your own tag ---------- */
+/* The "You're looking at the original" banner: a stronger, yellow look so it's hard to miss. */
+.original-banner {
+  background: var(--warn-soft);
+  border-color: var(--warn);
+}
+
+/* ---------- 17. Settings and Backup ---------- */
+
+.backup h2 {
+  margin-bottom: 4px;
+}
+
+/* The quiet "✓ All recipes backed up" line. */
+.backup-status {
+  color: var(--ok);
+  font-size: var(--text-sm);
+  margin: 0 0 16px;
+}
+
+/* The "Then choose Save to Files…" tip under the Export button. */
+.backup-hint {
+  margin: 8px 0 0;
+}
+
+.backup .message {
+  margin-top: 8px;
+}
+/* The "N recipes changed since your last backup" warning: yellow, like on the home screen. */
+#backup-reminder {
+  background: var(--warn-soft);
+  border-color: transparent;
+  border-left-color: var(--warn);
+}
+
+/* ---------- 18. Adding your own tag ---------- */
 
 /* The "New tag" box and its "+ Add" button, side by side under the tag chips. */
 .new-tag-row {
@@ -557,98 +1115,19 @@ textarea:focus {
   white-space: nowrap;
 }
 
-/* ---------- 13. Search (home screen) ---------- */
-
-/* The box and its × button. "position: relative" lets the × sit inside the box's right end. */
-.search {
-  position: relative;
-  margin: 16px 0 0;
-}
-
-.search input {
-  -webkit-appearance: none;   /* use our own look, not Safari's built-in search style */
-  appearance: none;
-  padding-right: 52px;        /* leave room for the × button */
-}
-
-/* Hide Safari's own small clear button; we have a bigger one. */
-.search input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  display: none;
-}
-
-.search-clear {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 48px;
-  height: 48px;
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  font-size: 26px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-/* "2 of 5 recipes" under the box. */
-.search-result {
-  color: var(--muted);
-  font-size: 16px;
-  margin: 8px 0 0;
-}
-
-/* ---------- 14. "What should I cook?" (home screen) ---------- */
-
-.pick-card {
-  margin-top: 12px;
-}
-
-.pick-heading {
-  color: var(--muted);
-  margin: 0 0 8px;
-}
-
-/* The picked recipe: one tappable row in its own box, like the list below. */
-.pick-result {
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-.pick-result:empty {
-  display: none;
-}
-
-.pick-message {
-  margin: 0 0 16px;
-}
-
-.pick-card .field-label {
-  font-weight: 600;
-  margin: 0 0 6px;
-}
-
-.pick-card .chips {
-  margin-bottom: 16px;
-}
-
-/* ---------- 15. Cooking screen (step 13) ---------- */
-
-/* "Start cooking" on the recipe page: the main button, right under the tags. */
-.start-cooking {
-  margin-top: 16px;
-}
+/* ---------- 19. Cooking screen (step 13) ---------- */
 
 /* Bigger text, so you can read it from the counter. */
 .cooking {
-  font-size: 22px;
+  font-size: 21px;
 }
 
 .cooking .hint {
-  margin-top: -4px;
+  margin-top: -2px;
+}
+
+.cooking .notes-box {
+  --note-line-height: 34px;
 }
 
 .cooking .recipe-section .cook-list {
@@ -660,6 +1139,11 @@ textarea:focus {
 .cooking .recipe-section li {
   margin: 0 0 10px;
   padding: 0;
+  border: 0;
+  min-height: 0;
+}
+.cooking .recipe-section li::before {
+  display: none;   /* the recipe page's step circles; here the tick box has its own */
 }
 
 /* Each ingredient or step is one big tappable box. */
@@ -668,12 +1152,12 @@ textarea:focus {
   gap: 12px;
   align-items: center;      /* circle centered beside one or two lines of text */
   width: 100%;
-  min-height: 56px;
+  min-height: 58px;
   padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  color: var(--text);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--paper-raised);
+  color: var(--ink);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -686,7 +1170,7 @@ textarea:focus {
   flex: none;
   width: 26px;
   height: 26px;
-  border: 2px solid var(--muted);
+  border: 2px solid var(--rule-strong);
   border-radius: 50%;
   /* The circle centers its number or ✓ itself (Version 22). A fixed line-height
      left the number about 2px too high on the iPhone. */
@@ -702,7 +1186,8 @@ textarea:focus {
   content: attr(data-number);   /* app.js numbers the steps (fillCookList) */
   font-size: 16px;
   font-weight: 700;
-  color: var(--muted);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* Ticked off: a filled tick, faded and crossed out. */
@@ -725,7 +1210,7 @@ textarea:focus {
   content: "✓";
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--accent-text);
+  color: var(--accent-ink);
   font-size: 16px;
   font-weight: 700;
 }
@@ -735,11 +1220,23 @@ textarea:focus {
   color: var(--accent);
 }
 
+/* Section headings on the cooking screen: small capitals, not tickable. */
+.cooking .recipe-section li.cook-section {
+  font-variant: all-small-caps;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin: 22px 0 8px;
+}
+.cooking .recipe-section li.cook-section:first-child {
+  margin-top: 0;
+}
+
 .cook-done {
   margin-top: 24px;
 }
 
-/* ---------- 16. Scaling on the cooking screen (step 14) ---------- */
+/* ---------- 20. Scaling on the cooking screen (step 14) ---------- */
 
 .scale-card {
   margin-top: 16px;
@@ -753,7 +1250,7 @@ textarea:focus {
   margin-bottom: 14px;
 }
 .servings-row > span:first-child {
-  font-weight: 600;
+  font-weight: 650;
   margin-right: auto;   /* pushes − 4 + to the right */
 }
 .servings-number {
@@ -766,9 +1263,9 @@ textarea:focus {
 .round-button {
   width: 48px;
   height: 48px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--rule);
   border-radius: 50%;
-  background: var(--background);
+  background: var(--paper);
   color: var(--accent);
   font: inherit;
   font-size: 26px;
@@ -795,19 +1292,19 @@ textarea:focus {
   min-height: 40px;
   min-width: 52px;
   padding: 0 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--background);
-  color: var(--text);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
   font: inherit;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
 }
 .scale-button[aria-pressed="true"] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
 }
 
 .scale-card .hint {
@@ -817,9 +1314,10 @@ textarea:focus {
 /* A changed amount, so you can see it was scaled. */
 .scaled {
   color: var(--accent);
+  font-weight: 650;
 }
 
-/* ---------- 17. Converter on the cooking screen (step 15) ---------- */
+/* ---------- 21. Converter on the cooking screen (step 15) ---------- */
 
 .convert-button {
   margin-top: 12px;
@@ -827,7 +1325,7 @@ textarea:focus {
 
 .convert-card {
   margin-top: 12px;
-  font-size: 18px;   /* normal size inside, so the boxes fit side by side */
+  font-size: var(--text-md);   /* normal size inside, so the boxes fit side by side */
 }
 
 /* Amount and From side by side, Amount a bit narrower. */
@@ -844,9 +1342,9 @@ select {
   -webkit-appearance: none;
   appearance: none;
   padding-right: 32px;
-  /* A small ▾ arrow on the right, drawn in the muted color. */
-  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
-                    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  /* A small ▾ arrow on the right, drawn in the soft ink color. */
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+                    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
   background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
@@ -858,11 +1356,11 @@ select {
   padding: 0;
   margin: 4px 0 0;
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 650;
 }
 .convert-results li {
   padding: 6px 0;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--rule);
 }
 .convert-results li:first-child {
   border-top: none;
@@ -870,19 +1368,21 @@ select {
 .convert-results .convert-hint {
   font-size: 16px;
   font-weight: 400;
-  color: var(--muted);
+  color: var(--ink-soft);
 }
 
-/* ---------- 18. Fill in automatically (step 16, top of the New recipe form) ---------- */
+/* ---------- 22. Fill in automatically (step 16, top of the New recipe form) ---------- */
 
 .autofill-card {
-  border-left: 6px solid var(--accent);
+  border-left: 5px solid var(--accent);
   margin-bottom: 24px;
 }
 
 .autofill-heading {
   display: block;
-  font-weight: 700;
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: 600;
   margin-bottom: 4px;
 }
 
@@ -901,29 +1401,8 @@ select {
   margin: 12px 0 0;
 }
 
-/* ---------- 19. Section headings in ingredients and steps (Version 20) ----------
-   A line ending with ":" ("Brined Lamb:") is shown as a heading. Step numbers start again at 1 after it. */
-
-/* Recipe page */
-.recipe-section li.section-heading {
-  list-style: none;
-  font-weight: 700;
-  margin: 18px 0 8px -24px;   /* line up with the section's left edge, where the bullets are */
-}
-.recipe-section li.section-heading:first-child {
-  margin-top: 0;
-}
-
-/* Cooking screen */
-.cooking .recipe-section li.cook-section {
-  font-weight: 700;
-  margin: 22px 0 10px;
-}
-.cooking .recipe-section li.cook-section:first-child {
-  margin-top: 0;
-}
-
-/* The form: no bullet or number in front of a heading row, and bold text */
+/* ---------- 23. Section headings in the form (Version 20) ----------
+   A line ending with ":" ("Brined Lamb:") is a heading: no bullet or number, and bold text. */
 .list-editor li.section-row::before {
   content: "";
 }
@@ -931,7 +1410,7 @@ select {
   font-weight: 700;
 }
 
-/* ---------- 20. Fill in from a link (step 17) ---------- */
+/* ---------- 24. Fill in from a link (step 17) ---------- */
 
 /* "Open it" / "Fill in anyway" under the "already saved" message. */
 .autofill-choices {
