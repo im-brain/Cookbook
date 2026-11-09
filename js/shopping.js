@@ -514,6 +514,6 @@ if (typeof module !== "undefined" && module.exports) {
     rowAmountText: rowAmountText, cleanShopping: cleanShopping, shoppingView: shoppingView, tickItem: tickItem,
     markAllSeen: markAllSeen, forgetItem: forgetItem, addExtra: addExtra, tickExtra: tickExtra,
     removeExtra: removeExtra, setPantry: setPantry, setAisle: setAisle, mergeShopping: mergeShopping,
-    isShoppingEmpty: isShoppingEmpty, withWeek: withWeek, volumeText: volumeText, weightText: weightText
+    isShoppingEmpty: isShoppingEmpty, writtenName: writtenName, withWeek: withWeek, volumeText: volumeText, weightText: weightText
   };
 }

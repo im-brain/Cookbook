@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=36">
+    <link rel="stylesheet" href="style.css?v=37">
   </head>
 
   <body>
@@ -51,6 +51,7 @@
       <symbol id="icon-back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
       <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
       <symbol id="icon-dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="8.5" cy="8.5" r="1.1"/><circle cx="15.5" cy="15.5" r="1.1"/><circle cx="12" cy="12" r="1.1"/></symbol>
+      <symbol id="icon-fridge" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M6 10h12M9.5 6v1.5M9.5 13v3"/></symbol>
       <symbol id="icon-cook" viewBox="0 0 24 24"><path d="M4 11h14v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M18 13h3M7 7.5c0-1 1-1.5 1-2.5M11 7.5c0-1 1-1.5 1-2.5"/></symbol>
       <symbol id="icon-backup" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5"/><path d="M4 15.5v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></symbol>
       <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M8 14.5h3"/></symbol>
@@ -148,6 +149,16 @@
           <button type="button" class="button button-secondary" id="pick-close">Close</button>
         </div>
 
+        <!-- ----- "What's in my fridge?" (Version 37) ----- -->
+        <div class="card fridge-card" id="fridge-card" hidden>
+          <p class="pick-heading">What's in my fridge?</p>
+          <label class="hint" for="fridge-input">Type what you have, with commas. Salt, pepper, water, oil and your Shopping "always have" items count automatically.</label>
+          <textarea id="fridge-input" rows="2" placeholder="eggs, spinach, rice" autocomplete="off" autocorrect="off" autocapitalize="none"></textarea>
+          <div id="fridge-results"></div>
+          <p class="pick-message" id="fridge-message" hidden></p>
+          <button type="button" class="button button-secondary" id="fridge-close">Close</button>
+        </div>
+
         <!-- The list of saved recipes. app.js fills it in, one row per recipe (A to Z). -->
         <!-- Search box: filters the list below as you type (title, ingredient or tag).
              Being inside a <form role="search"> makes the iPhone keyboard show a "Search" key.
@@ -173,6 +184,9 @@
             <button type="button" data-view="grid" aria-pressed="false">Grid</button>
             <button type="button" data-view="list" aria-pressed="false">List</button>
           </div>
+          <button type="button" class="icon-button" id="fridge-button" aria-label="What's in my fridge?">
+            <svg class="icon"><use href="#icon-fridge"/></svg>
+          </button>
           <button type="button" class="icon-button" id="pick-button" aria-label="What should I cook?">
             <svg class="icon"><use href="#icon-dice"/></svg>
           </button>
@@ -211,7 +225,7 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 36</p>
+        <p class="version">Version 37</p>
       </section>
 
       <!-- ===================== THIS WEEK SCREEN (Version 31) ===================== -->
@@ -751,19 +765,21 @@
       </div>
     </div>
 
-    <script src="vendor/supabase.js?v=36"></script>
-    <script src="js/ingredients.js?v=36"></script>
-    <script src="js/plan.js?v=36"></script>
-    <script src="js/shopping.js?v=36"></script>
-    <script src="js/sync.js?v=36"></script>
-    <script src="js/plan-sync.js?v=36"></script>
-    <script src="js/shopping-sync.js?v=36"></script>
-    <script src="js/photos.js?v=36"></script>
-    <script src="js/auth.js?v=36"></script>
-    <script src="js/cookbook-views.js?v=36"></script>
-    <script src="app.js?v=36"></script>
-    <script src="js/plan-ui.js?v=36"></script>
-    <script src="js/shopping-ui.js?v=36"></script>
-    <script src="js/sync-ui.js?v=36"></script>
+    <script src="vendor/supabase.js?v=37"></script>
+    <script src="js/ingredients.js?v=37"></script>
+    <script src="js/plan.js?v=37"></script>
+    <script src="js/shopping.js?v=37"></script>
+    <script src="js/sync.js?v=37"></script>
+    <script src="js/plan-sync.js?v=37"></script>
+    <script src="js/shopping-sync.js?v=37"></script>
+    <script src="js/photos.js?v=37"></script>
+    <script src="js/auth.js?v=37"></script>
+    <script src="js/cookbook-views.js?v=37"></script>
+    <script src="app.js?v=37"></script>
+    <script src="js/plan-ui.js?v=37"></script>
+    <script src="js/shopping-ui.js?v=37"></script>
+    <script src="js/fridge.js?v=37"></script>
+    <script src="js/fridge-ui.js?v=37"></script>
+    <script src="js/sync-ui.js?v=37"></script>
   </body>
 </html>
