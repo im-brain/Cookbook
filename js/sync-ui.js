@@ -82,6 +82,27 @@ function planChanged() {
   scheduleSync();
 }
 
+// ---------- The shopping choices (Version 36, Phase 8 Part B) ----------
+// The engine is js/shopping-sync.js. storeShopping (js/shopping-ui.js) saves without starting another sync.
+function shoppingSyncEnv() {
+  return {
+    cloud: cloud,
+    userId: syncUser ? syncUser.id : null,
+    loadShopping: loadShopping,
+    saveShopping: storeShopping,
+    loadState: function () {
+      try { return readJsonKey(SHOPPING_SYNC_KEY, null); } catch (error) { return null; }
+    },
+    saveState: function (state) { localStorage.setItem(SHOPPING_SYNC_KEY, JSON.stringify(state)); },
+    now: function () { return new Date().toISOString(); }
+  };
+}
+
+// js/shopping-ui.js calls this after every change the person makes to the shopping list.
+function shoppingChanged() {
+  scheduleSync();
+}
+
 // ---------- Photos (Phase 6) ----------
 
 // Every photo any recipe, any "Recently deleted" recipe, or any open choice still uses.
@@ -145,6 +166,7 @@ function safePending() {
   let count = 0;
   try { count += pendingCount(syncEnv()); } catch (error) { /* counts as none */ }
   try { count += planPendingCount(planSyncEnv()); } catch (error) { /* counts as none */ }   // Version 32: planned dinners too
+  try { count += shoppingPendingCount(shoppingSyncEnv()); } catch (error) { /* counts as none */ }   // Version 36: shopping choices too
   return count;
 }
 
@@ -238,6 +260,10 @@ async function runSync() {
       const planResult = await syncPlan(planSyncEnv());
       if (planResult.ok) { result.planPulled = planResult.pulled; } else { result = planResult; }
     }
+    if (result.ok) {                                  // Version 36: then the shopping choices (same rule)
+      const shopResult = await syncShopping(shoppingSyncEnv());
+      if (shopResult.ok) { result.shopPulled = shopResult.pulled; } else { result = shopResult; }
+    }
   } catch (error) {
     result = { ok: false, kind: "error", message: "Something went wrong." };
   }
@@ -248,6 +274,7 @@ async function runSync() {
     if (result.pulled > 0 || result.pushed > 0 || result.photos > 0) { refreshHome(); }
     // A phone or iPad changed the plan: show it, unless a sheet is open (it would change under the person's finger).
     if (result.planPulled > 0 && !planScreen.hidden && !isAnySheetOpen()) { renderPlan(); }
+    if ((result.shopPulled > 0 || result.planPulled > 0) && typeof shopScreen !== "undefined" && !shopScreen.hidden && !isAnySheetOpen() && shopSheet.hidden) { renderShop(); }
     if (document.body.dataset.screen !== "recipe-form-screen") {      // (a photo picked in the open form isn't saved yet)
       removeUnusedLocalPhotos(photoStore, referencedPhotoIds()).catch(function () { /* tidying is optional */ });
     }

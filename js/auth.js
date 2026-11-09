@@ -214,6 +214,55 @@ const cloud = {
     if (result.error) { throw cloudError(result.error); }
   },
 
+  // ----- the shopping choices (Phase 8 Part B): one row per small choice, table `shopping_items` -----
+  async pullShop(since) {
+    const client = getClient();
+    if (!client) { throw cloudError("no library"); }
+    const rows = [];
+    for (let from = 0; ; from += PAGE_SIZE) {
+      let query = client.from("shopping_items").select("*").order("modified_at", { ascending: true }).order("id", { ascending: true });
+      if (since) { query = query.gte("modified_at", since); }
+      const result = await query.range(from, from + PAGE_SIZE - 1);
+      if (result.error) { throw cloudError(result.error); }
+      rows.push.apply(rows, result.data);
+      if (result.data.length < PAGE_SIZE) { break; }
+    }
+    return rows;
+  },
+
+  async fetchShopRow(id) {
+    const client = getClient();
+    const result = await client.from("shopping_items").select("*").eq("id", id).maybeSingle();
+    if (result.error) { throw cloudError(result.error); }
+    return result.data;
+  },
+
+  async insertShop(row) {
+    const client = getClient();
+    const result = await client.from("shopping_items").insert(row).select("modified_at");
+    if (result.error) {
+      if (result.error.code === "23505") { return { ok: false }; }       // already there
+      throw cloudError(result.error);
+    }
+    return { ok: true, modified_at: result.data && result.data[0] ? result.data[0].modified_at : null };
+  },
+
+  // A change based on `baseVersion`. Accepted only if the cloud is still at that version.
+  async updateShop(id, baseVersion, row) {
+    const client = getClient();
+    const patch = Object.assign({}, row);
+    delete patch.id;
+    const result = await client.from("shopping_items").update(patch).eq("id", id).eq("version", baseVersion).select("version, modified_at");
+    if (result.error) { throw cloudError(result.error); }
+    return { ok: result.data.length === 1, modified_at: result.data[0] ? result.data[0].modified_at : null };
+  },
+
+  async purgeOldShop(cutoff) {
+    const client = getClient();
+    const result = await client.from("shopping_items").delete().not("deleted_at", "is", null).lt("deleted_at", cutoff);
+    if (result.error) { throw cloudError(result.error); }
+  },
+
   // ----- photos (Phase 6): one picture per file, named <your id>/<photo id>.jpg -----
   async photoPath(photoId) {
     const user = await cloud.currentUser();
