@@ -5,7 +5,7 @@ How we work and the reasons behind each decision are in `CLAUDE.md`.
 
 ## Current status (2026-11-09)
 
-- **"Suggest from my fridge" is built as Version 37** (waiting for the user to merge and test on the phone). **The AI upgrade is dropped** (user's choice, 2026-11-09): for screenshots the user will send them to Claude in a chat and get back text to paste with 📋 Paste. After Version 37 is confirmed, nothing is planned; ask the user what they'd like next.
+- **"Suggest from my fridge" is done as Version 37** (merged and confirmed working on the phone on 2026-11-09). **The AI upgrade is dropped** (user's choice, 2026-11-09): for screenshots the user will send them to Claude in a chat and get back text to paste with 📋 Paste. **Nothing is planned now: the redesign, import, cooking mode and the fridge are all done. Ask the user what they'd like next.**
 
 - **Phase 8 (Shopping list) is done.** Part B (Version 36, shopping sync) is merged, its SQL was run in Supabase, and on 2026-11-09 the user confirmed it works both ways between iPhone and iPad (extras, ticks, removals). Phases 1–8 are done. Next: see **Redesign** below for what follows Phase 8 (the AI upgrade and "Suggest from my fridge" come after the redesign).
 
@@ -239,3 +239,4 @@ Also decided: a deleted recipe goes to **"Recently deleted" for 30 days** (from 
 - 2026-11-09 — Phase 8 Part B built (Version 36): shopping choices sync between devices through a new cloud table `shopping_items` (SQL at the end of `supabase/schema.sql`, must be run once). New file `js/shopping-sync.js` (works in Node), cloud calls in `js/auth.js`, wiring in `js/sync-ui.js` / `js/shopping-ui.js`, tests `tests/shopping-sync.test.js` (30) plus a two-device Playwright run (an extra typed on one phone showed on the other). Backups unchanged (format 5).
 - 2026-11-09 — Version 36 merged and confirmed on the user's iPhone and iPad ("Works both ways"). Phase 8 (Shopping list) is done. Notes only (no version change).
 - 2026-11-09 — Version 37: "What's in my fridge?" on the Cookbook screen (fridge button beside the dice). Type what you have; saved recipes (my version) are ranked by fewest missing ingredients, each showing "You have 2 of 3. Missing: feta". Salt/pepper/water/oil and optional ingredients never count; Shopping "I always have this" items count as had. New `js/fridge.js` (matching, Node checks `tests/fridge.test.js`, 27) and `js/fridge-ui.js`. The AI upgrade was dropped at the user's request (screenshots go through a Claude chat instead).
+- 2026-11-09 — Version 37 merged and confirmed on the user's phone ("everything works"). Nothing is planned next; ask the user. Notes only (no version change).
