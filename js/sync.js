@@ -521,6 +521,18 @@ async function previewMove(env) {
 
 // After the upload: download everything again and compare with the phone, recipe by recipe.
 // ok is true only when nothing is missing, different, waiting, or in a conflict.
+// Which parts of a recipe differ between this device and the cloud, in plain names (for messages).
+function differingParts(local, remote, inTrash, remoteDeleted) {
+  const names = [];
+  MERGE_PARTS.forEach(function (part) {
+    if (!sameValue(getPart(local, part), getPart(remote, part))) { names.push(part.name); }
+  });
+  if (local.kind !== remote.kind) { names.push("kind"); }
+  if (local.createdAt !== remote.createdAt || local.updatedAt !== remote.updatedAt) { names.push("dates"); }
+  if (!!inTrash !== !!remoteDeleted) { names.push(inTrash ? "deleted here only" : "deleted in the cloud only"); }
+  return names;
+}
+
 async function verifyMove(env) {
   try {
     const all = readAll(env);
@@ -529,23 +541,69 @@ async function verifyMove(env) {
     rows.forEach(function (row) { byId[row.id] = row; });
     const missing = [];
     const different = [];
+    const differentDetails = [];
     let matching = 0;
     function compare(recipe, inTrash) {
       const row = byId[recipe.id];
       if (!row) { missing.push(titleOf(recipe)); return; }
       const sameState = inTrash ? !!row.deleted_at : !row.deleted_at;
-      if (sameState && syncFingerprint(fromRow(row, env.today())) === syncFingerprint(recipe)) { matching++; }
-      else { different.push(titleOf(recipe)); }
+      const remote = fromRow(row, env.today());
+      if (sameState && syncFingerprint(remote) === syncFingerprint(recipe)) { matching++; }
+      else {
+        different.push(titleOf(recipe));
+        const parts = differingParts(recipe, remote, inTrash, !!row.deleted_at);
+        differentDetails.push({ title: titleOf(recipe), parts: parts.length ? parts : ["formatting only"] });
+      }
     }
     all.recipes.forEach(function (r) { compare(r, false); });
     all.trash.forEach(function (t) { compare(t.recipe, true); });
     const total = all.recipes.length + all.trash.length;
-    const waiting = pendingIds(all).length;
+    const waitingIds = pendingIds(all);
+    const waiting = waitingIds.length;
     const conflicts = Object.keys(all.state.conflicts).length;
+    const waitingDetails = waitingIds.map(function (id) {
+      const item = findLocal(all, id);
+      return { title: item ? titleOf(item.recipe) : id, why: all.state.base[id] ? "changed since it was last sent" : "not sent yet" };
+    });
     return {
       ok: missing.length === 0 && different.length === 0 && waiting === 0 && conflicts === 0,
-      total: total, matching: matching, missing: missing, different: different, waiting: waiting, conflicts: conflicts
+      total: total, matching: matching, missing: missing, different: different, waiting: waiting, conflicts: conflicts,
+      differentDetails: differentDetails, waitingDetails: waitingDetails
     };
+  } catch (error) {
+    return moveFailure(error);
+  }
+}
+
+// "Make this device match the cloud" (for a second device such as an iPad): every recipe the cloud already has
+// is replaced here by the cloud's copy (including its "Recently deleted" state), and any open choice about it
+// is dropped. Recipes that exist only on this device are kept (the normal sync sends them). With dryRun = true
+// nothing is changed; it only counts. Returns { ok, cloudTotal, replace, alreadyMatch, onlyHere }.
+async function matchCloud(env, dryRun) {
+  try {
+    const rows = await env.cloud.pullChanges(null);
+    const all = readAll(env);
+    let replace = 0;
+    let alreadyMatch = 0;
+    let newest = all.state.lastPulled;
+    const inCloud = {};
+    rows.forEach(function (row) {
+      inCloud[row.id] = true;
+      if (!newest || row.modified_at > newest) { newest = row.modified_at; }
+      const local = findLocal(all, row.id);
+      const sameState = local && (local.where === "trash") === !!row.deleted_at;
+      if (sameState && syncFingerprint(local.recipe) === syncFingerprint(fromRow(row, env.today()))) { alreadyMatch++; }
+      else { replace++; }
+      if (!dryRun) { adoptRemote(env, all, row); }
+    });
+    let onlyHere = 0;
+    all.recipes.forEach(function (r) { if (!inCloud[r.id]) { onlyHere++; } });
+    all.trash.forEach(function (t) { if (!inCloud[t.recipe.id]) { onlyHere++; } });
+    if (!dryRun) {
+      all.state.lastPulled = newest;
+      writeAll(env, all);
+    }
+    return { ok: true, cloudTotal: rows.length, replace: replace, alreadyMatch: alreadyMatch, onlyHere: onlyHere };
   } catch (error) {
     return moveFailure(error);
   }
@@ -559,7 +617,7 @@ function moveFailure(error) {
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    previewMove: previewMove, verifyMove: verifyMove, TRASH_DAYS: TRASH_DAYS, stableText: stableText, syncFingerprint: syncFingerprint,
+    previewMove: previewMove, verifyMove: verifyMove, matchCloud: matchCloud, TRASH_DAYS: TRASH_DAYS, stableText: stableText, syncFingerprint: syncFingerprint,
     canonicalRecipe: canonicalRecipe, cleanPhotoNote: cleanPhotoNote, toRow: toRow, fromRow: fromRow, mergeRecipes: mergeRecipes,
     describePart: describePart, pendingCount: pendingCount, conflictList: conflictList, syncNow: syncNow,
     moveToTrash: moveToTrash, restoreFromTrash: restoreFromTrash, resolveConflict: resolveConflict,

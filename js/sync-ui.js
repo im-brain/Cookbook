@@ -333,6 +333,8 @@ const moveCard = document.getElementById("move-card");
 const moveSteps = document.getElementById("move-steps");
 const moveMessage = document.getElementById("move-message");
 const moveIntro = document.getElementById("move-intro");
+const moveMatch = document.getElementById("move-match");
+const moveMatchButton = document.getElementById("move-match-button");
 
 let movePreview = null;        // the answer of step 2 (kept in memory only)
 let moveLookedAt = false;      // step 3 confirmed
@@ -354,6 +356,12 @@ function saveMove(change) {
 }
 
 function syncEnabled() { return moveState().done === true; }
+
+// Step 1 is satisfied by an up-to-date backup, or by having matched this device to the cloud
+// (the backup made just before matching holds what was here before; the cloud holds the rest).
+function moveBackedUp() {
+  return backupIsCurrent() || moveState().matched === true;
+}
 
 function showMoveMessage(text) {
   moveMessage.textContent = text;
@@ -388,6 +396,8 @@ function renderMove() {
   if (!syncUser) { moveCard.hidden = true; return; }
   moveCard.hidden = false;
   const state = moveState();
+  moveMatch.hidden = !!state.done;
+  moveMatchButton.disabled = moveBusy || !moveBackedUp();
   const recipes = loadRecipes();
   const signature = JSON.stringify([state, backupIsCurrent(), !!movePreview, moveLookedAt, moveBusy, recipes ? recipes.length : -1]);
   if (signature === moveDrawn) { return; }
@@ -401,10 +411,10 @@ function renderMove() {
   }
   moveIntro.textContent = "Six small steps. Your recipes stay on this phone the whole time; this only adds a safe copy in the cloud. Nothing is uploaded until step 4.";
 
-  const backed = backupIsCurrent();
+  const backed = moveBackedUp();
   const steps = [
     { title: "Back up your recipes", done: backed,
-      text: backed ? "✓ Backed up. If anything ever goes wrong, you can import this file." : "Save a backup file to iCloud Drive first. This step stays open until the backup is up to date.",
+      text: backed ? (backupIsCurrent() ? "✓ Backed up. If anything ever goes wrong, you can import this file." : "✓ Covered: this device now matches the cloud, and your earlier backup holds what was here before.") : "Save a backup file to iCloud Drive first. This step stays open until the backup is up to date.",
       button: backed ? null : stepButton("Export a backup file", true, function () { document.getElementById("export-button").click(); }) },
     { title: "Check", done: !!movePreview,
       text: movePreview ? "✓ Your recipes can be read, you’re signed in, and the cloud answers." : "Checks that your saved recipes are readable and that the cloud answers. Nothing is sent.",
@@ -465,7 +475,7 @@ async function withMoveBusy(work) {
   moveBusy = true;
   showMoveMessage("");
   renderMove();
-  try { await work(); } finally { moveBusy = false; renderMove(); }
+  try { await work(); } finally { moveBusy = false; renderMove(); renderConflicts(); }   // (a choice found during a step shows at once)
 }
 
 function failureText(result) {
@@ -486,7 +496,7 @@ function runMoveCheck() {
 }
 
 function runMoveUpload() {
-  if (!backupIsCurrent()) { showMoveMessage("Recipes changed since your backup. Please back up again first."); renderMove(); return Promise.resolve(); }
+  if (!moveBackedUp()) { showMoveMessage("Recipes changed since your backup. Please back up again first."); renderMove(); return Promise.resolve(); }
   const n = movePreview ? movePreview.toUpload : 0;
   if (!window.confirm("Upload " + recipesWord(n) + " to your private cloud now?\n\nNothing on this phone is deleted.")) { return Promise.resolve(); }
   return withMoveBusy(async function () {
@@ -507,17 +517,52 @@ function runMoveVerify() {
     if (!result.ok) {
       const parts = [];
       if (result.missing.length) { parts.push("missing in the cloud: " + result.missing.join(", ")); }
-      if (result.different.length) { parts.push("different: " + result.different.join(", ")); }
-      if (result.waiting) { parts.push(changesWord(result.waiting) + " still waiting"); }
-      if (result.conflicts) { parts.push(result.conflicts + " need your choice on the Cookbook screen"); }
+      if (result.differentDetails.length) {
+        parts.push("different from the cloud: " + result.differentDetails.map(function (d) {
+          return d.title + " (" + d.parts.map(function (n) { return partLabel(n).toLowerCase(); }).join(", ") + ")";
+        }).join("; "));
+      }
+      if (result.waiting) {
+        parts.push(changesWord(result.waiting) + " not sent yet: " + result.waitingDetails.map(function (d) { return d.title + " (" + d.why + ")"; }).join("; "));
+      }
+      if (result.conflicts) { parts.push(result.conflicts + (result.conflicts === 1 ? " recipe needs" : " recipes need") + " your choice"); }
       saveMove({ uploaded: false, verified: false });
-      showMoveMessage("Not finished: " + parts.join("; ") + ". Tap Upload again, then Verify.");
+      const next = result.conflicts
+        ? "Open the Cookbook tab and answer the “Changed on two devices” box first. Then come back, tap Upload, then Verify."
+        : "Tap Upload, then Verify. If it keeps happening, use “Make this device match the cloud” below.";
+      showMoveMessage("Not finished: " + parts.join(". ") + ". " + next);
       return;
     }
     saveMove({ verified: true });
     showMoveMessage("✓ All " + result.total + " match.");
   });
 }
+
+// "Make this device match the cloud": look first, ask, then replace this device's copies with the cloud's.
+function runMatchCloud() {
+  if (!moveBackedUp()) { showMoveMessage("Please back up first (step 1). This replaces recipes on this device."); renderMove(); return Promise.resolve(); }
+  return withMoveBusy(async function () {
+    showMoveMessage("Looking…");
+    const look = await matchCloud(syncEnv(), true);
+    if (!look.ok) { showMoveMessage("Couldn’t check: " + failureText(look)); return; }
+    if (look.cloudTotal === 0) { showMoveMessage("The cloud has no recipes yet, so there is nothing to match. Use Upload instead."); return; }
+    let question = "Make this device match the cloud?\n\n";
+    question += "• " + recipesWord(look.alreadyMatch) + " already " + (look.alreadyMatch === 1 ? "matches" : "match") + ".\n";
+    question += "• " + recipesWord(look.replace) + " here will be replaced by the cloud’s copy.\n";
+    if (look.onlyHere > 0) { question += "• " + recipesWord(look.onlyHere) + " only on this device " + (look.onlyHere === 1 ? "stays" : "stay") + " and will be uploaded.\n"; }
+    question += "\nYou backed up first, so a safe copy exists.";
+    if (!window.confirm(question)) { showMoveMessage(""); return; }
+    showMoveMessage("Matching…");
+    const done = await matchCloud(syncEnv(), false);
+    if (!done.ok) { showMoveMessage("Couldn’t finish: " + failureText(done) + " Nothing was lost; tap the button again."); return; }
+    const again = await previewMove(syncEnv());       // fresh numbers for step 3 and 4
+    if (again.ok) { movePreview = again; moveLookedAt = true; }
+    saveMove({ uploaded: false, verified: false, matched: true });
+    refreshHome();
+    showMoveMessage("✓ This device now matches the cloud (" + recipesWord(done.replace) + " replaced). Next: tap Upload, then Verify.");
+  });
+}
+moveMatchButton.addEventListener("click", runMatchCloud);
 
 function runMoveFinish() {
   if (!window.confirm("Turn syncing on?\n\nFrom now on, changes are sent to the cloud automatically.")) { return Promise.resolve(); }

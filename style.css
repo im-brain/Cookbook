@@ -2507,3 +2507,18 @@ body.sheet-open { overflow: hidden; }
 }
 .menu-move .button { width: auto; }
 .menu-move label { font-weight: 650; white-space: nowrap; }
+
+/* ---------- 31. "Make this device match the cloud" (Version 33) ---------- */
+.move-match {
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--rule);
+}
+.move-match h3 {
+  font-size: var(--text-md);
+  margin: 0 0 var(--s1);
+}
+.move-match .button:disabled {
+  opacity: .5;
+  cursor: default;
+}
