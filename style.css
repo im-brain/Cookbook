@@ -2537,6 +2537,16 @@ body.sheet-open { overflow: hidden; }
   white-space: nowrap;
 }
 
+/* Send the list to another app (Version 38). */
+.shop-send {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s2);
+  margin-bottom: var(--s4);
+}
+.shop-send .button { width: auto; padding-left: var(--s5); padding-right: var(--s5); }
+.shop-send .button:first-child { width: 100%; }
+
 /* The "add something" row. */
 .shop-add {
   display: grid;

@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=37">
+    <link rel="stylesheet" href="style.css?v=38">
   </head>
 
   <body>
@@ -149,7 +149,7 @@
           <button type="button" class="button button-secondary" id="pick-close">Close</button>
         </div>
 
-        <!-- ----- "What's in my fridge?" (Version 37) ----- -->
+        <!-- ----- "What's in my fridge?" (Version 38) ----- -->
         <div class="card fridge-card" id="fridge-card" hidden>
           <p class="pick-heading">What's in my fridge?</p>
           <label class="hint" for="fridge-input">Type what you have, with commas. Salt, pepper, water, oil and your Shopping "always have" items count automatically.</label>
@@ -225,7 +225,7 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 37</p>
+        <p class="version">Version 38</p>
       </section>
 
       <!-- ===================== THIS WEEK SCREEN (Version 31) ===================== -->
@@ -279,6 +279,11 @@
             <p class="plan-weeklabel-sub" id="shop-progress"></p>
           </div>
           <button type="button" class="icon-button" id="shop-next" aria-label="Later week"><svg class="icon chevron"><use href="#icon-chevron"/></svg></button>
+        </div>
+
+        <div class="shop-send" id="shop-send">
+          <button type="button" class="button" id="shop-send-button">Send to my app</button>
+          <button type="button" class="button button-secondary" id="shop-copy-button">Copy</button>
         </div>
 
         <p class="message" id="shop-message" hidden></p>
@@ -765,21 +770,21 @@
       </div>
     </div>
 
-    <script src="vendor/supabase.js?v=37"></script>
-    <script src="js/ingredients.js?v=37"></script>
-    <script src="js/plan.js?v=37"></script>
-    <script src="js/shopping.js?v=37"></script>
-    <script src="js/sync.js?v=37"></script>
-    <script src="js/plan-sync.js?v=37"></script>
-    <script src="js/shopping-sync.js?v=37"></script>
-    <script src="js/photos.js?v=37"></script>
-    <script src="js/auth.js?v=37"></script>
-    <script src="js/cookbook-views.js?v=37"></script>
-    <script src="app.js?v=37"></script>
-    <script src="js/plan-ui.js?v=37"></script>
-    <script src="js/shopping-ui.js?v=37"></script>
-    <script src="js/fridge.js?v=37"></script>
-    <script src="js/fridge-ui.js?v=37"></script>
-    <script src="js/sync-ui.js?v=37"></script>
+    <script src="vendor/supabase.js?v=38"></script>
+    <script src="js/ingredients.js?v=38"></script>
+    <script src="js/plan.js?v=38"></script>
+    <script src="js/shopping.js?v=38"></script>
+    <script src="js/sync.js?v=38"></script>
+    <script src="js/plan-sync.js?v=38"></script>
+    <script src="js/shopping-sync.js?v=38"></script>
+    <script src="js/photos.js?v=38"></script>
+    <script src="js/auth.js?v=38"></script>
+    <script src="js/cookbook-views.js?v=38"></script>
+    <script src="app.js?v=38"></script>
+    <script src="js/plan-ui.js?v=38"></script>
+    <script src="js/shopping-ui.js?v=38"></script>
+    <script src="js/fridge.js?v=38"></script>
+    <script src="js/fridge-ui.js?v=38"></script>
+    <script src="js/sync-ui.js?v=38"></script>
   </body>
 </html>

@@ -507,6 +507,24 @@ function mergeShopping(onPhone, fromFile) {
   return { shopping: phone, added: added };
 }
 
+// The unticked items as plain text, one per line, to hand to another shopping app (Version 38).
+// Takes the result of shoppingView(). Ticked items and pantry items are left out; no headings.
+function shoppingExportText(view) {
+  const lines = [];
+  function add(it) {
+    if (it.ticked) { return; }
+    const amount = it.amount || "";
+    if (!amount) { lines.push(it.name); }
+    else if (it.look) { lines.push(it.name + ": " + amount); }
+    else { lines.push(amount + " " + it.name); }
+  }
+  view.look.forEach(add);
+  Object.keys(view.aisles).sort(function (a, b) { return AISLES.indexOf(a) - AISLES.indexOf(b); })
+    .forEach(function (a) { view.aisles[a].forEach(add); });
+  view.extras.forEach(function (x) { if (!x.ticked) { lines.push(x.text); } });
+  return { text: lines.join("\n"), count: lines.length };
+}
+
 // Lets the Node checks load this file.
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
@@ -514,6 +532,6 @@ if (typeof module !== "undefined" && module.exports) {
     rowAmountText: rowAmountText, cleanShopping: cleanShopping, shoppingView: shoppingView, tickItem: tickItem,
     markAllSeen: markAllSeen, forgetItem: forgetItem, addExtra: addExtra, tickExtra: tickExtra,
     removeExtra: removeExtra, setPantry: setPantry, setAisle: setAisle, mergeShopping: mergeShopping,
-    isShoppingEmpty: isShoppingEmpty, writtenName: writtenName, withWeek: withWeek, volumeText: volumeText, weightText: weightText
+    isShoppingEmpty: isShoppingEmpty, shoppingExportText: shoppingExportText, writtenName: writtenName, withWeek: withWeek, volumeText: volumeText, weightText: weightText
   };
 }

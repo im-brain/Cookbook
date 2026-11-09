@@ -35,7 +35,8 @@ function writeShopping(shopping) {
 }
 
 // ---------- What's on screen ----------
-let shopViewStart = null;   // the Monday of the week being shown
+let shopViewStart = null;
+let shopShownView = null;   // what is on screen, for Send / Copy (Version 38)   // the Monday of the week being shown
 
 const shopList = document.getElementById("shop-list");
 const shopMessage = document.getElementById("shop-message");
@@ -77,12 +78,14 @@ function renderShop() {
   const damaged = shopping === null || plan === null;
   shopDamaged.hidden = !damaged;
   document.getElementById("shop-add-form").hidden = damaged;
+  document.getElementById("shop-send").hidden = damaged;
   if (damaged) { document.getElementById("shop-progress").textContent = ""; return; }
 
   const built = buildShoppingList(plan, loadRecipes() || [], shopViewStart);
   const view = shoppingView(shopping, built, shopViewStart);
   if (view.changed) { writeShopping(withWeek(shopping, shopViewStart, view.week)); }
 
+  shopShownView = view;
   document.getElementById("shop-progress").textContent = view.total === 0 ? "Nothing to buy yet" : view.ticked + " of " + view.total + " ticked";
 
   const moreCount = view.look.concat(allAisleItems(view)).filter(function (it) { return it.moreWas; }).length;
@@ -324,4 +327,45 @@ document.getElementById("shop-sheet-pantry").addEventListener("click", function 
   writeShopping(setPantry(shopping, shopSheetItem.key, shopSheetItem.name, true));
   closeBackdrop(shopSheet);
   renderShop();
+});
+
+
+// ---------- Send the list to another shopping app (Version 38) ----------
+// Only unticked items go, one per line. Nothing is saved or ticked by sending.
+function currentExport() {
+  if (!shopShownView) { return { text: "", count: 0 }; }
+  return shoppingExportText(shopShownView);
+}
+
+async function copyShoppingText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+document.getElementById("shop-copy-button").addEventListener("click", async function () {
+  const out = currentExport();
+  if (out.count === 0) { showShopMessage("Nothing left to send: everything is ticked or the list is empty."); return; }
+  const ok = await copyShoppingText(out.text);
+  showShopMessage(ok ? "Copied " + out.count + (out.count === 1 ? " item." : " items.") + " Paste it into your shopping app."
+                     : "Couldn't copy. Try the Send button instead.");
+});
+
+document.getElementById("shop-send-button").addEventListener("click", async function () {
+  const out = currentExport();
+  if (out.count === 0) { showShopMessage("Nothing left to send: everything is ticked or the list is empty."); return; }
+  if (navigator.share) {
+    try {
+      await navigator.share({ text: out.text });
+      return;
+    } catch (error) {
+      if (error && error.name === "AbortError") { return; }   // the person closed the Share menu
+    }
+  }
+  const ok = await copyShoppingText(out.text);
+  showShopMessage(ok ? "Sharing isn't available here, so the list (" + out.count + (out.count === 1 ? " item" : " items") + ") was copied instead. Paste it into your shopping app."
+                     : "Couldn't send or copy the list.");
 });
