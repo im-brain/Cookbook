@@ -1145,6 +1145,7 @@ function refreshHome() {
   renderRecipeList();
   updateBackupReminder();
   pickCard.hidden = true; // an old pick might be out of date now
+  if (typeof renderFridge === "function") { renderFridge(); } // fridge results may be out of date too
 }
 
 // Find one recipe, change it with "change", and store everything again.

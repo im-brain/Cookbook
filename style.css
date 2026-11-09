@@ -2673,3 +2673,13 @@ body.sheet-open { overflow: hidden; }
 .shop-badge.more { background: var(--warn-soft); color: var(--warn); }
 .shop-small { width: auto; min-height: 44px; padding: 6px 16px; flex: none; }
 .shop-fold .shop-text { flex: 1; }
+
+/* ---------- "What's in my fridge?" (Version 37) ---------- */
+.fridge-card { margin-top: 12px; }
+.fridge-card textarea { width: 100%; margin: 8px 0 12px; }
+.fridge-card .hint { display: block; }
+#fridge-results { margin-bottom: 12px; }
+.fridge-result { margin: 0 0 12px; }
+.fridge-result .pick-result { margin-bottom: 4px; }
+.fridge-status { margin: 0 4px; font-size: 0.9rem; color: var(--ink-soft); }
+.fridge-status.complete { color: var(--ok); font-weight: 650; }
