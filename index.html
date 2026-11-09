@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=32">
+    <link rel="stylesheet" href="style.css?v=33">
   </head>
 
   <body>
@@ -207,7 +207,7 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 32</p>
+        <p class="version">Version 33</p>
       </section>
 
       <!-- ===================== THIS WEEK SCREEN (Version 31) ===================== -->
@@ -308,6 +308,13 @@
           <p class="hint" id="move-intro">Six small steps. Your recipes stay on this phone the whole time; this only adds a safe copy in the cloud.</p>
           <p class="message" id="move-message" hidden></p>
           <ol class="move-steps" id="move-steps"></ol>
+
+          <!-- For a second device (like an iPad), or when Verify keeps failing (Version 33). -->
+          <div class="move-match" id="move-match" hidden>
+            <h3>Another device, or Verify keeps failing?</h3>
+            <p class="hint">Replaces this device’s copy of every recipe the cloud already has with the cloud’s copy. Recipes that are only on this device are kept and uploaded. Back up first (step 1): any change you made here to a recipe the cloud already has is not kept.</p>
+            <button type="button" class="button button-secondary" id="move-match-button">Make this device match the cloud</button>
+          </div>
         </div>
 
         <!-- ----- Recently deleted (Version 28) ----- -->
@@ -685,16 +692,16 @@
       </div>
     </div>
 
-    <script src="vendor/supabase.js?v=32"></script>
-    <script src="js/ingredients.js?v=32"></script>
-    <script src="js/plan.js?v=32"></script>
-    <script src="js/sync.js?v=32"></script>
-    <script src="js/plan-sync.js?v=32"></script>
-    <script src="js/photos.js?v=32"></script>
-    <script src="js/auth.js?v=32"></script>
-    <script src="js/cookbook-views.js?v=32"></script>
-    <script src="app.js?v=32"></script>
-    <script src="js/plan-ui.js?v=32"></script>
-    <script src="js/sync-ui.js?v=32"></script>
+    <script src="vendor/supabase.js?v=33"></script>
+    <script src="js/ingredients.js?v=33"></script>
+    <script src="js/plan.js?v=33"></script>
+    <script src="js/sync.js?v=33"></script>
+    <script src="js/plan-sync.js?v=33"></script>
+    <script src="js/photos.js?v=33"></script>
+    <script src="js/auth.js?v=33"></script>
+    <script src="js/cookbook-views.js?v=33"></script>
+    <script src="app.js?v=33"></script>
+    <script src="js/plan-ui.js?v=33"></script>
+    <script src="js/sync-ui.js?v=33"></script>
   </body>
 </html>

@@ -314,6 +314,70 @@ function recipe(id, title, tags) {
     check("verify spots a waiting change", !v.ok && v.waiting === 1);
   }
 
+  // Version 33: Verify explains itself, and "make this device match the cloud".
+  {
+    const cloud = makeCloud(); const A = makeDevice(cloud, "A"); const B = makeDevice(cloud, "B");
+    ["s1", "s2", "s3"].forEach(function (id, i) { A.add(recipe(id, "Dish " + (i + 1), ["dinner"])); });
+    await A.sync();                                           // the cloud holds three recipes from phone A
+    // The iPad B holds the same ids, but with its own notes / servings / an extra recipe only it has.
+    ["s1", "s2", "s3"].forEach(function (id, i) { B.add(recipe(id, "Dish " + (i + 1), ["dinner"])); });
+    B.edit("s1", function (x) { x.notes = "iPad note"; });
+    B.edit("s2", function (x) { x.current.servings = 6; });
+    B.add(recipe("only-b", "Only on the iPad", ["dinner"]));
+    // Details: which parts differ (before anything is synced, the cloud still has A's copies).
+    let v = await sync.verifyMove(B.env);
+    const d1 = v.differentDetails.filter(function (d) { return d.title === "Dish 1"; })[0];
+    const d2 = v.differentDetails.filter(function (d) { return d.title === "Dish 2"; })[0];
+    check("verify names the differing part (notes)", d1 && d1.parts.join() === "notes", JSON.stringify(v.differentDetails));
+    check("verify names the differing part (servings)", d2 && d2.parts.join() === "servings", JSON.stringify(v.differentDetails));
+    check("verify explains what is waiting", v.waitingDetails.length === 4 && v.waitingDetails.every(function (w) { return w.why === "not sent yet"; }), JSON.stringify(v.waitingDetails));
+    check("verify lists the recipe missing in the cloud", v.missing.join() === "Only on the iPad");
+
+    // Looking first changes nothing.
+    const before = JSON.stringify(B.recipes());
+    const look = await sync.matchCloud(B.env, true);
+    check("dry run counts", look.ok && look.cloudTotal === 3 && look.replace === 2 && look.alreadyMatch === 1 && look.onlyHere === 1, JSON.stringify(look));
+    check("dry run changes nothing", JSON.stringify(B.recipes()) === before);
+
+    // Doing it: the cloud's copies win, the iPad-only recipe stays, and the usual Upload then Verify pass.
+    const done = await sync.matchCloud(B.env, false);
+    check("match replaced two", done.ok && done.replace === 2, JSON.stringify(done));
+    check("iPad copy of Dish 1 is the cloud's (no iPad note)", B.get("s1").notes === "");
+    check("iPad copy of Dish 2 is the cloud's (servings 4)", B.get("s2").current.servings === 4);
+    check("the iPad-only recipe is kept", !!B.get("only-b"));
+    await B.sync();
+    v = await sync.verifyMove(B.env);
+    check("after match + upload, verify passes", v.ok && v.total === 4 && v.waiting === 0 && v.conflicts === 0, JSON.stringify(v));
+    check("the iPad-only recipe reached the cloud", !!cloud.rows["only-b"]);
+
+    // An open choice is dropped by matching.
+    A.edit("s3", function (x) { x.notes = "A's note"; }); await A.sync();
+    B.edit("s3", function (x) { x.notes = "B's note"; });
+    await B.sync();
+    check("a conflict was found", Object.keys(JSON.parse(B.store.state).conflicts).length === 1);
+    v = await sync.verifyMove(B.env);
+    check("verify reports the open choice", !v.ok && v.conflicts === 1);
+    await sync.matchCloud(B.env, false);
+    check("matching drops the open choice", Object.keys(JSON.parse(B.store.state).conflicts).length === 0 && B.get("s3").notes === "A's note");
+    await B.sync();
+    v = await sync.verifyMove(B.env);
+    check("verify passes again", v.ok, JSON.stringify(v));
+
+    // Deleted recipes follow the cloud too.
+    A.env.saveRecipes(A.recipes()); 
+    sync.moveToTrash(A.env, "s1"); await A.sync(); 
+    await sync.matchCloud(B.env, false);
+    check("a recipe deleted elsewhere moves to Recently deleted here", !B.get("s1") && B.trash().some(function (t) { return t.recipe.id === "s1"; }));
+    // Nothing in the cloud: nothing to match.
+    const empty = await sync.matchCloud(makeDevice(makeCloud(), "C").env, true);
+    check("empty cloud: nothing to match", empty.ok && empty.cloudTotal === 0);
+    // Offline is reported, nothing changed.
+    cloud.offline = true;
+    const off2 = await sync.matchCloud(B.env, false);
+    check("match offline says so", !off2.ok && off2.kind === "offline");
+    cloud.offline = false;
+  }
+
   console.log(passed + " passed, " + failed + " failed");
   process.exit(failed ? 1 : 0);
 })();
