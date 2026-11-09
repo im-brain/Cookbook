@@ -33,6 +33,7 @@
   /* Notebook tab marks (muted colors, like coloured page tabs) */
   --tab-sage: #a9ba95;
   --tab-blue: #a2b7cb;
+  --tab-butter: #d6c27e;
 
   /* Cover colours: one per tag (Version 24). 0-5 are the starter tags, 6-9 are your own tags. */
   --tagc-0: #e6c675; --tagc-1: #9fc5b6; --tagc-2: #d99a7c; --tagc-3: #bfb2d6; --tagc-4: #a2b7cb;
@@ -76,7 +77,7 @@
     --focus: #8bb8ec;
     --ok: #9cc58f; --ok-soft: #26321f; --warn: #e6bf6a; --warn-soft: #3a2f17;
     --danger: #f08b7d;
-    --tab-sage: #74876a; --tab-blue: #6c8299;
+    --tab-sage: #74876a; --tab-blue: #6c8299; --tab-butter: #9a8a52;
     --tagc-0: #a68a3c; --tagc-1: #5f8a7b; --tagc-2: #a8644a; --tagc-3: #7d6f9a; --tagc-4: #6c8299;
     --tagc-5: #74876a; --tagc-6: #9a6272; --tagc-7: #8a7550; --tagc-8: #55808d; --tagc-9: #7d6a4a;
     --cover-plain: #4a4033; --cover-paper: #2c261f;
@@ -256,7 +257,7 @@ a {
   bottom: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);   /* Cookbook, This Week, Settings */
+  grid-template-columns: repeat(4, 1fr);   /* Cookbook, This Week, Shopping, Settings */
   padding: 6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   background: var(--paper-raised);
   border-top: 1px solid var(--rule);
@@ -358,6 +359,9 @@ body[data-screen="cooking-screen"] .tabbar {
   }
   #tab-plan {
     --tab-color: var(--tab-blue);
+  }
+  #tab-shop {
+    --tab-color: var(--tab-butter);
   }
   /* Settings sits at the bottom of the sidebar, without a tab mark. */
   .tab-settings {
@@ -2522,3 +2526,137 @@ body.sheet-open { overflow: hidden; }
   opacity: .5;
   cursor: default;
 }
+
+/* ---------- 32. Shopping (Version 34) ---------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* The "add something" row. */
+.shop-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s2);
+  margin-bottom: var(--s4);
+}
+.shop-add .button { width: auto; padding-left: var(--s5); padding-right: var(--s5); }
+
+.shop-changes {
+  display: grid;
+  gap: var(--s2);
+  margin-bottom: var(--s4);
+}
+.shop-changes p { margin: 0; }
+.shop-changes .button { width: auto; justify-self: start; min-height: 44px; }
+
+.shop-section { margin: 0 0 var(--s5); }
+.shop-section h2,
+.shop-fold summary {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: 650;
+  margin: 0 0 var(--s2);
+}
+.shop-fold summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+.shop-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s2);
+}
+.shop-item {
+  display: flex;
+  align-items: stretch;
+  gap: var(--s2);
+}
+.shop-fold .shop-item { align-items: center; padding: 6px 0; }
+
+/* One whole row is the tick button; the ••• button beside it opens more choices. */
+.shop-check {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 58px;
+  padding: 10px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--paper-raised);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.shop-check::before {
+  content: "";
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--rule-strong);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.shop-item.done .shop-check { opacity: .55; }
+.shop-item.done .shop-name { text-decoration: line-through; }
+.shop-item.done .shop-check::before {
+  content: "✓";
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-size: 16px;
+  font-weight: 700;
+}
+.shop-text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+.shop-top {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+  align-items: baseline;
+}
+.shop-name { font-weight: 650; }
+.shop-amount { color: var(--ink-soft); white-space: nowrap; }
+.shop-sub { color: var(--ink-faint); font-size: var(--text-sm); }
+.shop-more {
+  flex: none;
+  width: var(--tap);
+  min-height: 58px;
+  height: auto;
+  border-radius: 14px;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+.shop-badge {
+  align-self: flex-start;
+  padding: 1px 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.shop-badge.new { background: var(--accent-soft); color: var(--accent); text-transform: uppercase; }
+.shop-badge.more { background: var(--warn-soft); color: var(--warn); }
+.shop-small { width: auto; min-height: 44px; padding: 6px 16px; flex: none; }
+.shop-fold .shop-text { flex: 1; }

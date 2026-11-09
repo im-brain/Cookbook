@@ -35,11 +35,13 @@ const viewScreen = document.getElementById("recipe-view-screen");
 const cookingScreen = document.getElementById("cooking-screen");
 const settingsScreen = document.getElementById("settings-screen");
 const planScreen = document.getElementById("plan-screen");   // This Week (Version 31, js/plan-ui.js)
+const shopScreen = document.getElementById("shop-screen");   // Shopping (Version 34, js/shopping-ui.js)
 
 // The tab bar (iPhone) / sidebar (iPad) buttons (Version 23).
 const cookbookTab = document.getElementById("tab-cookbook");
 const settingsTab = document.getElementById("tab-settings");
 const planTab = document.getElementById("tab-plan");
+const shopTab = document.getElementById("tab-shop");
 
 // True while a recipe was opened from This Week, so its Back button returns there (Version 31, js/plan-ui.js).
 let backToPlan = false;
@@ -53,16 +55,17 @@ function showScreen(screenToShow) {
   cookingScreen.hidden = screenToShow !== cookingScreen;
   settingsScreen.hidden = screenToShow !== settingsScreen;
   planScreen.hidden = screenToShow !== planScreen;
+  shopScreen.hidden = screenToShow !== shopScreen;
   // Leaving the recipe / cooking / form screens for a main screen forgets "came from This Week".
-  if (screenToShow === homeScreen || screenToShow === settingsScreen || screenToShow === planScreen) { backToPlan = false; }
+  if (screenToShow === homeScreen || screenToShow === settingsScreen || screenToShow === planScreen || screenToShow === shopScreen) { backToPlan = false; }
 
   // Tell style.css which screen is showing. It hides the tab bar on the form
   // (so a half-typed recipe isn't left by accident) and while cooking (more room).
   document.body.dataset.screen = screenToShow.id;
 
-  // Light up the right tab. Everything except This Week and Settings belongs to the Cookbook tab.
-  const activeTab = screenToShow === settingsScreen ? settingsTab : (screenToShow === planScreen ? planTab : cookbookTab);
-  [cookbookTab, planTab, settingsTab].forEach(function (tab) {
+  // Light up the right tab. Everything except This Week, Shopping and Settings belongs to the Cookbook tab.
+  const activeTab = screenToShow === settingsScreen ? settingsTab : (screenToShow === planScreen ? planTab : (screenToShow === shopScreen ? shopTab : cookbookTab));
+  [cookbookTab, planTab, shopTab, settingsTab].forEach(function (tab) {
     if (tab === activeTab) { tab.setAttribute("aria-current", "page"); } else { tab.removeAttribute("aria-current"); }
   });
   window.scrollTo(0, 0); // jump back to the top of the page
@@ -79,6 +82,10 @@ cookbookTab.addEventListener("click", function () {
 planTab.addEventListener("click", function () {
   showScreen(planScreen);
   if (typeof openPlanScreen === "function") { openPlanScreen(); }   // js/plan-ui.js
+});
+shopTab.addEventListener("click", function () {
+  showScreen(shopScreen);
+  if (typeof openShopScreen === "function") { openShopScreen(); }   // js/shopping-ui.js
 });
 settingsTab.addEventListener("click", function () {
   backupMessage.hidden = true; // an old "✓ Backup saved" message would be confusing later
@@ -1632,7 +1639,7 @@ async function buildBackupFile(recipes) {
   }
   const backup = {
     app: "my-cookbook",
-    formatVersion: 4,   // 4 = meal plan (Version 31); 3 = photos (Version 30); 2 = structured ingredients (Version 26); older files still import
+    formatVersion: 5,   // 5 = shopping list choices (Version 34); 4 = meal plan (Version 31); 3 = photos (Version 30); 2 = structured ingredients (Version 26); older files still import
     exportedAt: todayAsText(),
     recipes: recipes
   };
@@ -1640,6 +1647,9 @@ async function buildBackupFile(recipes) {
   // Version 31: the meal plan goes along (left out while the plan is empty).
   const plan = typeof loadPlan === "function" ? loadPlan() : null;
   if (plan && plan.entries.length > 0) { backup.plan = plan; }
+  // Version 34: ticks, extras, pantry and aisle choices go along (left out while there are none).
+  const shopping = typeof loadShopping === "function" ? loadShopping() : null;
+  if (shopping && !isShoppingEmpty(shopping)) { backup.shopping = shopping; }
   const fileName = "cookbook-backup-" + todayAsText() + ".json";
   return new File([JSON.stringify(backup, null, 2)], fileName, { type: "application/json" });
 }
@@ -1768,9 +1778,11 @@ function importBackupText(text) {
   let fileRecipes;
   let filePhotos = {};
   let filePlan = { entries: [] };
+  let fileShopping = cleanShopping(null);
   try {
     const data = JSON.parse(text);
     if (data && !Array.isArray(data) && data.plan && typeof loadPlan === "function") { filePlan = cleanPlan(data.plan); }
+    if (data && !Array.isArray(data) && data.shopping) { fileShopping = cleanShopping(data.shopping); }
     fileRecipes = Array.isArray(data) ? data : (data && data.app === "my-cookbook" ? data.recipes : null);
     if (data && data.photos && typeof data.photos === "object" && !Array.isArray(data.photos)) { filePhotos = data.photos; }
   } catch (error) {
@@ -1812,7 +1824,11 @@ function importBackupText(text) {
   const phonePlan = typeof loadPlan === "function" ? loadPlan() : null;
   const planMerge = phonePlan && filePlan.entries.length > 0 ? mergePlans(phonePlan, filePlan) : { plan: phonePlan, added: 0 };
 
-  if (added === 0 && updated === 0 && planMerge.added === 0) {
+  // Version 34: shopping-list choices in the file that the phone doesn't have yet are added too.
+  const phoneShopping = typeof loadShopping === "function" ? loadShopping() : null;
+  const shopMerge = phoneShopping && !isShoppingEmpty(fileShopping) ? mergeShopping(phoneShopping, fileShopping) : { shopping: phoneShopping, added: 0 };
+
+  if (added === 0 && updated === 0 && planMerge.added === 0 && shopMerge.added === 0) {
     rememberBackup(cleaned); // the file is a backup of these recipes
     updateBackupReminder();
     showBackupMessage("Everything in that backup is already on your phone. Nothing to add.");
@@ -1825,6 +1841,7 @@ function importBackupText(text) {
   if (updated) question += "• " + recipesWord(updated) + " will be replaced by the newer copy in the file.\n";
   if (same) question += "• " + recipesWord(same) + " already on your phone " + (same === 1 ? "stays as it is" : "stay as they are") + ".\n";
   if (planMerge.added) question += "• " + planMerge.added + (planMerge.added === 1 ? " planned meal" : " planned meals") + " will be added to This Week.\n";
+  if (shopMerge.added) question += "• " + shopMerge.added + (shopMerge.added === 1 ? " shopping list item or choice" : " shopping list items and choices") + " will be added.\n";
   question += "Nothing on your phone will be deleted. Go ahead?";
   if (!window.confirm(question)) {
     showBackupMessage("Import cancelled. Nothing was changed.");
@@ -1849,10 +1866,12 @@ function importBackupText(text) {
   }
   rememberBackup(cleaned); // the file is a backup of these recipes
   if (planMerge.added > 0) { savePlan(planMerge.plan); }
+  if (shopMerge.added > 0) { writeShopping(shopMerge.shopping); }
 
   let done = "✓ Imported: " + recipesWord(added) + " added";
   if (updated) done += ", " + updated + " replaced";
   if (planMerge.added) done += ", " + planMerge.added + (planMerge.added === 1 ? " planned meal" : " planned meals") + " added";
+  if (shopMerge.added) done += ", " + shopMerge.added + " shopping list " + (shopMerge.added === 1 ? "item" : "items") + " added";
   done += ".";
   if (skipped) done += " " + recipesWord(skipped) + " in the file couldn't be read and were skipped.";
   showBackupMessage(done);

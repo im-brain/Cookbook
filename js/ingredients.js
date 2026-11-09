@@ -435,6 +435,6 @@ if (typeof module !== "undefined" && module.exports) {
     ingredientText: ingredientText, ingredientTexts: ingredientTexts, cleanIngredient: cleanIngredient,
     cleanIngredientList: cleanIngredientList, upgradeIngredients: upgradeIngredients,
     scaleIngredient: scaleIngredient, LEADING_AMOUNT: LEADING_AMOUNT,
-    ingredientFromParts: ingredientFromParts, amountText: amountText
+    ingredientFromParts: ingredientFromParts, amountText: amountText, UNIT_PLURALS: UNIT_PLURALS
   };
 }

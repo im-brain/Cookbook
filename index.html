@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=33">
+    <link rel="stylesheet" href="style.css?v=34">
   </head>
 
   <body>
@@ -56,6 +56,7 @@
       <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M8 14.5h3"/></symbol>
       <symbol id="icon-leftovers" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.4-5.5"/><path d="M4 4.5v4h4"/></symbol>
       <symbol id="icon-fork" viewBox="0 0 24 24"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 21V3c-2.5 1.5-3.5 4.5-3.5 8H17"/></symbol>
+      <symbol id="icon-cart" viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 10.5h10.3L20 7.5H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></symbol>
       <symbol id="icon-note" viewBox="0 0 24 24"><path d="M6 3h8l4.5 4.5V21H6z"/><path d="M14 3v5h4.5M9 13h6M9 17h6"/></symbol>
       <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
     </svg>
@@ -70,6 +71,9 @@
       </button>
       <button type="button" class="tab" id="tab-plan">
         <svg class="icon"><use href="#icon-calendar"/></svg><span>This Week</span>
+      </button>
+      <button type="button" class="tab" id="tab-shop">
+        <svg class="icon"><use href="#icon-cart"/></svg><span>Shopping</span>
       </button>
       <button type="button" class="tab tab-settings" id="tab-settings">
         <svg class="icon"><use href="#icon-gear"/></svg><span>Settings</span>
@@ -207,7 +211,7 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 33</p>
+        <p class="version">Version 34</p>
       </section>
 
       <!-- ===================== THIS WEEK SCREEN (Version 31) ===================== -->
@@ -240,6 +244,45 @@
         <ol class="plan-days" id="plan-days"></ol>
 
         <button type="button" class="button button-secondary plan-reuse" id="plan-reuse">Reuse a past week…</button>
+      </section>
+
+      <!-- ===================== SHOPPING SCREEN (Version 34) ===================== -->
+      <!-- The list for one week, worked out from the meal plan. js/shopping-ui.js fills it in; js/shopping.js does the sums. -->
+      <section id="shop-screen" hidden>
+        <div class="topbar">
+          <h1>Shopping</h1>
+        </div>
+
+        <div class="plan-switch" role="group" aria-label="Which week">
+          <button type="button" id="shop-this-week" aria-pressed="true">This week</button>
+          <button type="button" id="shop-next-week" aria-pressed="false">Next week</button>
+        </div>
+
+        <div class="plan-weeknav">
+          <button type="button" class="icon-button" id="shop-prev" aria-label="Earlier week"><svg class="icon"><use href="#icon-back"/></svg></button>
+          <div class="plan-weeklabel">
+            <p class="plan-weeklabel-main" id="shop-week-label"></p>
+            <p class="plan-weeklabel-sub" id="shop-progress"></p>
+          </div>
+          <button type="button" class="icon-button" id="shop-next" aria-label="Later week"><svg class="icon chevron"><use href="#icon-chevron"/></svg></button>
+        </div>
+
+        <p class="message" id="shop-message" hidden></p>
+        <p class="message" id="shop-damaged" hidden>Sorry, your shopping list couldn't be read, so nothing was changed. Please tell Claude.</p>
+
+        <form class="shop-add" id="shop-add-form" autocomplete="off">
+          <label class="visually-hidden" for="shop-add-text">Add something to buy</label>
+          <input type="text" id="shop-add-text" placeholder="Add your own item…" maxlength="120" enterkeyhint="done">
+          <button type="submit" class="button" id="shop-add-button">Add</button>
+        </form>
+
+        <div id="shop-changes" class="message shop-changes" hidden>
+          <p id="shop-changes-text"></p>
+          <button type="button" class="button button-secondary" id="shop-gotit">Got it</button>
+        </div>
+
+        <div id="shop-list"></div>
+        <p class="empty-note" id="shop-empty" hidden></p>
       </section>
 
       <!-- ===================== SETTINGS SCREEN (Version 23) ===================== -->
@@ -682,6 +725,22 @@
       </div>
     </div>
 
+    <div class="sheet-backdrop" id="shop-sheet" hidden>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shop-sheet-title">
+        <div class="sheet-grip"></div>
+        <h2 id="shop-sheet-title"></h2>
+        <p class="sheet-sub" id="shop-sheet-sub"></p>
+        <div class="menu-buttons">
+          <div class="field">
+            <label for="shop-sheet-aisle">Aisle</label>
+            <select id="shop-sheet-aisle"></select>
+          </div>
+          <button type="button" class="button button-secondary" id="shop-sheet-pantry">I always have this (leave it off)</button>
+        </div>
+        <button type="button" class="sheet-cancel" id="shop-sheet-close">Close</button>
+      </div>
+    </div>
+
     <div class="sheet-backdrop" id="plan-reuse-sheet" hidden>
       <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reuse-title">
         <div class="sheet-grip"></div>
@@ -692,16 +751,18 @@
       </div>
     </div>
 
-    <script src="vendor/supabase.js?v=33"></script>
-    <script src="js/ingredients.js?v=33"></script>
-    <script src="js/plan.js?v=33"></script>
-    <script src="js/sync.js?v=33"></script>
-    <script src="js/plan-sync.js?v=33"></script>
-    <script src="js/photos.js?v=33"></script>
-    <script src="js/auth.js?v=33"></script>
-    <script src="js/cookbook-views.js?v=33"></script>
-    <script src="app.js?v=33"></script>
-    <script src="js/plan-ui.js?v=33"></script>
-    <script src="js/sync-ui.js?v=33"></script>
+    <script src="vendor/supabase.js?v=34"></script>
+    <script src="js/ingredients.js?v=34"></script>
+    <script src="js/plan.js?v=34"></script>
+    <script src="js/shopping.js?v=34"></script>
+    <script src="js/sync.js?v=34"></script>
+    <script src="js/plan-sync.js?v=34"></script>
+    <script src="js/photos.js?v=34"></script>
+    <script src="js/auth.js?v=34"></script>
+    <script src="js/cookbook-views.js?v=34"></script>
+    <script src="app.js?v=34"></script>
+    <script src="js/plan-ui.js?v=34"></script>
+    <script src="js/shopping-ui.js?v=34"></script>
+    <script src="js/sync-ui.js?v=34"></script>
   </body>
 </html>
