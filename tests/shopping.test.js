@@ -191,5 +191,24 @@ eq("importing the same file again adds nothing", s.mergeShopping(merged.shopping
 check("phone's choice wins", s.mergeShopping(phone, s.setAisle(empty, "kale", "Bakery")).shopping.aisles.kale === "Bakery" && s.mergeShopping(s.setAisle(empty, "kale", "Frozen"), s.setAisle(empty, "kale", "Bakery")).shopping.aisles.kale === "Frozen");
 check("empty check", s.isShoppingEmpty(empty) && !s.isShoppingEmpty(phone));
 
+// ----- export text (Version 38) -----
+{
+  const rs = [recipe("r1", "Soup", ["2 cups flour", "1 lb chicken thighs", "3 cloves garlic", "1 head garlic"], 4)];
+  const lst = listFor([meal("2026-11-10", "r1", 4)], rs);
+  let st = s.addExtra(empty, WEEK, "Paper towels", "x1");
+  st = s.addExtra(st, WEEK, "Foil", "x2");
+  st = s.tickExtra(st, WEEK, "x2", true);
+  let vw = s.shoppingView(st, lst, WEEK);
+  st = s.withWeek(st, WEEK, vw.week);
+  st = s.tickItem(st, WEEK, vw.aisles[Object.keys(vw.aisles)[0]][0], true);
+  vw = s.shoppingView(st, lst, WEEK);
+  const ex2 = s.shoppingExportText(vw);
+  check("export skips ticked + counts lines", ex2.count === ex2.text.split("\n").length && !/Foil/.test(ex2.text), ex2);
+  check("export has amount first", /(^|\n)1 lb chicken thighs/.test(ex2.text) && /garlic: 3 cloves \+ 1 head/.test(ex2.text) && !/flour/.test(ex2.text), ex2);
+  check("export has extra", /Paper towels/.test(ex2.text), ex2);
+  eq("empty export", s.shoppingExportText(s.shoppingView(empty, listFor([], []), WEEK)), { text: "", count: 0 });
+  console.log(JSON.stringify(ex2.text));
+}
+
 console.log(passed + " passed, " + failed + " failed");
 process.exit(failed ? 1 : 0);
