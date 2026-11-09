@@ -2554,16 +2554,16 @@ body.sheet-open { overflow: hidden; }
 .shop-changes p { margin: 0; }
 .shop-changes .button { width: auto; justify-self: start; min-height: 44px; }
 
-.shop-section { margin: 0 0 var(--s5); }
+.shop-section { margin: 0 0 var(--s3); }
 .shop-section h2,
 .shop-fold summary {
   font-family: var(--font-serif);
-  font-size: var(--text-lg);
+  font-size: var(--text-md);
   font-weight: 650;
-  margin: 0 0 var(--s2);
+  margin: 0 0 var(--s1);
 }
 .shop-fold summary {
-  min-height: var(--tap);
+  min-height: 40px;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -2574,12 +2574,13 @@ body.sheet-open { overflow: hidden; }
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--s2);
+  grid-template-columns: minmax(0, 1fr);   /* never wider than the screen, however long a line is */
+  gap: 4px;
 }
 .shop-item {
   display: flex;
   align-items: stretch;
-  gap: var(--s2);
+  gap: 4px;
 }
 .shop-fold .shop-item { align-items: center; padding: 6px 0; }
 
@@ -2588,12 +2589,12 @@ body.sheet-open { overflow: hidden; }
   flex: 1;
   min-width: 0;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  min-height: 58px;
-  padding: 10px 14px;
+  min-height: 40px;
+  padding: 5px 10px;
   border: 1px solid var(--rule);
-  border-radius: 14px;
+  border-radius: 10px;
   background: var(--paper-raised);
   color: var(--ink);
   font: inherit;
@@ -2603,8 +2604,8 @@ body.sheet-open { overflow: hidden; }
 .shop-check::before {
   content: "";
   flex: none;
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
   border: 2px solid var(--rule-strong);
   border-radius: 50%;
   display: flex;
@@ -2619,7 +2620,7 @@ body.sheet-open { overflow: hidden; }
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
 }
 .shop-text {
@@ -2627,7 +2628,7 @@ body.sheet-open { overflow: hidden; }
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   overflow-wrap: anywhere;
 }
 .shop-top {
@@ -2635,17 +2636,29 @@ body.sheet-open { overflow: hidden; }
   justify-content: space-between;
   gap: var(--s3);
   align-items: baseline;
+  font-size: 16px;
+  line-height: 1.25;
 }
-.shop-name { font-weight: 650; }
+.shop-name { font-weight: 650; flex: none; max-width: 60%; }
+/* The meals it is for: tiny, on the same line, cut off with … when there's no room. */
+.shop-from {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink-faint);
+  font-size: 11px;
+}
 .shop-amount { color: var(--ink-soft); white-space: nowrap; }
-.shop-sub { color: var(--ink-faint); font-size: var(--text-sm); }
+.shop-sub { color: var(--ink-faint); font-size: 12px; }
 .shop-more {
   flex: none;
-  width: var(--tap);
-  min-height: 58px;
+  width: 40px;
+  min-height: 40px;
   height: auto;
-  border-radius: 14px;
-  font-size: 18px;
+  border-radius: 10px;
+  font-size: 16px;
   letter-spacing: 1px;
 }
 .shop-badge {

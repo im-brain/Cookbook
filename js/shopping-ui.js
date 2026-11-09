@@ -40,15 +40,8 @@ function showShopMessage(text) {
   shopMessage.hidden = !text;
 }
 
-// On a Sunday you are shopping for the coming week, so that is where the screen starts.
-function defaultShopWeek() {
-  const today = localDateText();
-  const thisStart = weekStartOf(today);
-  return dateFromText(today).getUTCDay() === 0 ? addDays(thisStart, 7) : thisStart;
-}
-
 function openShopScreen() {
-  shopViewStart = defaultShopWeek();
+  shopViewStart = weekStartOf(localDateText());   // always starts on the current week
   showShopMessage("");
   renderShop();
 }
@@ -135,13 +128,13 @@ function makeItemRow(it, mode) {
   const text = shopEl("span", "shop-text");
   const top = shopEl("span", "shop-top");
   top.append(shopEl("span", "shop-name", it.name));
+  top.append(shopEl("span", "shop-from", it.from.join(", ")));
   const amount = it.amount || (it.written ? "as written" : "");
   if (amount) { top.append(shopEl("span", "shop-amount", amount)); }
   text.append(top);
   if (it.isNew) { text.append(shopEl("span", "shop-badge new", "New")); }
   if (it.moreWas) { text.append(shopEl("span", "shop-badge more", "More needed · was " + it.moreWas + " when ticked")); }
   if (mode === "look" && it.look) { text.append(shopEl("span", "shop-sub", it.look)); }
-  text.append(shopEl("span", "shop-sub", it.from.join(", ")));
   check.append(text);
   check.addEventListener("click", function () {
     const shopping = loadShopping();
