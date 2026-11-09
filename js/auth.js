@@ -164,6 +164,56 @@ const cloud = {
     if (result.error) { throw cloudError(result.error); }
   },
 
+  // ----- the meal plan (Phase 7 Part B): one row per planned dinner, table `plan_entries` -----
+  async pullPlan(since) {
+    const client = getClient();
+    if (!client) { throw cloudError("no library"); }
+    const rows = [];
+    for (let from = 0; ; from += PAGE_SIZE) {
+      let query = client.from("plan_entries").select("*").order("modified_at", { ascending: true }).order("id", { ascending: true });
+      if (since) { query = query.gte("modified_at", since); }
+      const result = await query.range(from, from + PAGE_SIZE - 1);
+      if (result.error) { throw cloudError(result.error); }
+      rows.push.apply(rows, result.data);
+      if (result.data.length < PAGE_SIZE) { break; }
+    }
+    return rows;
+  },
+
+  async fetchPlanRow(id) {
+    const client = getClient();
+    const result = await client.from("plan_entries").select("*").eq("id", id).maybeSingle();
+    if (result.error) { throw cloudError(result.error); }
+    return result.data;
+  },
+
+  async insertPlan(row) {
+    const client = getClient();
+    const result = await client.from("plan_entries").insert(row).select("modified_at");
+    if (result.error) {
+      if (result.error.code === "23505") { return { ok: false }; }       // already there
+      throw cloudError(result.error);
+    }
+    return { ok: true, modified_at: result.data && result.data[0] ? result.data[0].modified_at : null };
+  },
+
+  // A change based on `baseVersion`. Accepted only if the cloud is still at that version.
+  async updatePlan(id, baseVersion, row) {
+    const client = getClient();
+    const patch = Object.assign({}, row);
+    delete patch.id;
+    const result = await client.from("plan_entries").update(patch).eq("id", id).eq("version", baseVersion).select("version, modified_at");
+    if (result.error) { throw cloudError(result.error); }
+    return { ok: result.data.length === 1, modified_at: result.data[0] ? result.data[0].modified_at : null };
+  },
+
+  // "Removed" marks older than the cutoff can go for good (the rules only allow removing marked rows).
+  async purgeOldPlan(cutoff) {
+    const client = getClient();
+    const result = await client.from("plan_entries").delete().not("deleted_at", "is", null).lt("deleted_at", cutoff);
+    if (result.error) { throw cloudError(result.error); }
+  },
+
   // ----- photos (Phase 6): one picture per file, named <your id>/<photo id>.jpg -----
   async photoPath(photoId) {
     const user = await cloud.currentUser();

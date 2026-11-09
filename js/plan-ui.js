@@ -17,13 +17,21 @@ function loadPlan() {
   }
 }
 
-function savePlan(plan) {
+// Saves without telling the sync (the sync engine uses this one for its own changes).
+function writePlan(plan) {
   try {
     localStorage.setItem(PLAN_KEY, JSON.stringify({ entries: plan.entries }));
     return true;
   } catch (error) {
     return false;
   }
+}
+
+// Every change by the person goes through here, so it also gets sent to the cloud (js/sync-ui.js, Version 32).
+function savePlan(plan) {
+  const saved = writePlan(plan);
+  if (saved && typeof planChanged === "function") { planChanged(); }
+  return saved;
 }
 
 // ---------- What's on screen ----------
