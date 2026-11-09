@@ -61,6 +61,27 @@ function syncEnv() {
   };
 }
 
+// ---------- The meal plan (Version 32, Phase 7 Part B) ----------
+// The plan sync engine is js/plan-sync.js. writePlan (js/plan-ui.js) saves without starting another sync.
+function planSyncEnv() {
+  return {
+    cloud: cloud,
+    userId: syncUser ? syncUser.id : null,
+    loadPlan: loadPlan,
+    savePlan: writePlan,
+    loadState: function () {
+      try { return readJsonKey(PLAN_SYNC_KEY, null); } catch (error) { return null; }
+    },
+    saveState: function (state) { localStorage.setItem(PLAN_SYNC_KEY, JSON.stringify(state)); },
+    now: function () { return new Date().toISOString(); }
+  };
+}
+
+// js/plan-ui.js calls this after every change the person makes to the plan.
+function planChanged() {
+  scheduleSync();
+}
+
 // ---------- Photos (Phase 6) ----------
 
 // Every photo any recipe, any "Recently deleted" recipe, or any open choice still uses.
@@ -121,7 +142,10 @@ async function updatePhotoLine() {
 function changesWord(n) { return n === 1 ? "1 change" : n + " changes"; }
 
 function safePending() {
-  try { return pendingCount(syncEnv()); } catch (error) { return 0; }
+  let count = 0;
+  try { count += pendingCount(syncEnv()); } catch (error) { /* counts as none */ }
+  try { count += planPendingCount(planSyncEnv()); } catch (error) { /* counts as none */ }   // Version 32: planned dinners too
+  return count;
 }
 
 function safeConflicts() {
@@ -210,6 +234,10 @@ async function runSync() {
   let result;
   try {
     result = await syncNow(syncEnv());
+    if (result.ok) {                                  // Version 32: then the meal plan (a plan problem never stops recipes)
+      const planResult = await syncPlan(planSyncEnv());
+      if (planResult.ok) { result.planPulled = planResult.pulled; } else { result = planResult; }
+    }
   } catch (error) {
     result = { ok: false, kind: "error", message: "Something went wrong." };
   }
@@ -218,6 +246,8 @@ async function runSync() {
     syncStatus = { kind: "idle", message: "", at: timeText() };
     retryDelay = 30000;
     if (result.pulled > 0 || result.pushed > 0 || result.photos > 0) { refreshHome(); }
+    // A phone or iPad changed the plan: show it, unless a sheet is open (it would change under the person's finger).
+    if (result.planPulled > 0 && !planScreen.hidden && !isAnySheetOpen()) { renderPlan(); }
     if (document.body.dataset.screen !== "recipe-form-screen") {      // (a photo picked in the open form isn't saved yet)
       removeUnusedLocalPhotos(photoStore, referencedPhotoIds()).catch(function () { /* tidying is optional */ });
     }

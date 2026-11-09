@@ -81,3 +81,63 @@ create policy recipe_photos_update on storage.objects for update to authenticate
   with check (bucket_id = 'recipe-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
 create policy recipe_photos_delete on storage.objects for delete to authenticated
   using (bucket_id = 'recipe-photos' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- ======================================================================
+-- Meal plan (Phase 7 Part B, Version 32): one row per planned dinner.
+-- Run this part once in Supabase too (SQL Editor -> New query -> paste -> Run). Safe to run again.
+-- Same privacy as recipes: a row is only visible and changeable by the person it belongs to.
+-- A removed dinner is only marked (deleted_at), so the removal reaches your other devices;
+-- the app erases marks older than 30 days.
+-- ======================================================================
+create table if not exists public.plan_entries (
+  owner       uuid        not null default auth.uid() references auth.users(id) on delete cascade,
+  id          text        not null,                 -- the entry's own id from the phone
+  date        date        not null,                 -- the day the dinner is planned for
+  meal        text        not null default 'dinner',
+  kind        text        not null,                 -- recipe / leftovers / out / note
+  role        text        not null default 'main',  -- main / side
+  recipe_id   text        not null default '',
+  title       text        not null default '',      -- a copy of the recipe's name
+  servings    numeric,
+  note        text        not null default '',
+  position    integer     not null default 0,
+  version     integer     not null default 1,       -- counts saved changes; used to spot clashes
+  deleted_at  timestamptz,                          -- set = removed from the plan
+  modified_at timestamptz not null default now(),   -- set by the server on every change
+  primary key (owner, id),
+  constraint plan_kind_ok check (kind in ('recipe', 'leftovers', 'out', 'note')),
+  constraint plan_role_ok check (role in ('main', 'side')),
+  constraint plan_size_ok check (char_length(note) <= 300 and char_length(title) <= 200 and char_length(recipe_id) <= 80)
+);
+
+create index if not exists plan_entries_owner_modified on public.plan_entries (owner, modified_at);
+
+create or replace function public.plan_entries_touch() returns trigger
+language plpgsql set search_path = public as $$
+begin
+  new.modified_at = now();
+  return new;
+end $$;
+
+drop trigger if exists plan_entries_touch on public.plan_entries;
+create trigger plan_entries_touch before insert or update on public.plan_entries
+  for each row execute function public.plan_entries_touch();
+
+alter table public.plan_entries enable row level security;
+
+drop policy if exists plan_select on public.plan_entries;
+drop policy if exists plan_insert on public.plan_entries;
+drop policy if exists plan_update on public.plan_entries;
+drop policy if exists plan_delete on public.plan_entries;
+
+create policy plan_select on public.plan_entries for select to authenticated
+  using (owner = (select auth.uid()));
+create policy plan_insert on public.plan_entries for insert to authenticated
+  with check (owner = (select auth.uid()));
+create policy plan_update on public.plan_entries for update to authenticated
+  using (owner = (select auth.uid())) with check (owner = (select auth.uid()));
+create policy plan_delete on public.plan_entries for delete to authenticated
+  using (owner = (select auth.uid()) and deleted_at is not null);
+
+revoke all on public.plan_entries from anon;
+grant select, insert, update, delete on public.plan_entries to authenticated;
