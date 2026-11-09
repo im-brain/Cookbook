@@ -141,3 +141,55 @@ create policy plan_delete on public.plan_entries for delete to authenticated
 
 revoke all on public.plan_entries from anon;
 grant select, insert, update, delete on public.plan_entries to authenticated;
+
+
+-- ======================================================================
+-- Shopping choices (Phase 8 Part B, Version 36): one row per small choice
+-- (a tick, an extra, a pantry item, an aisle choice, what you have seen).
+-- Run this part once in Supabase too (SQL Editor -> New query -> paste -> Run). Safe to run again.
+-- Same privacy as recipes: a row is only visible and changeable by the person it belongs to.
+-- A removed choice is only marked (deleted_at), so the removal reaches your other devices;
+-- the app erases marks older than 30 days.
+-- ======================================================================
+create table if not exists public.shopping_items (
+  owner       uuid        not null default auth.uid() references auth.users(id) on delete cascade,
+  id          text        not null,                 -- e.g. tick|2026-11-09|onion
+  value       jsonb       not null default '{}'::jsonb,
+  version     integer     not null default 1,       -- counts saved changes; used to spot clashes
+  deleted_at  timestamptz,                          -- set = removed
+  modified_at timestamptz not null default now(),   -- set by the server on every change
+  primary key (owner, id),
+  constraint shopping_size_ok check (char_length(id) <= 300 and pg_column_size(value) <= 20000)
+);
+
+create index if not exists shopping_items_owner_modified on public.shopping_items (owner, modified_at);
+
+create or replace function public.shopping_items_touch() returns trigger
+language plpgsql set search_path = public as $$
+begin
+  new.modified_at = now();
+  return new;
+end $$;
+
+drop trigger if exists shopping_items_touch on public.shopping_items;
+create trigger shopping_items_touch before insert or update on public.shopping_items
+  for each row execute function public.shopping_items_touch();
+
+alter table public.shopping_items enable row level security;
+
+drop policy if exists shopping_select on public.shopping_items;
+drop policy if exists shopping_insert on public.shopping_items;
+drop policy if exists shopping_update on public.shopping_items;
+drop policy if exists shopping_delete on public.shopping_items;
+
+create policy shopping_select on public.shopping_items for select to authenticated
+  using (owner = (select auth.uid()));
+create policy shopping_insert on public.shopping_items for insert to authenticated
+  with check (owner = (select auth.uid()));
+create policy shopping_update on public.shopping_items for update to authenticated
+  using (owner = (select auth.uid())) with check (owner = (select auth.uid()));
+create policy shopping_delete on public.shopping_items for delete to authenticated
+  using (owner = (select auth.uid()) and deleted_at is not null);
+
+revoke all on public.shopping_items from anon;
+grant select, insert, update, delete on public.shopping_items to authenticated;

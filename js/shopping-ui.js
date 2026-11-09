@@ -17,13 +17,21 @@ function loadShopping() {
   }
 }
 
-function writeShopping(shopping) {
+// Saves quietly (the sync engine uses this one).
+function storeShopping(shopping) {
   try {
     localStorage.setItem(SHOPPING_KEY, JSON.stringify({ weeks: shopping.weeks, pantry: shopping.pantry, aisles: shopping.aisles }));
     return true;
   } catch (error) {
     return false;
   }
+}
+
+// Saves what the person did, then lets the sync know (Version 36).
+function writeShopping(shopping) {
+  const saved = storeShopping(shopping);
+  if (saved && typeof shoppingChanged === "function") { shoppingChanged(); }
+  return saved;
 }
 
 // ---------- What's on screen ----------
