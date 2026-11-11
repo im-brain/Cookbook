@@ -36,6 +36,7 @@ const cookingScreen = document.getElementById("cooking-screen");
 const settingsScreen = document.getElementById("settings-screen");
 const planScreen = document.getElementById("plan-screen");   // This Week (Version 31, js/plan-ui.js)
 const shopScreen = document.getElementById("shop-screen");   // Shopping (Version 34, js/shopping-ui.js)
+const plannerScreen = document.getElementById("planner-screen");   // Plan for me (Version 39, js/planner-ui.js)
 
 // The tab bar (iPhone) / sidebar (iPad) buttons (Version 23).
 const cookbookTab = document.getElementById("tab-cookbook");
@@ -45,6 +46,8 @@ const shopTab = document.getElementById("tab-shop");
 
 // True while a recipe was opened from This Week, so its Back button returns there (Version 31, js/plan-ui.js).
 let backToPlan = false;
+// True while a recipe was opened from "Plan for me", so its Back button returns to the suggestion (Version 39).
+let backToPlanner = false;
 
 // A "function" is a named set of instructions we can reuse.
 // This one shows the screen you give it and hides the rest.
@@ -56,15 +59,17 @@ function showScreen(screenToShow) {
   settingsScreen.hidden = screenToShow !== settingsScreen;
   planScreen.hidden = screenToShow !== planScreen;
   shopScreen.hidden = screenToShow !== shopScreen;
+  plannerScreen.hidden = screenToShow !== plannerScreen;
+  if (screenToShow !== viewScreen && screenToShow !== cookingScreen && screenToShow !== formScreen) { backToPlanner = false; }
   // Leaving the recipe / cooking / form screens for a main screen forgets "came from This Week".
-  if (screenToShow === homeScreen || screenToShow === settingsScreen || screenToShow === planScreen || screenToShow === shopScreen) { backToPlan = false; }
+  if (screenToShow === homeScreen || screenToShow === settingsScreen || screenToShow === planScreen || screenToShow === shopScreen || screenToShow === plannerScreen) { backToPlan = false; }
 
   // Tell style.css which screen is showing. It hides the tab bar on the form
   // (so a half-typed recipe isn't left by accident) and while cooking (more room).
   document.body.dataset.screen = screenToShow.id;
 
   // Light up the right tab. Everything except This Week, Shopping and Settings belongs to the Cookbook tab.
-  const activeTab = screenToShow === settingsScreen ? settingsTab : (screenToShow === planScreen ? planTab : (screenToShow === shopScreen ? shopTab : cookbookTab));
+  const activeTab = screenToShow === settingsScreen ? settingsTab : (screenToShow === planScreen || screenToShow === plannerScreen ? planTab : (screenToShow === shopScreen ? shopTab : cookbookTab));
   [cookbookTab, planTab, shopTab, settingsTab].forEach(function (tab) {
     if (tab === activeTab) { tab.setAttribute("aria-current", "page"); } else { tab.removeAttribute("aria-current"); }
   });
@@ -1282,6 +1287,10 @@ document.getElementById("delete-button").addEventListener("click", function () {
 
 // "‹ My Cookbook" button → back to the list.
 document.getElementById("back-button").addEventListener("click", function () {
+  if (backToPlanner) {
+    showScreen(plannerScreen);   // js/planner-ui.js: the suggestion is still there
+    return;
+  }
   if (backToPlan) {
     showScreen(planScreen);
     openPlanScreen(true);   // js/plan-ui.js: same week as before
