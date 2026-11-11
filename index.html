@@ -13,7 +13,7 @@
 
     <!-- The color Safari uses for its top bar, so it blends with the page. -->
     <meta name="theme-color" content="#f6f0e4" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#1b1713" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 
     <!-- The name shown on the browser tab and in bookmarks. -->
     <title>My Cookbook</title>
@@ -35,7 +35,7 @@
          here (style.css), at the bottom (app.js), and the "Version" line on the home screen. -->
 
     <!-- Load the look of the page from style.css. -->
-    <link rel="stylesheet" href="style.css?v=38">
+    <link rel="stylesheet" href="style.css?v=39">
   </head>
 
   <body>
@@ -59,6 +59,16 @@
       <symbol id="icon-fork" viewBox="0 0 24 24"><path d="M7 3v8M4.5 3v5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 21V3c-2.5 1.5-3.5 4.5-3.5 8H17"/></symbol>
       <symbol id="icon-cart" viewBox="0 0 24 24"><path d="M3 4h2.5l2.2 10.5h10.3L20 7.5H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></symbol>
       <symbol id="icon-note" viewBox="0 0 24 24"><path d="M6 3h8l4.5 4.5V21H6z"/><path d="M14 3v5h4.5M9 13h6M9 17h6"/></symbol>
+      <symbol id="icon-wand" viewBox="0 0 24 24"><path d="m4 20 11-11M15 9l-2-2M17.5 3.5v3M16 5h3M20 10v2.5M18.8 11.2h2.4M9.5 3.5v2.5M8.2 4.8h2.6"/></symbol>
+      <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+      <symbol id="icon-unlock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 7.6-1.7"/></symbol>
+      <symbol id="icon-swap" viewBox="0 0 24 24"><path d="M4 8h14M14.5 4.5 18 8l-3.5 3.5M20 16H6M9.5 12.5 6 16l3.5 3.5"/></symbol>
+      <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.4-5.5"/><path d="M20 4.5v4h-4"/></symbol>
+      <symbol id="icon-basket" viewBox="0 0 24 24"><path d="M3.5 10h17l-1.6 8.2a2 2 0 0 1-2 1.6H7.1a2 2 0 0 1-2-1.6z"/><path d="m8 10 3-6M16 10l-3-6M9.5 13.5v3M12 13.5v3M14.5 13.5v3"/></symbol>
+      <symbol id="icon-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.3 2.4 2.4 4.6-5"/></symbol>
+      <symbol id="icon-plus-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8.5v7M8.5 12h7"/></symbol>
+      <symbol id="icon-alert-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.8v5M12 16v.2"/></symbol>
+      <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
       <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
     </svg>
 
@@ -225,7 +235,7 @@
         <p class="empty-note" id="empty-note" hidden>No recipes yet. Tap the round <strong>+</strong> button at the top to add your first one.</p>
 
         <!-- Shows which version of the cookbook this phone has. Raise it with every update. -->
-        <p class="version">Version 38</p>
+        <p class="version">Version 39</p>
       </section>
 
       <!-- ===================== THIS WEEK SCREEN (Version 31) ===================== -->
@@ -233,6 +243,8 @@
       <section id="plan-screen" hidden>
         <div class="topbar">
           <h1 id="plan-heading">This Week</h1>
+          <!-- "Plan for me" (Version 39): suggests dinners for the week on screen. js/planner-ui.js -->
+          <button type="button" class="pill-button" id="plan-auto"><svg class="icon"><use href="#icon-wand"/></svg>Plan for me</button>
         </div>
 
         <div class="plan-switch" role="group" aria-label="Which week">
@@ -258,6 +270,99 @@
         <ol class="plan-days" id="plan-days"></ol>
 
         <button type="button" class="button button-secondary plan-reuse" id="plan-reuse">Reuse a past week…</button>
+      </section>
+
+      <!-- ===================== PLAN FOR ME SCREEN (Version 39) ===================== -->
+      <!-- Suggests a week of dinners from the saved recipes. js/planner.js does the thinking (on the phone only),
+           js/planner-ui.js fills this screen in. Nothing is saved until "Add to This Week" is confirmed. -->
+      <section id="planner-screen" hidden>
+        <button type="button" class="back-button" id="planner-back"><svg class="icon"><use href="#icon-back"/></svg>This Week</button>
+        <h1>Plan for me</h1>
+        <p class="subtitle" id="planner-week"></p>
+        <p class="message" id="planner-message" role="status" hidden></p>
+
+        <!-- Step 1: what you have and what you'd like. -->
+        <form id="planner-prefs" class="planner-prefs" novalidate>
+          <div class="field">
+            <label for="planner-have">What do you have?</label>
+            <p class="hint" id="planner-have-hint">Separate things with commas. Amounts aren't needed.</p>
+            <textarea id="planner-have" rows="2" placeholder="chicken, potatoes, spinach, eggs" aria-describedby="planner-have-hint" autocomplete="off" autocorrect="off" autocapitalize="none"></textarea>
+          </div>
+
+          <div class="planner-settings">
+            <div class="planner-row">
+              <div class="planner-row-text"><span class="planner-row-title" id="planner-dinners-label">Dinners this week</span><span class="hint" id="planner-dinners-hint"></span></div>
+              <div class="stepper" role="group" aria-labelledby="planner-dinners-label">
+                <button type="button" class="round-button" id="planner-dinners-minus" aria-label="Fewer dinners">−</button>
+                <span class="stepper-number" id="planner-dinners" aria-live="polite">5</span>
+                <button type="button" class="round-button" id="planner-dinners-plus" aria-label="More dinners">+</button>
+              </div>
+            </div>
+            <div class="planner-row">
+              <div class="planner-row-text"><span class="planner-row-title" id="planner-eaters-label">People eating</span><span class="hint">Servings for each dinner</span></div>
+              <div class="stepper" role="group" aria-labelledby="planner-eaters-label">
+                <button type="button" class="round-button" id="planner-eaters-minus" aria-label="Fewer people">−</button>
+                <span class="stepper-number" id="planner-eaters" aria-live="polite">4</span>
+                <button type="button" class="round-button" id="planner-eaters-plus" aria-label="More people">+</button>
+              </div>
+            </div>
+            <label class="planner-row planner-switch">
+              <span class="planner-row-text"><span class="planner-row-title">Plan a leftovers night</span><span class="hint">Cook one dinner bigger and eat it twice</span></span>
+              <input type="checkbox" role="switch" id="planner-leftovers" checked>
+            </label>
+            <label class="planner-row planner-switch">
+              <span class="planner-row-text"><span class="planner-row-title">Count pantry staples as on hand</span><span class="hint" id="planner-pantry-hint"></span></span>
+              <input type="checkbox" role="switch" id="planner-pantry" checked>
+            </label>
+            <label class="planner-row planner-switch" id="planner-keep-row" hidden>
+              <span class="planner-row-text"><span class="planner-row-title">Keep dinners already planned</span><span class="hint" id="planner-keep-hint"></span></span>
+              <input type="checkbox" role="switch" id="planner-keep" checked>
+            </label>
+          </div>
+
+          <fieldset class="field planner-priority">
+            <legend>What matters most?</legend>
+            <div class="chips">
+              <label class="chip"><input type="radio" name="planner-priority" value="have" checked><span>Use what I have</span></label>
+              <label class="chip"><input type="radio" name="planner-priority" value="shopping"><span>Least shopping</span></label>
+              <label class="chip"><input type="radio" name="planner-priority" value="quick"><span>Quickest</span></label>
+              <label class="chip"><input type="radio" name="planner-priority" value="variety"><span>Most variety</span></label>
+            </div>
+          </fieldset>
+
+          <button type="submit" class="button" id="planner-go"><svg class="icon"><use href="#icon-wand"/></svg>Suggest my week</button>
+        </form>
+
+        <!-- Step 2: the suggested week. -->
+        <div id="planner-result" hidden>
+          <p class="planner-summary" id="planner-summary" role="status"></p>
+          <ul class="planner-notes" id="planner-notes"></ul>
+
+          <div class="planner-columns">
+            <div>
+              <ol class="planner-days" id="planner-days"></ol>
+              <div class="planner-actions">
+                <button type="button" class="button button-secondary" id="planner-again"><svg class="icon"><use href="#icon-refresh"/></svg>Suggest again</button>
+                <button type="button" class="button button-secondary" id="planner-edit">Edit choices</button>
+              </div>
+            </div>
+
+            <section class="planner-impact" aria-labelledby="planner-impact-title">
+              <div class="planner-impact-head">
+                <svg class="icon" aria-hidden="true"><use href="#icon-basket"/></svg>
+                <div>
+                  <h2 id="planner-impact-title">Shopping impact</h2>
+                  <p id="planner-impact-sub">A guide only. The app doesn't know how much of each thing you have.</p>
+                </div>
+              </div>
+              <div id="planner-impact"></div>
+            </section>
+          </div>
+
+          <div class="planner-savebar">
+            <button type="button" class="button" id="planner-review">Review and add to This Week</button>
+          </div>
+        </div>
       </section>
 
       <!-- ===================== SHOPPING SCREEN (Version 34) ===================== -->
@@ -760,6 +865,36 @@
       </div>
     </div>
 
+    <!-- ===== Plan for me: bottom sheets (Version 39) ===== -->
+    <div class="sheet-backdrop" id="planner-swap-sheet" hidden>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="planner-swap-title">
+        <div class="sheet-grip"></div>
+        <h2 id="planner-swap-title"></h2>
+        <p class="sheet-sub">Every saved recipe, with the best fits for the rest of this week first.</p>
+        <div class="sheet-search">
+          <svg class="icon"><use href="#icon-search"/></svg>
+          <input type="search" id="planner-swap-search" placeholder="Find a recipe" aria-label="Find a recipe" autocomplete="off">
+        </div>
+        <ul class="sheet-recipes planner-swap-list" id="planner-swap-list"></ul>
+        <button type="button" class="sheet-cancel" id="planner-swap-cancel">Cancel</button>
+      </div>
+    </div>
+
+    <div class="sheet-backdrop" id="planner-confirm-sheet" hidden>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="planner-confirm-title">
+        <div class="sheet-grip"></div>
+        <h2 id="planner-confirm-title">Add to This Week?</h2>
+        <p class="sheet-sub" id="planner-confirm-sub"></p>
+        <ul class="planner-changes" id="planner-changes"></ul>
+        <p class="hint planner-confirm-note" id="planner-confirm-note"></p>
+        <p class="message" id="planner-confirm-message" hidden></p>
+        <div class="menu-buttons">
+          <button type="button" class="button" id="planner-confirm-save"></button>
+        </div>
+        <button type="button" class="sheet-cancel" id="planner-confirm-cancel">Cancel (nothing is changed)</button>
+      </div>
+    </div>
+
     <div class="sheet-backdrop" id="plan-reuse-sheet" hidden>
       <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reuse-title">
         <div class="sheet-grip"></div>
@@ -770,21 +905,23 @@
       </div>
     </div>
 
-    <script src="vendor/supabase.js?v=38"></script>
-    <script src="js/ingredients.js?v=38"></script>
-    <script src="js/plan.js?v=38"></script>
-    <script src="js/shopping.js?v=38"></script>
-    <script src="js/sync.js?v=38"></script>
-    <script src="js/plan-sync.js?v=38"></script>
-    <script src="js/shopping-sync.js?v=38"></script>
-    <script src="js/photos.js?v=38"></script>
-    <script src="js/auth.js?v=38"></script>
-    <script src="js/cookbook-views.js?v=38"></script>
-    <script src="app.js?v=38"></script>
-    <script src="js/plan-ui.js?v=38"></script>
-    <script src="js/shopping-ui.js?v=38"></script>
-    <script src="js/fridge.js?v=38"></script>
-    <script src="js/fridge-ui.js?v=38"></script>
-    <script src="js/sync-ui.js?v=38"></script>
+    <script src="vendor/supabase.js?v=39"></script>
+    <script src="js/ingredients.js?v=39"></script>
+    <script src="js/plan.js?v=39"></script>
+    <script src="js/shopping.js?v=39"></script>
+    <script src="js/sync.js?v=39"></script>
+    <script src="js/plan-sync.js?v=39"></script>
+    <script src="js/shopping-sync.js?v=39"></script>
+    <script src="js/photos.js?v=39"></script>
+    <script src="js/auth.js?v=39"></script>
+    <script src="js/cookbook-views.js?v=39"></script>
+    <script src="app.js?v=39"></script>
+    <script src="js/plan-ui.js?v=39"></script>
+    <script src="js/shopping-ui.js?v=39"></script>
+    <script src="js/fridge.js?v=39"></script>
+    <script src="js/fridge-ui.js?v=39"></script>
+    <script src="js/planner.js?v=39"></script>
+    <script src="js/planner-ui.js?v=39"></script>
+    <script src="js/sync-ui.js?v=39"></script>
   </body>
 </html>

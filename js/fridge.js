@@ -132,5 +132,6 @@ function rankByFridge(recipes, fridgeItems, pantryNames) {
 
 // Lets the Node checks load this file.
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { parseFridgeText: parseFridgeText, rankByFridge: rankByFridge, fridgeMatches: fridgeMatches, fridgeWords: fridgeWords };
+  module.exports = { parseFridgeText: parseFridgeText, rankByFridge: rankByFridge, fridgeMatches: fridgeMatches, fridgeWords: fridgeWords,
+    isBasicName: isBasicName, fridgeIngredientName: fridgeIngredientName };
 }

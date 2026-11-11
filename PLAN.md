@@ -3,7 +3,9 @@
 A personal cookbook website that I use on my iPhone.
 How we work and the reasons behind each decision are in `CLAUDE.md`.
 
-## Current status (2026-11-09)
+## Current status (2026-11-11)
+
+- **Version 39 (built on branch `claude/smart-weekly-planner-ctanzj`, NOT merged, waiting for the user's review): "Plan for me"** on This Week (suggests a week of dinners from saved recipes, using what you have, with a leftovers night, a shopping preview, lock / swap / suggest again, and nothing saved until confirmed) **and a near-black Dark Mode.** Details in `CLAUDE.md` → Key decisions. Tested only with made-up recipes; no real data, Supabase or `main` was touched. If the user merges it, they should check Version 39 on the phone.
 
 - **Version 38 (in review): "Send to my app" on the Shopping screen** sends the week's unticked items to the iPhone Share menu (one per line) or copies them. Not yet confirmed on the phone.
 
@@ -243,3 +245,4 @@ Also decided: a deleted recipe goes to **"Recently deleted" for 30 days** (from 
 - 2026-11-09 — Version 37: "What's in my fridge?" on the Cookbook screen (fridge button beside the dice). Type what you have; saved recipes (my version) are ranked by fewest missing ingredients, each showing "You have 2 of 3. Missing: feta". Salt/pepper/water/oil and optional ingredients never count; Shopping "I always have this" items count as had. New `js/fridge.js` (matching, Node checks `tests/fridge.test.js`, 27) and `js/fridge-ui.js`. The AI upgrade was dropped at the user's request (screenshots go through a Claude chat instead).
 - 2026-11-09 — Version 37 merged and confirmed on the user's phone ("everything works"). Nothing is planned next; ask the user. Notes only (no version change).
 - 2026-11-09 — Version 38: Shopping screen gets **Send to my app** (iPhone Share menu, plain text, one item per line) and **Copy**. Only unticked items, "Needs a look" items (as `name: a + b`) and unticked extras go; pantry items and ticked items are left out; nothing is changed by sending. New `shoppingExportText` in `js/shopping.js` (checks added to `tests/shopping.test.js`, 62 in all).
+- 2026-11-11 — Version 39 built in one autonomous session (the user's explicit request, for this feature only): **Plan for me** (new `js/planner.js`, `js/planner-ui.js`, `tests/planner.test.js` with 134 checks; screen, two bottom sheets and icons in `index.html`; styles in `style.css`; small wiring in `app.js`; two more exports in `js/fridge.js`) and a **near-black Dark Mode** (dark colour settings only). No new storage for recipes, plan or shopping; no backup, sync or Supabase change; one new device-only key `cookbook.planner` for the remembered choices. Checked: all 9 Node test files pass (572 checks), 76 screen checks on simulated iPhone 13, iPhone SE, iPad Pro 11 (both ways), light and dark. Left on the branch for review; not merged.
