@@ -496,7 +496,9 @@ function plannerSlots(chosen, ctx, eaters, locked) {
       };
     }
     const nights = leftoverDates[m.id] || [];
-    let servings = m.servings === null ? null : eaters * (1 + nights.length);
+    // Enough for everyone (and the leftovers nights). A recipe is scaled UP when it has to be,
+    // never down: half a chicken or 2⅔ cloves of garlic helps nobody.
+    let servings = m.servings === null ? null : Math.max(m.servings, eaters * (1 + nights.length));
     if (locked[x.date] && locked[x.date].servings) { servings = locked[x.date].servings; }
     const have = m.have.map(function (i) { return ctx.typed[i].label; });
     const reasons = [];

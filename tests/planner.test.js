@@ -107,8 +107,12 @@ check("the leftovers night names a cooked dinner", !!source);
 eq("the link goes both ways", [left.sourceDate, source.leftoverDates], [source.date, [left.date]]);
 const gap = (Date.parse(left.date) - Date.parse(source.date)) / 86400000;
 check("leftovers are eaten 1 to 3 days later", gap >= 1 && gap <= 3, gap);
-eq("the source is cooked for both nights", source.servings, 8);
-check("other dinners are cooked for four", cooks(week).filter(function (s) { return s !== source; }).every(function (s) { return s.servings === 4; }));
+check("the source is cooked for both nights", source.servings === Math.max(8, source.baseServings), source.servings);
+check("other dinners feed four, and are never scaled down", cooks(week).filter(function (s) { return s !== source; }).every(function (s) { return s.servings === Math.max(4, s.baseServings); }));
+const roastOnly = suggest({ dinners: 1, leftovers: false, available: ["whole chicken", "lemon", "garlic"] });
+eq("a recipe for six stays at six for four people", [roastOnly.slots[0].recipeId, roastOnly.slots[0].servings], ["roast", 6]);
+const omeletOnly = suggest({ dinners: 1, leftovers: false }, [BOOK[12]]);
+eq("a recipe for one is scaled up to four", omeletOnly.slots[0].servings, 4);
 check("the source is one that keeps", ["stew", "curry", "chili", "roast", "soup", "pasta", "salmon", "friedrice", "frittata"].indexOf(source.recipeId) !== -1 && source.recipeId !== "omelet");
 check("the reason says so", source.reasons.some(function (r) { return /bigger batch/.test(r); }) && /^From /.test(left.reasons[0]));
 

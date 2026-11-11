@@ -403,7 +403,7 @@ function makePlannerDay(slot, recipes) {
   why.className = "planner-why";
   slot.reasons.forEach(function (reason) { why.append(plannerText("li", "", reason)); });
   if (slot.kind === "cook" && slot.leftoverDates.length > 0 && slot.servings) {
-    const rest = slot.servings - planner.options.eaters;
+    const rest = Math.min(slot.servings - planner.options.eaters, 99);
     const night = plannerList(slot.leftoverDates.map(dayName));
     why.append(plannerText("li", rest < planner.options.eaters ? "planner-warn" : "",
       rest < planner.options.eaters
@@ -530,7 +530,7 @@ function renderPlannerImpact() {
       const text = document.createElement("span");
       text.className = "impact-text";
       text.append(plannerText("span", "impact-name", item.name));
-      const detail = [item.why, item.from.join(", ")].filter(Boolean).join(" · ");
+      const detail = item.why || item.from.join(", ");
       if (detail) { text.append(plannerText("span", "impact-from", detail)); }
       li.append(makeIcon(group[2]), text);
       if (item.amount) { li.append(plannerText("span", "impact-amount", item.amount)); }
